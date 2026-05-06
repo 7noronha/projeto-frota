@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from 'primereact/button';
-import { Divider } from 'primereact/divider';
 
 const itensMenu = [
   { href: '/veiculos', rotulo: 'Veículos', icone: 'pi pi-car' },
@@ -22,6 +21,7 @@ export function NavegacaoPrincipal() {
 
   return (
     <aside
+      aria-label="Navegação principal"
       className="flex h-screen w-64 flex-col"
       style={{
         background: '#0A2540',
@@ -44,33 +44,19 @@ export function NavegacaoPrincipal() {
       </div>
 
       {/* Menu */}
-      <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
+      <nav aria-label="Menu" className="flex-1 px-3 py-4 flex flex-col gap-1">
         {itensMenu.map((item) => {
           const ativo = pathname.startsWith(item.href);
           return (
-            <Link key={item.href} href={item.href} style={{ textDecoration: 'none' }}>
-              <div
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-pointer"
-                style={{
-                  background: ativo ? '#0066FF' : 'transparent',
-                  color: ativo ? '#ffffff' : 'rgba(255,255,255,0.65)',
-                }}
-                onMouseEnter={(e) => {
-                  if (!ativo) {
-                    (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.08)';
-                    (e.currentTarget as HTMLDivElement).style.color = '#ffffff';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!ativo) {
-                    (e.currentTarget as HTMLDivElement).style.background = 'transparent';
-                    (e.currentTarget as HTMLDivElement).style.color = 'rgba(255,255,255,0.65)';
-                  }
-                }}
-              >
-                <i className={item.icone} style={{ fontSize: '1rem', width: 20, textAlign: 'center' }} />
-                <span className="text-sm font-medium">{item.rotulo}</span>
-              </div>
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={ativo ? 'page' : undefined}
+              className="nav-sidebar-item"
+              data-active={ativo ? 'true' : undefined}
+            >
+              <i className={item.icone} style={{ fontSize: '1rem', width: 20, textAlign: 'center' }} />
+              <span className="text-sm font-medium">{item.rotulo}</span>
             </Link>
           );
         })}

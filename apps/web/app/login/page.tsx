@@ -71,7 +71,7 @@ export default function PaginaLogin() {
 
           {/* Cabeçalho */}
           <h1 className="text-2xl font-bold mb-1" style={{ color: '#0A2540' }}>
-            Bem-vindo de volta 👋
+            Bem-vindo de volta
           </h1>
           <p className="text-sm mb-8" style={{ color: '#94a3b8' }}>
             Entre com sua matrícula e senha para continuar.
