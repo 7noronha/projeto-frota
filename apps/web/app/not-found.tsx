@@ -24,10 +24,8 @@ export default function NaoEncontrado() {
 
         <Link
           href="/"
-          className="inline-flex h-10 items-center rounded-full px-6 text-sm font-semibold text-white transition-colors"
-          style={{ background: '#0066ff', textDecoration: 'none' }}
-          onMouseOver={(e) => ((e.currentTarget as HTMLAnchorElement).style.background = '#0047b3')}
-          onMouseOut={(e) => ((e.currentTarget as HTMLAnchorElement).style.background = '#0066ff')}
+          className="inline-flex h-10 items-center rounded-full bg-[#0066ff] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#0047b3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066ff] focus-visible:ring-offset-2"
+          style={{ textDecoration: 'none' }}
         >
           Voltar para o início
         </Link>
