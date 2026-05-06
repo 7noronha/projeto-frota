@@ -9,6 +9,7 @@ import { Button } from 'primereact/button';
 import { Message } from 'primereact/message';
 import { acaoExcluirVeiculo } from '@/app/(dashboard)/veiculos/actions';
 import { EstadoVazio } from '@/components/EstadoVazio';
+import { DialogConfirmacao } from '@/components/DialogConfirmacao';
 import type { VeiculoResposta } from '@fleetops/types';
 
 type SeveridadeTag = 'success' | 'warning' | 'danger' | 'info' | undefined;
@@ -27,12 +28,28 @@ interface TabelaVeiculosProps {
 export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
   const [erro, setErro] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [veiculoParaExcluir, setVeiculoParaExcluir] = useState<{
+    id: string;
+    placa: string;
+  } | null>(null);
 
-  function confirmarExclusao(id: string, placa: string) {
-    if (!confirm(`Tem certeza que deseja excluir o veículo ${placa}?`)) return;
+  function abrirDialogExclusao(id: string, placa: string) {
+    setErro(null);
+    setVeiculoParaExcluir({ id, placa });
+  }
+
+  function fecharDialog() {
+    if (!isPending) setVeiculoParaExcluir(null);
+  }
+
+  function confirmarExclusao() {
+    if (!veiculoParaExcluir) return;
     startTransition(async () => {
-      const resultado = await acaoExcluirVeiculo(id);
-      if (resultado?.erro) setErro(resultado.erro);
+      const resultado = await acaoExcluirVeiculo(veiculoParaExcluir.id);
+      if (resultado?.erro) {
+        setErro(resultado.erro);
+      }
+      setVeiculoParaExcluir(null);
     });
   }
 
@@ -75,8 +92,8 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
           size="small"
           text
           severity="danger"
-          loading={isPending}
-          onClick={() => confirmarExclusao(rowData.id, rowData.placa)}
+          aria-label={`Excluir veículo ${rowData.placa}`}
+          onClick={() => abrirDialogExclusao(rowData.id, rowData.placa)}
           style={{ padding: '0.25rem 0.5rem' }}
         />
       </div>
@@ -88,6 +105,7 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
       {erro && (
         <Message severity="error" text={erro} className="w-full justify-start mb-4" />
       )}
+
       <DataTable
         value={veiculos}
         emptyMessage={
@@ -114,6 +132,17 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
         <Column field="situacao" header="Situação" body={corpoSituacao} />
         <Column header="Ações" body={corpoAcoes} style={{ width: 180 }} />
       </DataTable>
+
+      <DialogConfirmacao
+        visivel={veiculoParaExcluir !== null}
+        titulo="Excluir veículo"
+        descricao={`Esta ação é irreversível. O veículo ${veiculoParaExcluir?.placa ?? ''} e todos os seus dados serão removidos permanentemente.`}
+        palavraConfirmacao={veiculoParaExcluir?.placa ?? ''}
+        labelConfirmar="Excluir veículo"
+        onConfirmar={confirmarExclusao}
+        onCancelar={fecharDialog}
+        carregando={isPending}
+      />
     </div>
   );
 }
