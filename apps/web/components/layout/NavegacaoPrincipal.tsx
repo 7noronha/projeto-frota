@@ -44,7 +44,7 @@ export function NavegacaoPrincipal() {
       </div>
 
       {/* Menu */}
-      <nav aria-label="Menu" className="flex-1 px-3 py-4 flex flex-col gap-1">
+      <nav aria-label="Menu" className="flex-1 px-3 py-4 flex flex-col gap-2">
         {itensMenu.map((item) => {
           const ativo = pathname.startsWith(item.href);
           return (
