@@ -1,14 +1,45 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { acaoLogin } from './actions';
 import { InputText } from 'primereact/inputtext';
 import { Password } from 'primereact/password';
 import { Button } from 'primereact/button';
 import { Message } from 'primereact/message';
 
+interface ErrosCampos {
+  matricula?: string;
+  senha?: string;
+}
+
+function validarMatricula(valor: string): string {
+  if (!valor.trim()) return 'Informe sua matrícula';
+  if (valor.trim().length < 4) return 'Matrícula inválida';
+  return '';
+}
+
+function validarSenha(valor: string): string {
+  if (!valor) return 'Informe sua senha';
+  if (valor.length < 4) return 'Senha muito curta';
+  return '';
+}
+
 export function FormularioLogin() {
   const [estado, acao, pendente] = useActionState(acaoLogin, null);
+  const [erros, setErros] = useState<ErrosCampos>({});
+  const [tocados, setTocados] = useState<Record<string, boolean>>({});
+
+  function marcarTocado(campo: string) {
+    setTocados((prev) => ({ ...prev, [campo]: true }));
+  }
+
+  function validarCampo(campo: keyof ErrosCampos, valor: string) {
+    const msg = campo === 'matricula' ? validarMatricula(valor) : validarSenha(valor);
+    setErros((prev) => ({ ...prev, [campo]: msg }));
+  }
+
+  const erroMatricula = tocados.matricula ? erros.matricula : '';
+  const erroSenha = tocados.senha ? erros.senha : '';
 
   return (
     <form action={acao} className="flex flex-col gap-6">
@@ -17,6 +48,7 @@ export function FormularioLogin() {
       <div className="flex flex-col gap-1.5">
         <label htmlFor="matricula" className="text-sm font-semibold" style={{ color: '#374151' }}>
           Matrícula
+          <span className="sr-only">(obrigatório)</span>
         </label>
         <div className="login-field flex items-center gap-3">
           <i className="pi pi-id-card flex-shrink-0" style={{ color: '#0066FF', fontSize: '1.1rem' }} />
@@ -28,14 +60,27 @@ export function FormularioLogin() {
             autoComplete="username"
             required
             className="flex-1"
+            aria-required="true"
+            aria-invalid={erroMatricula ? 'true' : 'false'}
+            aria-describedby={erroMatricula ? 'matricula-erro' : undefined}
+            onBlur={(e) => {
+              marcarTocado('matricula');
+              validarCampo('matricula', e.target.value);
+            }}
           />
         </div>
+        {erroMatricula && (
+          <p id="matricula-erro" role="alert" className="text-xs" style={{ color: '#ef4444' }}>
+            {erroMatricula}
+          </p>
+        )}
       </div>
 
       {/* Senha */}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="senha" className="text-sm font-semibold" style={{ color: '#374151' }}>
           Senha
+          <span className="sr-only">(obrigatório)</span>
         </label>
         <div className="login-field flex items-center gap-3">
           <i className="pi pi-lock flex-shrink-0" style={{ color: '#0066FF', fontSize: '1.1rem' }} />
@@ -49,12 +94,28 @@ export function FormularioLogin() {
             required
             className="flex-1"
             inputClassName="w-full"
-            pt={{ input: { style: { width: '100%' } } }}
+            pt={{
+              input: {
+                style: { width: '100%' },
+                'aria-required': 'true',
+                'aria-invalid': erroSenha ? 'true' : 'false',
+                'aria-describedby': erroSenha ? 'senha-erro' : undefined,
+                onBlur: (e: React.FocusEvent<HTMLInputElement>) => {
+                  marcarTocado('senha');
+                  validarCampo('senha', e.target.value);
+                },
+              },
+            }}
           />
         </div>
+        {erroSenha && (
+          <p id="senha-erro" role="alert" className="text-xs" style={{ color: '#ef4444' }}>
+            {erroSenha}
+          </p>
+        )}
       </div>
 
-      {/* Erro */}
+      {/* Erro do servidor */}
       {estado?.erro && (
         <Message
           severity="error"

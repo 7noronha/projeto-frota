@@ -21,13 +21,45 @@ interface FormViagemProps {
   veiculos: VeiculoResposta[];
 }
 
+interface ErrosCampos {
+  destino?: string;
+  dataViagem?: string;
+  motoristaId?: string;
+  veiculoId?: string;
+  solicitadoPor?: string;
+  autorizadoPor?: string;
+}
+
+function naoVazio(valor: string, rotulo: string): string {
+  return valor.trim() ? '' : `Informe ${rotulo.toLowerCase()}`;
+}
+
 export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
   const [estado, acaoForm, pendente] = useActionState(acao, null);
-
+  const [erros, setErros] = useState<ErrosCampos>({});
+  const [tocados, setTocados] = useState<Record<string, boolean>>({});
   const [motoristaId, setMotoristaId] = useState('');
   const [veiculoId, setVeiculoId] = useState('');
 
   const hoje = new Date().toISOString().split('T')[0] ?? '';
+
+  function tocar(campo: string) {
+    setTocados((p) => ({ ...p, [campo]: true }));
+  }
+
+  function erroBlur(campo: keyof ErrosCampos, valor: string, rotulo: string) {
+    tocar(campo);
+    setErros((p) => ({ ...p, [campo]: naoVazio(valor, rotulo) }));
+  }
+
+  function erroDropdown(campo: keyof ErrosCampos, valor: string, rotulo: string) {
+    tocar(campo);
+    setErros((p) => ({ ...p, [campo]: valor ? '' : `Selecione ${rotulo.toLowerCase()}` }));
+  }
+
+  function erroCampo(campo: keyof ErrosCampos) {
+    return tocados[campo] ? erros[campo] : '';
+  }
 
   const opcoesMotoristas = motoristas.map((m) => ({
     label: `${m.nome} (${m.matricula})`,
@@ -38,6 +70,25 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
     label: `${v.placa} — ${v.marca} ${v.modelo}`,
     value: v.id,
   }));
+
+  function CampoErro({ id, msg }: { id: string; msg?: string }) {
+    if (!msg) return null;
+    return (
+      <p id={id} role="alert" className="text-xs" style={{ color: '#ef4444' }}>
+        {msg}
+      </p>
+    );
+  }
+
+  function labelObrigatorio(texto: string) {
+    return (
+      <>
+        {texto}{' '}
+        <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
+        <span className="sr-only">(obrigatório)</span>
+      </>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -55,7 +106,7 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
           {/* Destino */}
           <div className="flex flex-col gap-2">
             <label htmlFor="destino" className="text-sm font-medium" style={{ color: '#374151' }}>
-              Destino <span style={{ color: '#ef4444' }}>*</span>
+              {labelObrigatorio('Destino')}
             </label>
             <InputText
               id="destino"
@@ -63,14 +114,19 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
               placeholder="Av. Paulista, 1000 — São Paulo, SP"
               required
               className="w-full"
+              aria-required="true"
+              aria-invalid={erroCampo('destino') ? 'true' : 'false'}
+              aria-describedby={erroCampo('destino') ? 'destino-erro' : undefined}
+              onBlur={(e) => erroBlur('destino', e.target.value, 'o destino')}
             />
+            <CampoErro id="destino-erro" msg={erroCampo('destino')} />
           </div>
 
           {/* Data + Horários */}
           <div className="grid grid-cols-3 gap-4">
             <div className="flex flex-col gap-2">
               <label htmlFor="dataViagem" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Data da viagem <span style={{ color: '#ef4444' }}>*</span>
+                {labelObrigatorio('Data da viagem')}
               </label>
               <InputText
                 id="dataViagem"
@@ -79,11 +135,16 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
                 min={hoje}
                 required
                 className="w-full"
+                aria-required="true"
+                aria-invalid={erroCampo('dataViagem') ? 'true' : 'false'}
+                aria-describedby={erroCampo('dataViagem') ? 'dataViagem-erro' : undefined}
+                onBlur={(e) => erroBlur('dataViagem', e.target.value, 'a data')}
               />
+              <CampoErro id="dataViagem-erro" msg={erroCampo('dataViagem')} />
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="horaInicioPrevista" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Hora início <span style={{ color: '#ef4444' }}>*</span>
+                {labelObrigatorio('Hora início')}
               </label>
               <InputText
                 id="horaInicioPrevista"
@@ -91,11 +152,12 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
                 type="time"
                 required
                 className="w-full"
+                aria-required="true"
               />
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="horaFimPrevista" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Hora fim <span style={{ color: '#ef4444' }}>*</span>
+                {labelObrigatorio('Hora fim')}
               </label>
               <InputText
                 id="horaFimPrevista"
@@ -103,6 +165,7 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
                 type="time"
                 required
                 className="w-full"
+                aria-required="true"
               />
             </div>
           </div>
@@ -110,18 +173,24 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
           {/* Motorista + Veículo */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium" style={{ color: '#374151' }}>
-                Motorista <span style={{ color: '#ef4444' }}>*</span>
+              <label htmlFor="motorista-dropdown" className="text-sm font-medium" style={{ color: '#374151' }}>
+                {labelObrigatorio('Motorista')}
               </label>
               <input type="hidden" name="motoristaId" value={motoristaId} />
               <Dropdown
+                inputId="motorista-dropdown"
                 value={motoristaId}
-                onChange={(e: { value: string }) => setMotoristaId(e.value)}
+                onChange={(e: { value: string }) => {
+                  setMotoristaId(e.value);
+                  erroDropdown('motoristaId', e.value, 'um motorista');
+                }}
                 options={opcoesMotoristas}
                 placeholder="Selecione um motorista"
-                className="w-full"
+                className={`w-full${erroCampo('motoristaId') ? ' p-invalid' : ''}`}
                 emptyMessage="Nenhum motorista disponível"
+                aria-describedby={erroCampo('motoristaId') ? 'motorista-erro' : undefined}
               />
+              <CampoErro id="motorista-erro" msg={erroCampo('motoristaId')} />
               {motoristas.length === 0 && (
                 <p className="text-xs" style={{ color: '#d97706' }}>
                   Nenhum motorista ativo cadastrado.
@@ -129,18 +198,24 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
               )}
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium" style={{ color: '#374151' }}>
-                Veículo <span style={{ color: '#ef4444' }}>*</span>
+              <label htmlFor="veiculo-dropdown" className="text-sm font-medium" style={{ color: '#374151' }}>
+                {labelObrigatorio('Veículo')}
               </label>
               <input type="hidden" name="veiculoId" value={veiculoId} />
               <Dropdown
+                inputId="veiculo-dropdown"
                 value={veiculoId}
-                onChange={(e: { value: string }) => setVeiculoId(e.value)}
+                onChange={(e: { value: string }) => {
+                  setVeiculoId(e.value);
+                  erroDropdown('veiculoId', e.value, 'um veículo');
+                }}
                 options={opcoesVeiculos}
                 placeholder="Selecione um veículo"
-                className="w-full"
+                className={`w-full${erroCampo('veiculoId') ? ' p-invalid' : ''}`}
                 emptyMessage="Nenhum veículo disponível"
+                aria-describedby={erroCampo('veiculoId') ? 'veiculo-erro' : undefined}
               />
+              <CampoErro id="veiculo-erro" msg={erroCampo('veiculoId')} />
               {veiculos.length === 0 && (
                 <p className="text-xs" style={{ color: '#d97706' }}>
                   Nenhum veículo ativo disponível.
@@ -153,7 +228,7 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <label htmlFor="solicitadoPor" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Solicitado por <span style={{ color: '#ef4444' }}>*</span>
+                {labelObrigatorio('Solicitado por')}
               </label>
               <InputText
                 id="solicitadoPor"
@@ -161,11 +236,16 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
                 placeholder="Nome do solicitante"
                 required
                 className="w-full"
+                aria-required="true"
+                aria-invalid={erroCampo('solicitadoPor') ? 'true' : 'false'}
+                aria-describedby={erroCampo('solicitadoPor') ? 'solicitadoPor-erro' : undefined}
+                onBlur={(e) => erroBlur('solicitadoPor', e.target.value, 'o solicitante')}
               />
+              <CampoErro id="solicitadoPor-erro" msg={erroCampo('solicitadoPor')} />
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="autorizadoPor" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Autorizado por <span style={{ color: '#ef4444' }}>*</span>
+                {labelObrigatorio('Autorizado por')}
               </label>
               <InputText
                 id="autorizadoPor"
@@ -173,7 +253,12 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
                 placeholder="Nome do autorizador"
                 required
                 className="w-full"
+                aria-required="true"
+                aria-invalid={erroCampo('autorizadoPor') ? 'true' : 'false'}
+                aria-describedby={erroCampo('autorizadoPor') ? 'autorizadoPor-erro' : undefined}
+                onBlur={(e) => erroBlur('autorizadoPor', e.target.value, 'o autorizador')}
               />
+              <CampoErro id="autorizadoPor-erro" msg={erroCampo('autorizadoPor')} />
             </div>
           </div>
 

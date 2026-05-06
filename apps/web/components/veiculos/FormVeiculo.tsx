@@ -32,15 +32,59 @@ interface FormVeiculoProps {
   titulo: string;
 }
 
+interface ErrosCampos {
+  placa?: string;
+  marca?: string;
+  modelo?: string;
+  cor?: string;
+  renavam?: string;
+}
+
+function naoVazio(valor: string, rotulo: string): string {
+  return valor.trim() ? '' : `Informe ${rotulo.toLowerCase()}`;
+}
+
 export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) {
   const [estado, acaoForm, pendente] = useActionState(acao, null);
+  const [erros, setErros] = useState<ErrosCampos>({});
+  const [tocados, setTocados] = useState<Record<string, boolean>>({});
 
   const ehEdicao = Boolean(veiculoInicial);
 
-  const [situacao, setSituacao] = useState(veiculoInicial?.situacao ?? 'ativo');
+  const [situacao, setSituacao] = useState<'ativo' | 'em_manutencao' | 'inativo' | 'baixado'>(
+    (veiculoInicial?.situacao as 'ativo' | 'em_manutencao' | 'inativo' | 'baixado') ?? 'ativo',
+  );
   const [anoFabricacao, setAnoFabricacao] = useState<number>(veiculoInicial?.anoFabricacao ?? anoAtual);
   const [anoModelo, setAnoModelo] = useState<number>(veiculoInicial?.anoModelo ?? anoAtual);
   const [odometro, setOdometro] = useState<number>(veiculoInicial?.odometroAtual ?? 0);
+
+  function erroBlur(campo: keyof ErrosCampos, valor: string, rotulo: string) {
+    setTocados((p) => ({ ...p, [campo]: true }));
+    setErros((p) => ({ ...p, [campo]: naoVazio(valor, rotulo) }));
+  }
+
+  function erroCampo(campo: keyof ErrosCampos) {
+    return tocados[campo] ? erros[campo] : '';
+  }
+
+  function CampoErro({ id, msg }: { id: string; msg?: string }) {
+    if (!msg) return null;
+    return (
+      <p id={id} role="alert" className="text-xs" style={{ color: '#ef4444' }}>
+        {msg}
+      </p>
+    );
+  }
+
+  function labelObrigatorio(texto: string) {
+    return (
+      <>
+        {texto}{' '}
+        <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
+        <span className="sr-only">(obrigatório)</span>
+      </>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -59,7 +103,7 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <label htmlFor="placa" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Placa <span style={{ color: '#ef4444' }}>*</span>
+                {labelObrigatorio('Placa')}
               </label>
               <InputText
                 id="placa"
@@ -70,16 +114,24 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
                 required
                 className="w-full uppercase"
                 style={ehEdicao ? { background: '#f8fafc' } : {}}
+                aria-required="true"
+                aria-invalid={erroCampo('placa') ? 'true' : 'false'}
+                aria-describedby={erroCampo('placa') ? 'placa-erro' : undefined}
+                onBlur={(e) => !ehEdicao && erroBlur('placa', e.target.value, 'a placa')}
               />
+              <CampoErro id="placa-erro" msg={erroCampo('placa')} />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium" style={{ color: '#374151' }}>
-                Situação <span style={{ color: '#ef4444' }}>*</span>
+              <label htmlFor="situacao-dropdown" className="text-sm font-medium" style={{ color: '#374151' }}>
+                {labelObrigatorio('Situação')}
               </label>
               <input type="hidden" name="situacao" value={situacao} />
               <Dropdown
+                inputId="situacao-dropdown"
                 value={situacao}
-                onChange={(e: { value: string }) => setSituacao(e.value)}
+                onChange={(e: { value: 'ativo' | 'em_manutencao' | 'inativo' | 'baixado' }) =>
+                  setSituacao(e.value)
+                }
                 options={SITUACOES}
                 className="w-full"
               />
@@ -90,7 +142,7 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <label htmlFor="marca" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Marca <span style={{ color: '#ef4444' }}>*</span>
+                {labelObrigatorio('Marca')}
               </label>
               <InputText
                 id="marca"
@@ -99,11 +151,16 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
                 defaultValue={veiculoInicial?.marca}
                 required
                 className="w-full"
+                aria-required="true"
+                aria-invalid={erroCampo('marca') ? 'true' : 'false'}
+                aria-describedby={erroCampo('marca') ? 'marca-erro' : undefined}
+                onBlur={(e) => erroBlur('marca', e.target.value, 'a marca')}
               />
+              <CampoErro id="marca-erro" msg={erroCampo('marca')} />
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="modelo" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Modelo <span style={{ color: '#ef4444' }}>*</span>
+                {labelObrigatorio('Modelo')}
               </label>
               <InputText
                 id="modelo"
@@ -112,18 +169,24 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
                 defaultValue={veiculoInicial?.modelo}
                 required
                 className="w-full"
+                aria-required="true"
+                aria-invalid={erroCampo('modelo') ? 'true' : 'false'}
+                aria-describedby={erroCampo('modelo') ? 'modelo-erro' : undefined}
+                onBlur={(e) => erroBlur('modelo', e.target.value, 'o modelo')}
               />
+              <CampoErro id="modelo-erro" msg={erroCampo('modelo')} />
             </div>
           </div>
 
           {/* Ano Fabricação + Ano Modelo */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium" style={{ color: '#374151' }}>
-                Ano de fabricação <span style={{ color: '#ef4444' }}>*</span>
+              <label htmlFor="ano-fabricacao-input" className="text-sm font-medium" style={{ color: '#374151' }}>
+                {labelObrigatorio('Ano de fabricação')}
               </label>
               <input type="hidden" name="anoFabricacao" value={anoFabricacao} />
               <InputNumber
+                inputId="ano-fabricacao-input"
                 value={anoFabricacao}
                 onValueChange={(e: InputNumberValueChangeEvent) => setAnoFabricacao(e.value ?? anoAtual)}
                 min={ANO_MINIMO}
@@ -134,11 +197,12 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium" style={{ color: '#374151' }}>
-                Ano do modelo <span style={{ color: '#ef4444' }}>*</span>
+              <label htmlFor="ano-modelo-input" className="text-sm font-medium" style={{ color: '#374151' }}>
+                {labelObrigatorio('Ano do modelo')}
               </label>
               <input type="hidden" name="anoModelo" value={anoModelo} />
               <InputNumber
+                inputId="ano-modelo-input"
                 value={anoModelo}
                 onValueChange={(e: InputNumberValueChangeEvent) => setAnoModelo(e.value ?? anoAtual)}
                 min={ANO_MINIMO}
@@ -154,7 +218,7 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
               <label htmlFor="cor" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Cor <span style={{ color: '#ef4444' }}>*</span>
+                {labelObrigatorio('Cor')}
               </label>
               <InputText
                 id="cor"
@@ -163,11 +227,16 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
                 defaultValue={veiculoInicial?.cor}
                 required
                 className="w-full"
+                aria-required="true"
+                aria-invalid={erroCampo('cor') ? 'true' : 'false'}
+                aria-describedby={erroCampo('cor') ? 'cor-erro' : undefined}
+                onBlur={(e) => erroBlur('cor', e.target.value, 'a cor')}
               />
+              <CampoErro id="cor-erro" msg={erroCampo('cor')} />
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="renavam" className="text-sm font-medium" style={{ color: '#374151' }}>
-                RENAVAM <span style={{ color: '#ef4444' }}>*</span>
+                {labelObrigatorio('RENAVAM')}
               </label>
               <InputText
                 id="renavam"
@@ -179,18 +248,24 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
                 required
                 className="w-full"
                 style={ehEdicao ? { background: '#f8fafc' } : {}}
+                aria-required="true"
+                aria-invalid={erroCampo('renavam') ? 'true' : 'false'}
+                aria-describedby={erroCampo('renavam') ? 'renavam-erro' : undefined}
+                onBlur={(e) => !ehEdicao && erroBlur('renavam', e.target.value, 'o RENAVAM')}
               />
+              <CampoErro id="renavam-erro" msg={erroCampo('renavam')} />
             </div>
           </div>
 
           {/* Odômetro + Data Aquisição */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium" style={{ color: '#374151' }}>
-                Odômetro atual (km) <span style={{ color: '#ef4444' }}>*</span>
+              <label htmlFor="odometro-input" className="text-sm font-medium" style={{ color: '#374151' }}>
+                {labelObrigatorio('Odômetro atual (km)')}
               </label>
               <input type="hidden" name="odometroAtual" value={odometro} />
               <InputNumber
+                inputId="odometro-input"
                 value={odometro}
                 onValueChange={(e: InputNumberValueChangeEvent) => setOdometro(e.value ?? 0)}
                 min={0}
@@ -202,7 +277,7 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="dataAquisicao" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Data de aquisição <span style={{ color: '#ef4444' }}>*</span>
+                {labelObrigatorio('Data de aquisição')}
               </label>
               <InputText
                 id="dataAquisicao"
@@ -211,6 +286,7 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
                 defaultValue={veiculoInicial?.dataAquisicao}
                 required
                 className="w-full"
+                aria-required="true"
               />
             </div>
           </div>
