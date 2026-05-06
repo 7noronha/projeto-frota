@@ -1,10 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Tag } from 'primereact/tag';
 import { Button } from 'primereact/button';
+import { EstadoVazio } from '@/components/EstadoVazio';
+import { EstadoVazioFiltro } from '@/components/EstadoVazioFiltro';
 import type { ViagemDetalhada } from '@fleetops/types';
 
 type SeveridadeTag = 'info' | 'warning' | 'success' | 'danger' | undefined;
@@ -17,9 +20,12 @@ const statusConfig: Record<string, { severity: SeveridadeTag; rotulo: string }> 
 
 interface TabelaViagensProps {
   viagens: ViagemDetalhada[];
+  temFiltrosAtivos?: boolean;
 }
 
-export function TabelaViagens({ viagens }: TabelaViagensProps) {
+export function TabelaViagens({ viagens, temFiltrosAtivos = false }: TabelaViagensProps) {
+  const router = useRouter();
+
   function corpoData(rowData: ViagemDetalhada) {
     return new Date(rowData.dataViagem + 'T00:00:00').toLocaleDateString('pt-BR');
   }
@@ -49,17 +55,25 @@ export function TabelaViagens({ viagens }: TabelaViagensProps) {
     );
   }
 
+  const emptyMessage = temFiltrosAtivos ? (
+    <EstadoVazioFiltro onLimpar={() => router.push('/viagens')} />
+  ) : (
+    <EstadoVazio
+      icone="pi pi-map"
+      titulo="Nenhuma viagem ainda"
+      descricao="As viagens criadas aparecerão aqui. Crie a primeira para começar."
+      cta={
+        <Link href="/viagens/nova" style={{ textDecoration: 'none' }}>
+          <Button label="Nova viagem" icon="pi pi-plus" size="small" />
+        </Link>
+      }
+    />
+  );
+
   return (
     <DataTable
       value={viagens}
-      emptyMessage={
-        <div className="text-center py-8">
-          <p style={{ color: '#64748b' }}>Nenhuma viagem encontrada.</p>
-          <Link href="/viagens/nova" style={{ color: '#0066FF', fontSize: '0.875rem' }}>
-            Criar primeira viagem
-          </Link>
-        </div>
-      }
+      emptyMessage={emptyMessage}
       stripedRows
       className="w-full"
       style={{ borderRadius: 12, overflow: 'hidden' }}

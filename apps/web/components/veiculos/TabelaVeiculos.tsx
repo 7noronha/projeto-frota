@@ -8,6 +8,7 @@ import { Tag } from 'primereact/tag';
 import { Button } from 'primereact/button';
 import { Message } from 'primereact/message';
 import { acaoExcluirVeiculo } from '@/app/(dashboard)/veiculos/actions';
+import { EstadoVazio } from '@/components/EstadoVazio';
 import type { VeiculoResposta } from '@fleetops/types';
 
 type SeveridadeTag = 'success' | 'warning' | 'danger' | 'info' | undefined;
@@ -90,12 +91,16 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
       <DataTable
         value={veiculos}
         emptyMessage={
-          <div className="text-center py-8">
-            <p style={{ color: '#64748b' }}>Nenhum veículo cadastrado.</p>
-            <Link href="/veiculos/novo" style={{ color: '#0066FF', fontSize: '0.875rem' }}>
-              Cadastrar primeiro veículo
-            </Link>
-          </div>
+          <EstadoVazio
+            icone="pi pi-car"
+            titulo="Nenhum veículo cadastrado"
+            descricao="Os veículos da frota aparecerão aqui. Cadastre o primeiro para começar."
+            cta={
+              <Link href="/veiculos/novo" style={{ textDecoration: 'none' }}>
+                <Button label="Cadastrar veículo" icon="pi pi-plus" size="small" />
+              </Link>
+            }
+          />
         }
         stripedRows
         className="w-full"
