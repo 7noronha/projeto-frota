@@ -1,17 +1,36 @@
 @import 'tailwindcss';
 
-/* ─── FleetOps — Sobrescreve primário do PrimeReact ─────────────────────── */
+/* ─── FleetOps — Tokens semânticos da marca ──────────────────────────────── */
 :root {
+  /* Primário PrimeReact */
   --primary-color: #0066ff;
   --primary-color-text: #ffffff;
   --highlight-bg: #e6f0ff;
   --highlight-text-color: #0066ff;
 
-  /* Paleta semântica */
+  /* Paleta semântica de estado */
   --success: #10b981;
   --warning: #f59e0b;
   --error: #ef4444;
   --info: #3b82f6;
+
+  /* Tokens da marca — use estes em vez de hex hardcoded */
+  --fo-navy: #0a2540;
+  --fo-primary: #0066ff;
+  --fo-primary-dark: #0047b3;
+  --fo-primary-light: #e6f0ff;
+  --fo-accent: #00c2ff;
+
+  /* Texto */
+  --fo-text: #1e293b;
+  --fo-text-secondary: #64748b;
+  --fo-text-muted: #94a3b8;
+
+  /* Superfícies */
+  --fo-bg: #f8fafc;
+  --fo-surface: #ffffff;
+  --fo-border: #e2e8f0;
+  --fo-border-subtle: #f1f5f9;
 }
 
 /* ─── Reset básico ────────────────────────────────────────────────────────── */

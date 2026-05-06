@@ -24,10 +24,10 @@ export default async function PaginaVeiculos({ searchParams }: PaginaVeiculosPro
       {/* Cabeçalho */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#0A2540' }}>
+          <h1 className="text-2xl font-bold text-[var(--fo-navy)]">
             Veículos
           </h1>
-          <p className="mt-1 text-sm" style={{ color: '#64748b' }}>
+          <p className="mt-1 text-sm text-[var(--fo-text-secondary)]">
             {total} {total === 1 ? 'veículo cadastrado' : 'veículos cadastrados'}
           </p>
         </div>

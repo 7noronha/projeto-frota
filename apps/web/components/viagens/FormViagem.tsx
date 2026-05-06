@@ -42,10 +42,10 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold" style={{ color: '#0A2540' }}>
+        <h1 className="text-2xl font-bold text-[var(--fo-navy)]">
           Nova viagem
         </h1>
-        <Link href="/viagens" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem' }}>
+        <Link href="/viagens" className="text-sm text-[var(--fo-text-secondary)]" style={{ textDecoration: 'none' }}>
           ← Voltar
         </Link>
       </div>

@@ -54,10 +54,10 @@ export default async function PaginaDetalheViagem(props: { params: Params }) {
       {/* Cabeçalho */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#0A2540' }}>
+          <h1 className="text-2xl font-bold text-[var(--fo-navy)]">
             Detalhe da viagem
           </h1>
-          <p className="mt-1 text-sm" style={{ color: '#64748b' }}>
+          <p className="mt-1 text-sm text-[var(--fo-text-secondary)]">
             ID: {viagem.id}
           </p>
         </div>
