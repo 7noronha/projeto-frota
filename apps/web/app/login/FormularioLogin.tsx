@@ -48,7 +48,6 @@ export function FormularioLogin() {
       <div className="flex flex-col gap-1.5">
         <label htmlFor="matricula" className="text-sm font-semibold" style={{ color: '#374151' }}>
           Matrícula
-          <span className="sr-only">(obrigatório)</span>
         </label>
         <div className="login-field flex items-center gap-3">
           <i className="pi pi-id-card flex-shrink-0" style={{ color: '#0066FF', fontSize: '1.1rem' }} />
@@ -80,7 +79,6 @@ export function FormularioLogin() {
       <div className="flex flex-col gap-1.5">
         <label htmlFor="senha" className="text-sm font-semibold" style={{ color: '#374151' }}>
           Senha
-          <span className="sr-only">(obrigatório)</span>
         </label>
         <div className="login-field flex items-center gap-3">
           <i className="pi pi-lock flex-shrink-0" style={{ color: '#0066FF', fontSize: '1.1rem' }} />

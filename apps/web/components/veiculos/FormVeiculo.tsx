@@ -81,7 +81,6 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
       <>
         {texto}{' '}
         <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
-        <span className="sr-only">(obrigatório)</span>
       </>
     );
   }

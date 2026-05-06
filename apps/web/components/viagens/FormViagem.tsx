@@ -85,7 +85,6 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
       <>
         {texto}{' '}
         <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
-        <span className="sr-only">(obrigatório)</span>
       </>
     );
   }
