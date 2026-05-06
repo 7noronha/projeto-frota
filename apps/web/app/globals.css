@@ -1,0 +1,91 @@
+@import 'tailwindcss';
+
+/* ─── FleetOps — Sobrescreve primário do PrimeReact ─────────────────────── */
+:root {
+  --primary-color: #0066ff;
+  --primary-color-text: #ffffff;
+  --highlight-bg: #e6f0ff;
+  --highlight-text-color: #0066ff;
+
+  /* Paleta semântica */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+}
+
+/* ─── Reset básico ────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* ─── Login — campos estilo underline ────────────────────────────────────── */
+.login-field .p-inputtext,
+.login-field input {
+  border: none !important;
+  border-bottom: 1.5px solid #cbd5e1 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-shadow: none !important;
+  transition: border-color 0.2s;
+}
+
+.login-field .p-inputtext:focus,
+.login-field input:focus {
+  border-bottom-color: #0066ff !important;
+  box-shadow: none !important;
+}
+
+.login-field .p-password {
+  width: 100%;
+}
+
+.login-field .p-password-input {
+  width: 100% !important;
+}
+
+/* Botão pill */
+.btn-pill {
+  border-radius: 9999px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+}
+
+/* ─── PrimeReact ajustes visuais ──────────────────────────────────────────── */
+.p-inputtext,
+.p-dropdown,
+.p-calendar .p-inputtext,
+.p-inputnumber-input {
+  width: 100%;
+}
+
+.p-button.p-button-primary {
+  background: #0066ff;
+  border-color: #0066ff;
+}
+
+.p-button.p-button-primary:hover {
+  background: #0047b3;
+  border-color: #0047b3;
+}
+
+.p-datatable .p-datatable-thead > tr > th {
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.p-datatable .p-datatable-tbody > tr:hover {
+  background: #f8fafc;
+}

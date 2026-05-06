@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  ci:
+    name: Lint · Typecheck · Testes
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: fleetops
+          POSTGRES_PASSWORD: fleetops
+          POSTGRES_DB: fleetops_test
+          TZ: America/Sao_Paulo
+          PGTZ: America/Sao_Paulo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      TZ: America/Sao_Paulo
+      DATABASE_URL: postgresql://fleetops:fleetops@localhost:5432/fleetops_test
+      JWT_SECRET: ci-jwt-secret-apenas-para-testes
+      JWT_EXPIRATION: 7d
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Configurar Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Instalar dependências
+        run: bun install --frozen-lockfile
+
+      - name: Verificar tipos (typecheck)
+        run: bun run typecheck
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Gerar cliente Prisma
+        working-directory: apps/api
+        run: bunx prisma generate
+
+      - name: Executar migrations no banco de teste
+        working-directory: apps/api
+        run: bunx prisma migrate deploy
+
+      - name: Testes unitários (todos os pacotes)
+        run: bun run test
+
+      - name: Testes E2E da API
+        working-directory: apps/api
+        run: bun run test:e2e

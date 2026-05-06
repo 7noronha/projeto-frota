@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun --version)",
+      "Bash(docker --version)",
+      "PowerShell(bun --version)",
+      "PowerShell(node --version)",
+      "PowerShell(docker --version)",
+      "PowerShell(Set-Location C:\\\\www\\\\frota; & \"$env:USERPROFILE\\\\.bun\\\\bin\\\\bun.exe\" install)"
+    ]
+  }
+}

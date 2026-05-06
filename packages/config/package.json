@@ -1,0 +1,12 @@
+{
+  "name": "@fleetops/config",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/nestjs.json": "./tsconfig/nestjs.json",
+    "./tsconfig/nextjs.json": "./tsconfig/nextjs.json",
+    "./tsconfig/react-native.json": "./tsconfig/react-native.json",
+    "./eslint-config": "./eslint-config/index.js"
+  }
+}

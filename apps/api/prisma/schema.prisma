@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Usuários ─────────────────────────────────────────────────────────────────
+
+model Usuario {
+  id              String    @id @default(uuid())
+  matricula       String    @unique @db.VarChar(10)
+  nome            String    @db.VarChar(200)
+  senhaHash       String    @map("senha_hash") @db.VarChar(255)
+  perfil          String    @db.VarChar(20)
+  email           String?   @db.VarChar(200)
+  telefone        String?   @db.VarChar(20)
+  cnh             String?   @db.VarChar(20)
+  cnhValidade     DateTime? @map("cnh_validade") @db.Date
+  ativo           Boolean   @default(true)
+
+  dataCriacao     DateTime  @default(now()) @map("data_criacao") @db.Timestamp(6)
+  dataAtualizacao DateTime  @updatedAt @map("data_atualizacao") @db.Timestamp(6)
+  dataExclusao    DateTime? @map("data_exclusao") @db.Timestamp(6)
+
+  viagensComoMotorista Viagem[] @relation("MotoristaViagens")
+  viagensCriadas       Viagem[] @relation("OperadorCriadorViagens")
+
+  @@index([perfil], map: "idx_usuarios_perfil")
+  @@map("usuarios")
+}
+
+// ─── Veículos ─────────────────────────────────────────────────────────────────
+
+model Veiculo {
+  id              String    @id @default(uuid())
+  placa           String    @unique @db.VarChar(10)
+  marca           String    @db.VarChar(80)
+  modelo          String    @db.VarChar(100)
+  anoFabricacao   Int       @map("ano_fabricacao")
+  anoModelo       Int       @map("ano_modelo")
+  cor             String    @db.VarChar(50)
+  renavam         String    @unique @db.VarChar(11)
+  odometroAtual   Int       @map("odometro_atual")
+  dataAquisicao   DateTime  @map("data_aquisicao") @db.Date
+  situacao        String    @db.VarChar(20)
+  observacoes     String?   @db.Text
+
+  dataCriacao     DateTime  @default(now()) @map("data_criacao") @db.Timestamp(6)
+  dataAtualizacao DateTime  @updatedAt @map("data_atualizacao") @db.Timestamp(6)
+  dataExclusao    DateTime? @map("data_exclusao") @db.Timestamp(6)
+
+  viagens         Viagem[]
+
+  @@index([placa], map: "idx_veiculos_placa")
+  @@map("veiculos")
+}
+
+// ─── Viagens ──────────────────────────────────────────────────────────────────
+
+model Viagem {
+  id                  String    @id @default(uuid())
+  origem              String    @db.VarChar(500)
+  destino             String    @db.VarChar(500)
+  dataViagem          DateTime  @map("data_viagem") @db.Date
+  horaInicioPrevista  DateTime  @map("hora_inicio_prevista") @db.Time(0)
+  horaFimPrevista     DateTime  @map("hora_fim_prevista") @db.Time(0)
+  dataHoraInicioReal  DateTime? @map("data_hora_inicio_real") @db.Timestamp(6)
+  dataHoraFimReal     DateTime? @map("data_hora_fim_real") @db.Timestamp(6)
+  odometroInicial     Int?      @map("odometro_inicial")
+  odometroFinal       Int?      @map("odometro_final")
+  distanciaPercorrida Int?      @map("distancia_percorrida")
+  motoristaId         String    @map("motorista_id")
+  veiculoId           String    @map("veiculo_id")
+  operadorCriadorId   String    @map("operador_criador_id")
+  solicitadoPor       String    @map("solicitado_por") @db.VarChar(200)
+  autorizadoPor       String    @map("autorizado_por") @db.VarChar(200)
+  observacoes         String?   @db.Text
+  status              String    @db.VarChar(20)
+
+  dataCriacao     DateTime  @default(now()) @map("data_criacao") @db.Timestamp(6)
+  dataAtualizacao DateTime  @updatedAt @map("data_atualizacao") @db.Timestamp(6)
+  dataExclusao    DateTime? @map("data_exclusao") @db.Timestamp(6)
+
+  motorista       Usuario   @relation("MotoristaViagens", fields: [motoristaId], references: [id])
+  operadorCriador Usuario   @relation("OperadorCriadorViagens", fields: [operadorCriadorId], references: [id])
+  veiculo         Veiculo   @relation(fields: [veiculoId], references: [id])
+
+  @@index([motoristaId, status], map: "idx_viagens_motorista_status")
+  @@index([veiculoId, status], map: "idx_viagens_veiculo_status")
+  @@index([dataViagem], map: "idx_viagens_data")
+  @@map("viagens")
+}
+
+// ─── Configurações do Sistema ─────────────────────────────────────────────────
+
+model Configuracao {
+  id              String   @id @default(uuid())
+  chave           String   @unique @db.VarChar(100)
+  valor           String   @db.Text
+  dataAtualizacao DateTime @updatedAt @map("data_atualizacao") @db.Timestamp(6)
+
+  @@map("configuracoes")
+}
