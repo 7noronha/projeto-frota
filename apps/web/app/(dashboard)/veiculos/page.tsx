@@ -41,23 +41,32 @@ export default async function PaginaVeiculos({ searchParams }: PaginaVeiculosPro
 
       {/* Paginação */}
       {totalPaginas > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-2">
-          {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((p) => (
-            <Link
-              key={p}
-              href={`/veiculos?pagina=${p}`}
-              className="flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium"
-              style={{
-                background: p === pagina ? '#0066FF' : 'white',
-                color: p === pagina ? 'white' : '#374151',
-                border: p === pagina ? 'none' : '1px solid #e2e8f0',
-                textDecoration: 'none',
-              }}
-            >
-              {p}
-            </Link>
-          ))}
-        </div>
+        <nav aria-label="Paginação" className="mt-6 flex items-center justify-center gap-2">
+          {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((p) => {
+            const sp = new URLSearchParams();
+            if (params.placa) sp.set('placa', params.placa);
+            if (params.modelo) sp.set('modelo', params.modelo);
+            if (params.situacao) sp.set('situacao', params.situacao);
+            sp.set('pagina', String(p));
+            return (
+              <Link
+                key={p}
+                href={`/veiculos?${sp.toString()}`}
+                aria-label={`Página ${p}${p === pagina ? ' (atual)' : ''}`}
+                aria-current={p === pagina ? 'page' : undefined}
+                className="flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium"
+                style={{
+                  background: p === pagina ? '#0066FF' : 'white',
+                  color: p === pagina ? 'white' : '#374151',
+                  border: p === pagina ? 'none' : '1px solid #e2e8f0',
+                  textDecoration: 'none',
+                }}
+              >
+                {p}
+              </Link>
+            );
+          })}
+        </nav>
       )}
     </div>
   );
