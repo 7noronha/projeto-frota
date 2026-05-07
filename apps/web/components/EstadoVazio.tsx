@@ -1,7 +1,8 @@
-import React from 'react';
+import { Icon } from '@minha-empresa/components-react';
+import type { IconType } from '@minha-empresa/components-react';
 
 interface EstadoVazioProps {
-  icone: string;
+  icone: IconType;
   titulo: string;
   descricao: string;
   cta?: React.ReactNode;
@@ -20,7 +21,7 @@ export function EstadoVazio({ icone, titulo, descricao, cta }: EstadoVazioProps)
         className="flex items-center justify-center rounded-full"
         style={{ width: 52, height: 52, background: '#f1f5f9' }}
       >
-        <i className={icone} style={{ fontSize: '1.4rem', color: '#94a3b8' }} />
+        <Icon name={icone} size="lg" color="contentTernary" />
       </div>
       <h3 className="mt-4 text-sm font-semibold" style={{ color: '#1e293b' }}>
         {titulo}

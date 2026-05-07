@@ -1,3 +1,4 @@
+import { Icon } from '@minha-empresa/components-react';
 import { FormularioLogin } from './FormularioLogin';
 import { IlustracaoAuth } from './IlustracaoAuth';
 
@@ -15,7 +16,7 @@ export default function PaginaLogin() {
             className="flex items-center justify-center rounded-lg"
             style={{ width: 34, height: 34, background: '#0066FF' }}
           >
-            <i className="pi pi-truck text-white" style={{ fontSize: '0.95rem' }} />
+            <Icon name="PiTruckBold" size="sm" color="light" />
           </div>
           <span className="text-lg font-bold tracking-tight" style={{ color: '#0A2540' }}>
             FleetOps
@@ -64,7 +65,7 @@ export default function PaginaLogin() {
               className="flex items-center justify-center rounded-lg"
               style={{ width: 32, height: 32, background: '#0066FF' }}
             >
-              <i className="pi pi-truck text-white" style={{ fontSize: '0.85rem' }} />
+              <Icon name="PiTruckBold" size="sm" color="light" />
             </div>
             <span className="text-base font-bold" style={{ color: '#0A2540' }}>FleetOps</span>
           </div>
@@ -92,7 +93,7 @@ export default function PaginaLogin() {
             className="flex items-start gap-3 rounded-xl p-4"
             style={{ background: '#f0f5ff', border: '1px solid #dbeafe' }}
           >
-            <i className="pi pi-info-circle mt-0.5" style={{ color: '#0066FF', fontSize: '1rem', flexShrink: 0 }} />
+            <Icon name="PiInfoBold" size="md" color="primary" />
             <p className="text-xs leading-relaxed" style={{ color: '#475569' }}>
               Acesso restrito a colaboradores autorizados. Em caso de dúvidas sobre sua matrícula ou senha, contate o administrador do sistema.
             </p>

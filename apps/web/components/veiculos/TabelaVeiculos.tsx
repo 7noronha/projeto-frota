@@ -105,7 +105,7 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
         value={veiculos}
         emptyMessage={
           <EstadoVazio
-            icone="pi pi-car"
+            icone="PiCarBold"
             titulo="Nenhum veículo cadastrado"
             descricao="Os veículos da frota aparecerão aqui. Cadastre o primeiro para começar."
             cta={

@@ -59,7 +59,7 @@ export function TabelaViagens({ viagens, temFiltrosAtivos = false }: TabelaViage
     <EstadoVazioFiltro onLimpar={() => router.push('/viagens')} />
   ) : (
     <EstadoVazio
-      icone="pi pi-map"
+      icone="PiMapBold"
       titulo="Nenhuma viagem ainda"
       descricao="As viagens criadas aparecerão aqui. Crie a primeira para começar."
       cta={
