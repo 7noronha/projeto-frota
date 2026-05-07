@@ -1,4 +1,4 @@
-import { Icon, Button } from '@minha-empresa/components-react';
+import { Icon, Button, VStack, Heading, Text } from '@minha-empresa/components-react';
 
 interface EstadoVazioFiltroProps {
   onLimpar: () => void;
@@ -6,14 +6,14 @@ interface EstadoVazioFiltroProps {
 
 export function EstadoVazioFiltro({ onLimpar }: EstadoVazioFiltroProps) {
   return (
-    <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+    <VStack align="center" justify="center" className="px-6 py-16 text-center">
       <Icon name="PiMagnifyingGlassBold" size="xl" color="contentTernary" />
-      <h3 className="mt-3 text-sm font-semibold" style={{ color: '#1e293b' }}>
+      <Heading as="h3" size="sm" weight="semibold" className="mt-3" style={{ color: '#1e293b' }}>
         Nenhum resultado
-      </h3>
-      <p className="mt-1 max-w-sm text-sm" style={{ color: '#64748b' }}>
+      </Heading>
+      <Text size="sm" className="mt-1 max-w-sm" style={{ color: '#64748b' }}>
         Os filtros aplicados não retornaram resultados. Tente ajustar ou limpar os filtros.
-      </p>
+      </Text>
       <Button
         variant="outline"
         color="default"
@@ -24,6 +24,6 @@ export function EstadoVazioFiltro({ onLimpar }: EstadoVazioFiltroProps) {
       >
         Limpar filtros
       </Button>
-    </div>
+    </VStack>
   );
 }

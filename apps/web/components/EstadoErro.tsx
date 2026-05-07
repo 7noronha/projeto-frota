@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Icon } from '@minha-empresa/components-react';
+import { Button, Icon, VStack, HStack, Heading, Text } from '@minha-empresa/components-react';
 
 interface EstadoErroProps {
   titulo?: string;
@@ -14,19 +14,21 @@ export function EstadoErro({
   onTentarNovamente,
 }: EstadoErroProps) {
   return (
-    <div
+    <VStack
       role="alert"
-      className="flex flex-col items-center justify-center rounded-xl px-6 py-14 text-center"
+      align="center"
+      justify="center"
+      className="rounded-xl px-6 py-14 text-center"
       style={{ border: '1px solid #fca5a5', background: '#fef2f2' }}
     >
       <Icon name="PiWarningCircleBold" size="xl" color="error" />
-      <h3 className="mt-3 text-base font-semibold" style={{ color: '#1e293b' }}>
+      <Heading as="h3" size="md" weight="semibold" className="mt-3" style={{ color: '#1e293b' }}>
         {titulo}
-      </h3>
-      <p className="mt-1 max-w-sm text-sm" style={{ color: '#64748b' }}>
+      </Heading>
+      <Text size="sm" className="mt-1 max-w-sm" style={{ color: '#64748b' }}>
         {descricao}
-      </p>
-      <div className="mt-6 flex items-center gap-3">
+      </Text>
+      <HStack align="center" gap="3" className="mt-6">
         <Button
           variant="outline"
           color="error"
@@ -44,7 +46,7 @@ export function EstadoErro({
         >
           Falar com suporte
         </Button>
-      </div>
-    </div>
+      </HStack>
+    </VStack>
   );
 }

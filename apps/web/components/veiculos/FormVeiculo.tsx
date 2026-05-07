@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import Link from 'next/link';
-import { TextField, TextArea, SelectNative, NumberField, Button, Alert, Card } from '@minha-empresa/components-react';
+import { TextField, TextArea, SelectNative, NumberField, Button, Alert, Card, HStack, VStack, Heading } from '@minha-empresa/components-react';
 import type { VeiculoResposta } from '@fleetops/types';
 
 const ANO_MINIMO = 1950;
@@ -63,14 +63,14 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
 
   return (
     <div className="mx-auto max-w-2xl">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[var(--fo-navy)]">
+      <HStack align="center" justify="between" className="mb-6">
+        <Heading as="h1" size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
           {titulo}
-        </h1>
+        </Heading>
         <Link href="/veiculos" className="text-sm text-[var(--fo-text-secondary)]" style={{ textDecoration: 'none' }}>
           ← Voltar
         </Link>
-      </div>
+      </HStack>
 
       <Card>
         <Card.Body>
@@ -91,7 +91,7 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
                 className="uppercase"
                 onBlur={(e) => !ehEdicao && erroBlur('placa', e.target.value, 'a placa')}
               />
-              <div className="flex flex-col gap-1">
+              <VStack gap="1">
                 <input type="hidden" name="situacao" value={situacao} />
                 <SelectNative
                   id="situacao"
@@ -106,7 +106,7 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
                     </SelectNative.Option>
                   ))}
                 </SelectNative>
-              </div>
+              </VStack>
             </div>
 
             {/* Marca + Modelo */}
@@ -233,7 +233,7 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
               <Alert color="error">{estado.erro}</Alert>
             )}
 
-            <div className="flex justify-end gap-3 pt-4" style={{ borderTop: '1px solid #f1f5f9' }}>
+            <HStack justify="end" gap="3" className="pt-4" style={{ borderTop: '1px solid #f1f5f9' }}>
               <Link href="/veiculos" style={{ textDecoration: 'none' }}>
                 <Button variant="outline" color="default" type="button">Cancelar</Button>
               </Link>
@@ -245,7 +245,7 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
               >
                 {pendente ? 'Salvando...' : ehEdicao ? 'Salvar alterações' : 'Cadastrar veículo'}
               </Button>
-            </div>
+            </HStack>
           </form>
         </Card.Body>
       </Card>

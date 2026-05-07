@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Badge, Button, Card } from '@minha-empresa/components-react';
+import { Badge, Button, Card, HStack, VStack, Heading, Text } from '@minha-empresa/components-react';
 import { ErroApi } from '@/lib/api-servidor';
 import { buscarViagemPorId, acaoIniciarViagem, acaoFinalizarViagem } from '../actions';
 import { FormIniciarViagem } from '@/components/viagens/FormIniciarViagem';
@@ -48,26 +48,26 @@ export default async function PaginaDetalheViagem(props: { params: Params }) {
   const dataViagem = new Date(viagem.dataViagem + 'T00:00:00').toLocaleDateString('pt-BR');
 
   return (
-    <div className="mx-auto max-w-3xl flex flex-col gap-6">
+    <VStack gap="6" className="mx-auto max-w-3xl">
       {/* Cabeçalho */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--fo-navy)]">
+      <HStack align="center" justify="between">
+        <VStack gap="0">
+          <Heading as="h1" size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
             Detalhe da viagem
-          </h1>
-          <p className="mt-1 text-sm text-[var(--fo-text-secondary)]">
+          </Heading>
+          <Text size="sm" className="mt-1" style={{ color: 'var(--fo-text-secondary)' }}>
             ID: {viagem.id}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
+          </Text>
+        </VStack>
+        <HStack align="center" gap="3">
           <Badge color={rotulo.color} variant="light" size="lg">{rotulo.texto}</Badge>
           <Link href="/viagens" style={{ textDecoration: 'none' }}>
             <Button variant="outline" color="default" size="sm" leftIcon="PiArrowLeftBold">
               Voltar
             </Button>
           </Link>
-        </div>
-      </div>
+        </HStack>
+      </HStack>
 
       {/* Informações gerais */}
       <Card>
@@ -174,6 +174,6 @@ export default async function PaginaDetalheViagem(props: { params: Params }) {
           </Card.Body>
         </Card>
       )}
-    </div>
+    </VStack>
   );
 }

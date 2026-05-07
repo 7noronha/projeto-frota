@@ -1,35 +1,38 @@
 import { Icon } from '@minha-empresa/components-react';
+import { VStack, HStack, Text, Heading, Divider } from '@minha-empresa/components-react';
 import { FormularioLogin } from './FormularioLogin';
 import { IlustracaoAuth } from './IlustracaoAuth';
 
 export default function PaginaLogin() {
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#f0f5ff' }}>
+    <VStack gap="0" className="min-h-screen" style={{ background: '#f0f5ff' }}>
 
       {/* ── Navbar ──────────────────────────────────────────────────────────── */}
       <nav
-        className="flex items-center justify-between px-8 py-4"
+        className="px-8 py-4"
         style={{ background: 'white', borderBottom: '1px solid #e8edf5' }}
       >
-        <div className="flex items-center gap-2.5">
-          <div
-            className="flex items-center justify-center rounded-lg"
-            style={{ width: 34, height: 34, background: '#0066FF' }}
-          >
-            <Icon name="PiTruckBold" size="sm" color="light" />
-          </div>
-          <span className="text-lg font-bold tracking-tight" style={{ color: '#0A2540' }}>
-            FleetOps
-          </span>
-        </div>
+        <HStack align="center" justify="between">
+          <HStack gap="0" align="center" className="gap-[10px]">
+            <div
+              className="flex items-center justify-center rounded-lg"
+              style={{ width: 34, height: 34, background: '#0066FF' }}
+            >
+              <Icon name="PiTruckBold" size="sm" color="light" />
+            </div>
+            <Text as="span" size="lg" className="font-bold tracking-tight" style={{ color: '#0A2540' }}>
+              FleetOps
+            </Text>
+          </HStack>
 
-        <a
-          href="#"
-          className="text-sm font-semibold"
-          style={{ color: '#0066FF', textDecoration: 'none' }}
-        >
-          Precisa de ajuda?
-        </a>
+          <a
+            href="#"
+            className="text-sm font-semibold"
+            style={{ color: '#0066FF', textDecoration: 'none' }}
+          >
+            Precisa de ajuda?
+          </a>
+        </HStack>
       </nav>
 
       {/* ── Corpo principal ─────────────────────────────────────────────────── */}
@@ -40,11 +43,11 @@ export default function PaginaLogin() {
           <IlustracaoAuth />
 
           <div className="text-center">
-            <p className="text-sm font-medium" style={{ color: '#64748b' }}>
+            <Text size="sm" className="font-medium" style={{ color: '#64748b' }}>
               Mais de{' '}
               <span className="font-bold" style={{ color: '#0066FF' }}>500 veículos</span>
               {' '}monitorados em tempo real
-            </p>
+            </Text>
           </div>
         </div>
 
@@ -60,53 +63,50 @@ export default function PaginaLogin() {
           }}
         >
           {/* Logo mobile */}
-          <div className="lg:hidden flex items-center gap-2.5 mb-6">
+          <HStack gap="0" align="center" className="lg:hidden mb-6 gap-[10px]">
             <div
               className="flex items-center justify-center rounded-lg"
               style={{ width: 32, height: 32, background: '#0066FF' }}
             >
               <Icon name="PiTruckBold" size="sm" color="light" />
             </div>
-            <span className="text-base font-bold" style={{ color: '#0A2540' }}>FleetOps</span>
-          </div>
+            <Text as="span" size="md" className="font-bold" style={{ color: '#0A2540' }}>FleetOps</Text>
+          </HStack>
 
           {/* Cabeçalho */}
-          <h1 className="text-2xl font-bold mb-1" style={{ color: '#0A2540' }}>
+          <Heading as="h1" size="xl" weight="bold" className="mb-1" style={{ color: '#0A2540' }}>
             Bem-vindo de volta
-          </h1>
-          <p className="text-sm mb-8" style={{ color: '#94a3b8' }}>
+          </Heading>
+          <Text size="sm" className="mb-8" style={{ color: '#94a3b8' }}>
             Entre com sua matrícula e senha para continuar.
-          </p>
+          </Text>
 
           {/* Formulário */}
           <FormularioLogin />
 
           {/* Divisor */}
-          <div className="flex items-center gap-4 my-6">
+          <HStack align="center" gap="4" className="my-6">
             <div className="flex-1" style={{ height: 1, background: '#e8edf5' }} />
-            <span className="text-xs font-medium" style={{ color: '#94a3b8' }}>acesso corporativo</span>
+            <Text as="span" size="xs" className="font-medium" style={{ color: '#94a3b8' }}>acesso corporativo</Text>
             <div className="flex-1" style={{ height: 1, background: '#e8edf5' }} />
-          </div>
+          </HStack>
 
           {/* Info de acesso */}
-          <div
-            className="flex items-start gap-3 rounded-xl p-4"
-            style={{ background: '#f0f5ff', border: '1px solid #dbeafe' }}
-          >
+          <HStack align="start" gap="3" className="rounded-xl p-4" style={{ background: '#f0f5ff', border: '1px solid #dbeafe' }}>
             <Icon name="PiInfoBold" size="md" color="primary" />
-            <p className="text-xs leading-relaxed" style={{ color: '#475569' }}>
+            <Text size="xs" className="leading-relaxed" style={{ color: '#475569' }}>
               Acesso restrito a colaboradores autorizados. Em caso de dúvidas sobre sua matrícula ou senha, contate o administrador do sistema.
-            </p>
-          </div>
+            </Text>
+          </HStack>
         </div>
       </main>
 
       {/* ── Rodapé ──────────────────────────────────────────────────────────── */}
       <footer className="text-center py-4">
-        <p className="text-xs" style={{ color: '#94a3b8' }}>
+        <Text size="xs" style={{ color: '#94a3b8' }}>
           © {new Date().getFullYear()} FleetOps — Todos os direitos reservados
-        </p>
+        </Text>
       </footer>
-    </div>
+    </VStack>
   );
 }

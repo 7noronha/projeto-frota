@@ -1,10 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { VStack, Heading, Text } from '@minha-empresa/components-react';
 
 export default function NaoEncontrado() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-[#f0f4ff] px-6">
-      <div className="flex flex-col items-center gap-6 text-center">
+      <VStack gap="6" align="center" className="text-center">
         <Image
           src="/404-ilustracao.svg"
           alt="Ilustração de página não encontrada"
@@ -13,14 +14,14 @@ export default function NaoEncontrado() {
           priority
         />
 
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold" style={{ color: '#0a2540' }}>
+        <VStack gap="2">
+          <Heading as="h1" size="2xl" weight="bold" style={{ color: '#0a2540' }}>
             Página não encontrada
-          </h1>
-          <p className="text-base" style={{ color: '#64748b' }}>
+          </Heading>
+          <Text size="md" style={{ color: '#64748b' }}>
             O endereço que você acessou não existe ou foi movido.
-          </p>
-        </div>
+          </Text>
+        </VStack>
 
         <Link
           href="/"
@@ -29,7 +30,7 @@ export default function NaoEncontrado() {
         >
           Voltar para o início
         </Link>
-      </div>
+      </VStack>
     </main>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import { acaoLogin } from './actions';
-import { TextField, Button, Alert, Icon } from '@minha-empresa/components-react';
+import { TextField, Button, Alert, Icon, VStack, Text } from '@minha-empresa/components-react';
 
 interface ErrosCampos {
   matricula?: string;
@@ -106,7 +106,7 @@ export function FormularioLogin() {
       </Button>
 
       {/* Esqueceu a senha */}
-      <p className="text-center text-sm" style={{ color: '#94a3b8', marginTop: -8 }}>
+      <Text size="sm" className="text-center" style={{ color: '#94a3b8', marginTop: -8 }}>
         Esqueceu o acesso?{' '}
         <a
           href="#"
@@ -116,7 +116,7 @@ export function FormularioLogin() {
         >
           Contate o TI
         </a>
-      </p>
+      </Text>
     </form>
   );
 }

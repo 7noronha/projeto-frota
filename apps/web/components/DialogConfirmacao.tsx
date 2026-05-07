@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Modal, TextField, Button } from '@minha-empresa/components-react';
+import { Modal, TextField, Button, HStack, Text } from '@minha-empresa/components-react';
 
 interface DialogConfirmacaoProps {
   visivel: boolean;
@@ -46,7 +46,7 @@ export function DialogConfirmacao({
       size="sm"
       hideCloseButton={carregando}
       footer={
-        <div className="flex justify-end gap-3">
+        <HStack justify="end" gap="3">
           <Button
             variant="outline"
             color="default"
@@ -65,12 +65,12 @@ export function DialogConfirmacao({
           >
             {carregando ? 'Excluindo...' : labelConfirmar}
           </Button>
-        </div>
+        </HStack>
       }
     >
-      <p className="text-sm mb-5" style={{ color: '#475569' }}>
+      <Text size="sm" className="mb-5" style={{ color: '#475569' }}>
         {descricao}
-      </p>
+      </Text>
 
       <TextField
         id="confirmacao-texto"

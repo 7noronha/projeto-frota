@@ -5,7 +5,7 @@ import Link from 'next/link';
 // TODO: sem equivalente — DataTable e Column não têm par em @minha-empresa/components-react
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { Badge, Button, Alert } from '@minha-empresa/components-react';
+import { Badge, Button, Alert, HStack } from '@minha-empresa/components-react';
 import { acaoExcluirVeiculo } from '@/app/(dashboard)/veiculos/actions';
 import { EstadoVazio } from '@/components/EstadoVazio';
 import { DialogConfirmacao } from '@/components/DialogConfirmacao';
@@ -75,7 +75,7 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
 
   function corpoAcoes(rowData: VeiculoResposta) {
     return (
-      <div className="flex items-center gap-2">
+      <HStack align="center" gap="2">
         <Link href={`/veiculos/${rowData.id}/editar`} style={{ textDecoration: 'none' }}>
           <Button variant="ghost" color="primary" size="sm" leftIcon="PiPencilBold">
             Editar
@@ -91,7 +91,7 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
         >
           Excluir
         </Button>
-      </div>
+      </HStack>
     );
   }
 

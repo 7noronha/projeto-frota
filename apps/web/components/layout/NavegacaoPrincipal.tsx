@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Button, Icon } from '@minha-empresa/components-react';
+import { Button, Icon, HStack, VStack, Text } from '@minha-empresa/components-react';
 
 const itensMenu = [
   { href: '/veiculos', rotulo: 'Veículos', icone: 'PiCarBold' as const },
@@ -30,8 +30,10 @@ export function NavegacaoPrincipal() {
       }}
     >
       {/* Logo */}
-      <div
-        className="flex h-16 items-center gap-3 px-5"
+      <HStack
+        align="center"
+        gap="3"
+        className="h-16 px-5"
         style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}
       >
         <div
@@ -40,26 +42,28 @@ export function NavegacaoPrincipal() {
         >
           <Icon name="PiTruckBold" size="sm" color="light" />
         </div>
-        <span className="text-xl font-bold text-white">FleetOps</span>
-      </div>
+        <Text as="span" size="xl" className="font-bold text-white">FleetOps</Text>
+      </HStack>
 
       {/* Menu */}
-      <nav aria-label="Menu" className="flex-1 px-3 py-4 flex flex-col gap-2">
-        {itensMenu.map((item) => {
-          const ativo = pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={ativo ? 'page' : undefined}
-              className="nav-sidebar-item"
-              data-active={ativo ? 'true' : undefined}
-            >
-              <Icon name={item.icone} size="md" />
-              <span className="text-sm font-medium">{item.rotulo}</span>
-            </Link>
-          );
-        })}
+      <nav aria-label="Menu" className="flex-1 px-3 py-4">
+        <VStack gap="2">
+          {itensMenu.map((item) => {
+            const ativo = pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={ativo ? 'page' : undefined}
+                className="nav-sidebar-item"
+                data-active={ativo ? 'true' : undefined}
+              >
+                <Icon name={item.icone} size="md" />
+                <Text as="span" size="sm" className="font-medium">{item.rotulo}</Text>
+              </Link>
+            );
+          })}
+        </VStack>
       </nav>
 
       {/* Sair */}

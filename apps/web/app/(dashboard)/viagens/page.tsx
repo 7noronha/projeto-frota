@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { TabelaViagens } from '@/components/viagens/TabelaViagens';
 import { buscarViagens } from './actions';
-import { Button, SelectNative, TextField } from '@minha-empresa/components-react';
+import { Button, SelectNative, TextField, HStack, VStack, Heading, Text } from '@minha-empresa/components-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,19 +31,19 @@ export default async function PaginaViagens({ searchParams }: PaginaViagensProps
   return (
     <div>
       {/* Cabeçalho */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--fo-navy)]">
+      <HStack align="center" justify="between" className="mb-6">
+        <VStack gap="0">
+          <Heading as="h1" size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
             Viagens
-          </h1>
-          <p className="mt-1 text-sm text-[var(--fo-text-secondary)]">
+          </Heading>
+          <Text size="sm" className="mt-1" style={{ color: 'var(--fo-text-secondary)' }}>
             {total} {total === 1 ? 'viagem encontrada' : 'viagens encontradas'}
-          </p>
-        </div>
+          </Text>
+        </VStack>
         <Link href="/viagens/nova" style={{ textDecoration: 'none' }}>
           <Button color="primary" leftIcon="PiPlusBold">Nova viagem</Button>
         </Link>
-      </div>
+      </HStack>
 
       {/* Filtros */}
       <form method="GET" className="mb-6 flex flex-wrap gap-3 items-end">

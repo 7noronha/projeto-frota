@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { TabelaVeiculos } from '@/components/veiculos/TabelaVeiculos';
 import { buscarVeiculos } from './actions';
-import { Button } from '@minha-empresa/components-react';
+import { Button, HStack, VStack, Heading, Text } from '@minha-empresa/components-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,19 +22,19 @@ export default async function PaginaVeiculos({ searchParams }: PaginaVeiculosPro
   return (
     <div>
       {/* Cabeçalho */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--fo-navy)]">
+      <HStack align="center" justify="between" className="mb-6">
+        <VStack gap="0">
+          <Heading as="h1" size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
             Veículos
-          </h1>
-          <p className="mt-1 text-sm text-[var(--fo-text-secondary)]">
+          </Heading>
+          <Text size="sm" className="mt-1" style={{ color: 'var(--fo-text-secondary)' }}>
             {total} {total === 1 ? 'veículo cadastrado' : 'veículos cadastrados'}
-          </p>
-        </div>
+          </Text>
+        </VStack>
         <Link href="/veiculos/novo" style={{ textDecoration: 'none' }}>
           <Button color="primary" leftIcon="PiPlusBold">Novo veículo</Button>
         </Link>
-      </div>
+      </HStack>
 
       {/* Tabela */}
       <TabelaVeiculos veiculos={dados} />

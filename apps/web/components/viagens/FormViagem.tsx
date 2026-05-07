@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import Link from 'next/link';
-import { TextField, TextArea, SelectNative, Button, Alert, Card } from '@minha-empresa/components-react';
+import { TextField, TextArea, SelectNative, Button, Alert, Card, HStack, VStack, Heading, Text } from '@minha-empresa/components-react';
 import type { UsuarioResposta, VeiculoResposta } from '@fleetops/types';
 
 type AcaoFormulario = (
@@ -56,14 +56,14 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[var(--fo-navy)]">
+      <HStack align="center" justify="between" className="mb-6">
+        <Heading as="h1" size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
           Nova viagem
-        </h1>
+        </Heading>
         <Link href="/viagens" className="text-sm text-[var(--fo-text-secondary)]" style={{ textDecoration: 'none' }}>
           ← Voltar
         </Link>
-      </div>
+      </HStack>
 
       <Card>
         <Card.Body>
@@ -115,7 +115,7 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
 
             {/* Motorista + Veículo */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1">
+              <VStack gap="1">
                 <SelectNative
                   id="motoristaId"
                   name="motoristaId"
@@ -134,13 +134,13 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
                   ))}
                 </SelectNative>
                 {motoristas.length === 0 && (
-                  <p className="text-xs" style={{ color: '#d97706' }}>
+                  <Text size="xs" style={{ color: '#d97706' }}>
                     Nenhum motorista ativo cadastrado.
-                  </p>
+                  </Text>
                 )}
-              </div>
+              </VStack>
 
-              <div className="flex flex-col gap-1">
+              <VStack gap="1">
                 <SelectNative
                   id="veiculoId"
                   name="veiculoId"
@@ -159,11 +159,11 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
                   ))}
                 </SelectNative>
                 {veiculos.length === 0 && (
-                  <p className="text-xs" style={{ color: '#d97706' }}>
+                  <Text size="xs" style={{ color: '#d97706' }}>
                     Nenhum veículo ativo disponível.
-                  </p>
+                  </Text>
                 )}
-              </div>
+              </VStack>
             </div>
 
             {/* Solicitado + Autorizado */}
@@ -205,7 +205,7 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
               <Alert color="error">{estado.erro}</Alert>
             )}
 
-            <div className="flex justify-end gap-3 pt-4" style={{ borderTop: '1px solid #f1f5f9' }}>
+            <HStack justify="end" gap="3" className="pt-4" style={{ borderTop: '1px solid #f1f5f9' }}>
               <Link href="/viagens" style={{ textDecoration: 'none' }}>
                 <Button variant="outline" color="default" type="button">Cancelar</Button>
               </Link>
@@ -217,7 +217,7 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
               >
                 {pendente ? 'Criando...' : 'Criar viagem'}
               </Button>
-            </div>
+            </HStack>
           </form>
         </Card.Body>
       </Card>
