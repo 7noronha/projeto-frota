@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { TabelaViagens } from '@/components/viagens/TabelaViagens';
 import { buscarViagens } from './actions';
-import { Button } from '@minha-empresa/components-react';
+import { Button, SelectNative, TextField } from '@minha-empresa/components-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,40 +46,39 @@ export default async function PaginaViagens({ searchParams }: PaginaViagensProps
       </div>
 
       {/* Filtros */}
-      <form method="GET" className="mb-6 flex flex-wrap gap-3 items-center">
-        <select
+      <form method="GET" className="mb-6 flex flex-wrap gap-3 items-end">
+        <SelectNative
           name="status"
           defaultValue={params.status ?? ''}
-          className="h-9 rounded-md border px-3 text-sm"
-          style={{ borderColor: '#e2e8f0', color: '#374151' }}
+          size="sm"
         >
           {STATUS_OPCOES.map((o) => (
-            <option key={o.valor} value={o.valor}>
+            <SelectNative.Option key={o.valor} value={o.valor}>
               {o.rotulo}
-            </option>
+            </SelectNative.Option>
           ))}
-        </select>
-        <input
+        </SelectNative>
+
+        <TextField
           type="date"
           name="dataInicio"
           defaultValue={params.dataInicio}
-          className="h-9 rounded-md border px-3 text-sm"
-          style={{ borderColor: '#e2e8f0', color: '#374151' }}
+          size="sm"
+          placeholder="Data início"
         />
-        <input
+
+        <TextField
           type="date"
           name="dataFim"
           defaultValue={params.dataFim}
-          className="h-9 rounded-md border px-3 text-sm"
-          style={{ borderColor: '#e2e8f0', color: '#374151' }}
+          size="sm"
+          placeholder="Data fim"
         />
-        <button
-          type="submit"
-          className="h-9 rounded-md border px-4 text-sm font-medium cursor-pointer"
-          style={{ borderColor: '#e2e8f0', color: '#374151', background: 'white' }}
-        >
+
+        <Button type="submit" variant="outline" color="default" size="sm">
           Filtrar
-        </button>
+        </Button>
+
         {(params.status || params.dataInicio || params.dataFim) && (
           <Link href="/viagens" className="text-sm" style={{ color: '#64748b' }}>
             Limpar filtros
