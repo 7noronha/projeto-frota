@@ -1,9 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog } from 'primereact/dialog';
-import { InputText } from 'primereact/inputtext';
-import { Button } from 'primereact/button';
+import { Modal, TextField, Button } from '@minha-empresa/components-react';
 
 interface DialogConfirmacaoProps {
   visivel: boolean;
@@ -29,7 +27,7 @@ export function DialogConfirmacao({
   const [texto, setTexto] = useState('');
   const confirmado = texto === palavraConfirmacao;
 
-  function handleHide() {
+  function handleClose() {
     if (!carregando) {
       setTexto('');
       onCancelar();
@@ -41,53 +39,48 @@ export function DialogConfirmacao({
   }
 
   return (
-    <Dialog
-      visible={visivel}
-      onHide={handleHide}
-      header={titulo}
-      style={{ width: 440 }}
-      closable={!carregando}
-      modal
+    <Modal
+      isOpen={visivel}
+      onClose={handleClose}
+      title={titulo}
+      size="sm"
+      hideCloseButton={carregando}
+      footer={
+        <div className="flex justify-end gap-3">
+          <Button
+            variant="outline"
+            color="default"
+            onClick={handleClose}
+            disabled={carregando}
+            type="button"
+          >
+            Cancelar
+          </Button>
+          <Button
+            color="error"
+            isLoading={carregando}
+            disabled={!confirmado || carregando}
+            onClick={handleConfirmar}
+            type="button"
+          >
+            {carregando ? 'Excluindo...' : labelConfirmar}
+          </Button>
+        </div>
+      }
     >
       <p className="text-sm mb-5" style={{ color: '#475569' }}>
         {descricao}
       </p>
 
-      <label
-        htmlFor="confirmacao-texto"
-        className="text-sm font-medium"
-        style={{ color: '#374151' }}
-      >
-        Digite <strong>{palavraConfirmacao}</strong> para confirmar
-      </label>
-      <InputText
+      <TextField
         id="confirmacao-texto"
+        label={`Digite "${palavraConfirmacao}" para confirmar`}
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
-        className="w-full mt-2"
         autoComplete="off"
         placeholder={palavraConfirmacao}
-        disabled={carregando}
+        isDisabled={carregando}
       />
-
-      <div className="flex justify-end gap-3 mt-6">
-        <Button
-          label="Cancelar"
-          outlined
-          severity="secondary"
-          onClick={handleHide}
-          disabled={carregando}
-          type="button"
-        />
-        <Button
-          label={carregando ? 'Excluindo...' : labelConfirmar}
-          severity="danger"
-          loading={carregando}
-          disabled={!confirmado || carregando}
-          onClick={handleConfirmar}
-          type="button"
-        />
-      </div>
-    </Dialog>
+    </Modal>
   );
 }

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { TabelaVeiculos } from '@/components/veiculos/TabelaVeiculos';
 import { buscarVeiculos } from './actions';
-import { Button } from 'primereact/button';
+import { Button } from '@minha-empresa/components-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +32,7 @@ export default async function PaginaVeiculos({ searchParams }: PaginaVeiculosPro
           </p>
         </div>
         <Link href="/veiculos/novo" style={{ textDecoration: 'none' }}>
-          <Button label="Novo veículo" icon="pi pi-plus" />
+          <Button color="primary" leftIcon="PiPlusBold">Novo veículo</Button>
         </Link>
       </div>
 

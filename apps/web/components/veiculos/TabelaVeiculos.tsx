@@ -2,23 +2,22 @@
 
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
+// TODO: sem equivalente — DataTable e Column não têm par em @minha-empresa/components-react
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { Tag } from 'primereact/tag';
-import { Button } from 'primereact/button';
-import { Message } from 'primereact/message';
+import { Badge, Button, Alert } from '@minha-empresa/components-react';
 import { acaoExcluirVeiculo } from '@/app/(dashboard)/veiculos/actions';
 import { EstadoVazio } from '@/components/EstadoVazio';
 import { DialogConfirmacao } from '@/components/DialogConfirmacao';
 import type { VeiculoResposta } from '@fleetops/types';
 
-type SeveridadeTag = 'success' | 'warning' | 'danger' | 'info' | undefined;
+type BadgeColor = 'success' | 'warning' | 'default' | 'error';
 
-const situacaoConfig: Record<string, { severity: SeveridadeTag; rotulo: string }> = {
-  ativo: { severity: 'success', rotulo: 'Ativo' },
-  em_manutencao: { severity: 'warning', rotulo: 'Em manutenção' },
-  inativo: { severity: undefined, rotulo: 'Inativo' },
-  baixado: { severity: 'danger', rotulo: 'Baixado' },
+const situacaoConfig: Record<string, { color: BadgeColor; rotulo: string }> = {
+  ativo: { color: 'success', rotulo: 'Ativo' },
+  em_manutencao: { color: 'warning', rotulo: 'Em manutenção' },
+  inativo: { color: 'default', rotulo: 'Inativo' },
+  baixado: { color: 'error', rotulo: 'Baixado' },
 };
 
 interface TabelaVeiculosProps {
@@ -70,32 +69,28 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
   }
 
   function corpoSituacao(rowData: VeiculoResposta) {
-    const cfg = situacaoConfig[rowData.situacao] ?? { severity: undefined, rotulo: rowData.situacao };
-    return <Tag value={cfg.rotulo} severity={cfg.severity} />;
+    const cfg = situacaoConfig[rowData.situacao] ?? { color: 'default' as BadgeColor, rotulo: rowData.situacao };
+    return <Badge color={cfg.color} variant="light">{cfg.rotulo}</Badge>;
   }
 
   function corpoAcoes(rowData: VeiculoResposta) {
     return (
       <div className="flex items-center gap-2">
         <Link href={`/veiculos/${rowData.id}/editar`} style={{ textDecoration: 'none' }}>
-          <Button
-            label="Editar"
-            icon="pi pi-pencil"
-            size="small"
-            text
-            style={{ color: '#0066FF', padding: '0.25rem 0.5rem' }}
-          />
+          <Button variant="ghost" color="primary" size="sm" leftIcon="PiPencilBold">
+            Editar
+          </Button>
         </Link>
         <Button
-          label="Excluir"
-          icon="pi pi-trash"
-          size="small"
-          text
-          severity="danger"
+          variant="ghost"
+          color="error"
+          size="sm"
+          leftIcon="PiTrashBold"
           aria-label={`Excluir veículo ${rowData.placa}`}
           onClick={() => abrirDialogExclusao(rowData.id, rowData.placa)}
-          style={{ padding: '0.25rem 0.5rem' }}
-        />
+        >
+          Excluir
+        </Button>
       </div>
     );
   }
@@ -103,7 +98,7 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
   return (
     <div>
       {erro && (
-        <Message severity="error" text={erro} className="w-full justify-start mb-4" />
+        <Alert color="error" className="mb-4">{erro}</Alert>
       )}
 
       <DataTable
@@ -115,7 +110,7 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
             descricao="Os veículos da frota aparecerão aqui. Cadastre o primeiro para começar."
             cta={
               <Link href="/veiculos/novo" style={{ textDecoration: 'none' }}>
-                <Button label="Cadastrar veículo" icon="pi pi-plus" size="small" />
+                <Button color="primary" size="sm" leftIcon="PiPlusBold">Cadastrar veículo</Button>
               </Link>
             }
           />

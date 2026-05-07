@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from 'primereact/button';
+import { Button, Icon } from '@minha-empresa/components-react';
 
 interface EstadoErroProps {
   titulo?: string;
@@ -19,7 +19,7 @@ export function EstadoErro({
       className="flex flex-col items-center justify-center rounded-xl px-6 py-14 text-center"
       style={{ border: '1px solid #fca5a5', background: '#fef2f2' }}
     >
-      <i className="pi pi-exclamation-circle" style={{ fontSize: '2rem', color: '#ef4444' }} />
+      <Icon name="PiWarningCircleBold" size="xl" color="error" />
       <h3 className="mt-3 text-base font-semibold" style={{ color: '#1e293b' }}>
         {titulo}
       </h3>
@@ -28,20 +28,22 @@ export function EstadoErro({
       </p>
       <div className="mt-6 flex items-center gap-3">
         <Button
-          label="Tentar novamente"
-          icon="pi pi-refresh"
-          outlined
-          size="small"
+          variant="outline"
+          color="error"
+          size="sm"
+          leftIcon="PiArrowClockwiseBold"
           onClick={onTentarNovamente}
-        />
+        >
+          Tentar novamente
+        </Button>
         <Button
-          label="Falar com suporte"
-          text
-          size="small"
-          onClick={() => {
-            window.location.href = 'mailto:ti@empresa.com';
-          }}
-        />
+          variant="ghost"
+          color="default"
+          size="sm"
+          onClick={() => { window.location.href = 'mailto:ti@empresa.com'; }}
+        >
+          Falar com suporte
+        </Button>
       </div>
     </div>
   );

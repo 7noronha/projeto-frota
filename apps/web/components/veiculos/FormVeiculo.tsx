@@ -2,13 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import Link from 'next/link';
-import { InputText } from 'primereact/inputtext';
-import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
-import { Dropdown } from 'primereact/dropdown';
-import { InputTextarea } from 'primereact/inputtextarea';
-import { Button } from 'primereact/button';
-import { Message } from 'primereact/message';
-import { Card } from 'primereact/card';
+import { TextField, TextArea, SelectNative, NumberField, Button, Alert, Card } from '@minha-empresa/components-react';
 import type { VeiculoResposta } from '@fleetops/types';
 
 const ANO_MINIMO = 1950;
@@ -67,24 +61,6 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
     return tocados[campo] ? erros[campo] : '';
   }
 
-  function CampoErro({ id, msg }: { id: string; msg?: string }) {
-    if (!msg) return null;
-    return (
-      <p id={id} role="alert" className="text-xs" style={{ color: '#ef4444' }}>
-        {msg}
-      </p>
-    );
-  }
-
-  function labelObrigatorio(texto: string) {
-    return (
-      <>
-        {texto}{' '}
-        <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
-      </>
-    );
-  }
-
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 flex items-center justify-between">
@@ -97,231 +73,181 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
       </div>
 
       <Card>
-        <form action={acaoForm} className="flex flex-col gap-5">
-          {/* Placa + Situação */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="placa" className="text-sm font-medium" style={{ color: '#374151' }}>
-                {labelObrigatorio('Placa')}
-              </label>
-              <InputText
+        <Card.Body>
+          <form action={acaoForm} className="flex flex-col gap-5">
+            {/* Placa + Situação */}
+            <div className="grid grid-cols-2 gap-4">
+              <TextField
                 id="placa"
                 name="placa"
+                label="Placa"
                 placeholder="ABC1D23"
                 defaultValue={veiculoInicial?.placa}
-                disabled={ehEdicao}
-                required
-                className="w-full uppercase"
-                style={ehEdicao ? { background: '#f8fafc' } : {}}
+                isDisabled={ehEdicao}
+                isRequired
+                isInvalid={Boolean(erroCampo('placa'))}
+                errorMessage={erroCampo('placa')}
                 aria-required="true"
-                aria-invalid={erroCampo('placa') ? 'true' : 'false'}
-                aria-describedby={erroCampo('placa') ? 'placa-erro' : undefined}
+                className="uppercase"
                 onBlur={(e) => !ehEdicao && erroBlur('placa', e.target.value, 'a placa')}
               />
-              <CampoErro id="placa-erro" msg={erroCampo('placa')} />
+              <div className="flex flex-col gap-1">
+                <input type="hidden" name="situacao" value={situacao} />
+                <SelectNative
+                  id="situacao"
+                  label="Situação"
+                  isRequired
+                  value={situacao}
+                  onChange={(e) => setSituacao(e.target.value as typeof situacao)}
+                >
+                  {SITUACOES.map((s) => (
+                    <SelectNative.Option key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectNative.Option>
+                  ))}
+                </SelectNative>
+              </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="situacao-dropdown" className="text-sm font-medium" style={{ color: '#374151' }}>
-                {labelObrigatorio('Situação')}
-              </label>
-              <input type="hidden" name="situacao" value={situacao} />
-              <Dropdown
-                inputId="situacao-dropdown"
-                value={situacao}
-                onChange={(e: { value: 'ativo' | 'em_manutencao' | 'inativo' | 'baixado' }) =>
-                  setSituacao(e.value)
-                }
-                options={SITUACOES}
-                className="w-full"
-              />
-            </div>
-          </div>
 
-          {/* Marca + Modelo */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="marca" className="text-sm font-medium" style={{ color: '#374151' }}>
-                {labelObrigatorio('Marca')}
-              </label>
-              <InputText
+            {/* Marca + Modelo */}
+            <div className="grid grid-cols-2 gap-4">
+              <TextField
                 id="marca"
                 name="marca"
+                label="Marca"
                 placeholder="Toyota"
                 defaultValue={veiculoInicial?.marca}
-                required
-                className="w-full"
+                isRequired
+                isInvalid={Boolean(erroCampo('marca'))}
+                errorMessage={erroCampo('marca')}
                 aria-required="true"
-                aria-invalid={erroCampo('marca') ? 'true' : 'false'}
-                aria-describedby={erroCampo('marca') ? 'marca-erro' : undefined}
                 onBlur={(e) => erroBlur('marca', e.target.value, 'a marca')}
               />
-              <CampoErro id="marca-erro" msg={erroCampo('marca')} />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="modelo" className="text-sm font-medium" style={{ color: '#374151' }}>
-                {labelObrigatorio('Modelo')}
-              </label>
-              <InputText
+              <TextField
                 id="modelo"
                 name="modelo"
+                label="Modelo"
                 placeholder="Corolla"
                 defaultValue={veiculoInicial?.modelo}
-                required
-                className="w-full"
+                isRequired
+                isInvalid={Boolean(erroCampo('modelo'))}
+                errorMessage={erroCampo('modelo')}
                 aria-required="true"
-                aria-invalid={erroCampo('modelo') ? 'true' : 'false'}
-                aria-describedby={erroCampo('modelo') ? 'modelo-erro' : undefined}
                 onBlur={(e) => erroBlur('modelo', e.target.value, 'o modelo')}
               />
-              <CampoErro id="modelo-erro" msg={erroCampo('modelo')} />
             </div>
-          </div>
 
-          {/* Ano Fabricação + Ano Modelo */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="ano-fabricacao-input" className="text-sm font-medium" style={{ color: '#374151' }}>
-                {labelObrigatorio('Ano de fabricação')}
-              </label>
-              <input type="hidden" name="anoFabricacao" value={anoFabricacao} />
-              <InputNumber
-                inputId="ano-fabricacao-input"
-                value={anoFabricacao}
-                onValueChange={(e: InputNumberValueChangeEvent) => setAnoFabricacao(e.value ?? anoAtual)}
-                min={ANO_MINIMO}
-                max={anoAtual + 1}
-                useGrouping={false}
-                className="w-full"
-                inputClassName="w-full"
-              />
+            {/* Ano Fabricação + Ano Modelo */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <input type="hidden" name="anoFabricacao" value={anoFabricacao} />
+                <NumberField
+                  id="anoFabricacao"
+                  label="Ano de fabricação"
+                  isRequired
+                  value={anoFabricacao}
+                  onChange={(v) => setAnoFabricacao(v ?? anoAtual)}
+                  min={ANO_MINIMO}
+                  max={anoAtual + 1}
+                />
+              </div>
+              <div>
+                <input type="hidden" name="anoModelo" value={anoModelo} />
+                <NumberField
+                  id="anoModelo"
+                  label="Ano do modelo"
+                  isRequired
+                  value={anoModelo}
+                  onChange={(v) => setAnoModelo(v ?? anoAtual)}
+                  min={ANO_MINIMO}
+                  max={anoAtual + 2}
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="ano-modelo-input" className="text-sm font-medium" style={{ color: '#374151' }}>
-                {labelObrigatorio('Ano do modelo')}
-              </label>
-              <input type="hidden" name="anoModelo" value={anoModelo} />
-              <InputNumber
-                inputId="ano-modelo-input"
-                value={anoModelo}
-                onValueChange={(e: InputNumberValueChangeEvent) => setAnoModelo(e.value ?? anoAtual)}
-                min={ANO_MINIMO}
-                max={anoAtual + 2}
-                useGrouping={false}
-                className="w-full"
-                inputClassName="w-full"
-              />
-            </div>
-          </div>
 
-          {/* Cor + RENAVAM */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="cor" className="text-sm font-medium" style={{ color: '#374151' }}>
-                {labelObrigatorio('Cor')}
-              </label>
-              <InputText
+            {/* Cor + RENAVAM */}
+            <div className="grid grid-cols-2 gap-4">
+              <TextField
                 id="cor"
                 name="cor"
+                label="Cor"
                 placeholder="Branco"
                 defaultValue={veiculoInicial?.cor}
-                required
-                className="w-full"
+                isRequired
+                isInvalid={Boolean(erroCampo('cor'))}
+                errorMessage={erroCampo('cor')}
                 aria-required="true"
-                aria-invalid={erroCampo('cor') ? 'true' : 'false'}
-                aria-describedby={erroCampo('cor') ? 'cor-erro' : undefined}
                 onBlur={(e) => erroBlur('cor', e.target.value, 'a cor')}
               />
-              <CampoErro id="cor-erro" msg={erroCampo('cor')} />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="renavam" className="text-sm font-medium" style={{ color: '#374151' }}>
-                {labelObrigatorio('RENAVAM')}
-              </label>
-              <InputText
+              <TextField
                 id="renavam"
                 name="renavam"
+                label="RENAVAM"
                 placeholder="12345678901"
                 maxLength={11}
                 defaultValue={veiculoInicial?.renavam}
-                disabled={ehEdicao}
-                required
-                className="w-full"
-                style={ehEdicao ? { background: '#f8fafc' } : {}}
+                isDisabled={ehEdicao}
+                isRequired
+                isInvalid={Boolean(erroCampo('renavam'))}
+                errorMessage={erroCampo('renavam')}
                 aria-required="true"
-                aria-invalid={erroCampo('renavam') ? 'true' : 'false'}
-                aria-describedby={erroCampo('renavam') ? 'renavam-erro' : undefined}
                 onBlur={(e) => !ehEdicao && erroBlur('renavam', e.target.value, 'o RENAVAM')}
               />
-              <CampoErro id="renavam-erro" msg={erroCampo('renavam')} />
             </div>
-          </div>
 
-          {/* Odômetro + Data Aquisição */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="odometro-input" className="text-sm font-medium" style={{ color: '#374151' }}>
-                {labelObrigatorio('Odômetro atual (km)')}
-              </label>
-              <input type="hidden" name="odometroAtual" value={odometro} />
-              <InputNumber
-                inputId="odometro-input"
-                value={odometro}
-                onValueChange={(e: InputNumberValueChangeEvent) => setOdometro(e.value ?? 0)}
-                min={0}
-                suffix=" km"
-                locale="pt-BR"
-                className="w-full"
-                inputClassName="w-full"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="dataAquisicao" className="text-sm font-medium" style={{ color: '#374151' }}>
-                {labelObrigatorio('Data de aquisição')}
-              </label>
-              <InputText
+            {/* Odômetro + Data Aquisição */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <input type="hidden" name="odometroAtual" value={odometro} />
+                <NumberField
+                  id="odometroAtual"
+                  label="Odômetro atual (km)"
+                  isRequired
+                  value={odometro}
+                  onChange={(v) => setOdometro(v ?? 0)}
+                  min={0}
+                />
+              </div>
+              <TextField
                 id="dataAquisicao"
                 name="dataAquisicao"
+                label="Data de aquisição"
                 type="date"
                 defaultValue={veiculoInicial?.dataAquisicao}
-                required
-                className="w-full"
+                isRequired
                 aria-required="true"
               />
             </div>
-          </div>
 
-          {/* Observações */}
-          <div className="flex flex-col gap-2">
-            <label htmlFor="observacoes" className="text-sm font-medium" style={{ color: '#374151' }}>
-              Observações
-            </label>
-            <InputTextarea
+            {/* Observações */}
+            <TextArea
               id="observacoes"
               name="observacoes"
+              label="Observações"
               placeholder="Informações adicionais sobre o veículo..."
               defaultValue={veiculoInicial?.observacoes ?? ''}
               rows={3}
-              className="w-full"
-              autoResize={false}
             />
-          </div>
 
-          {estado?.erro && (
-            <Message severity="error" text={estado.erro} className="w-full justify-start" />
-          )}
+            {estado?.erro && (
+              <Alert color="error">{estado.erro}</Alert>
+            )}
 
-          <div className="flex justify-end gap-3 pt-4" style={{ borderTop: '1px solid #f1f5f9' }}>
-            <Link href="/veiculos" style={{ textDecoration: 'none' }}>
-              <Button label="Cancelar" severity="secondary" outlined type="button" />
-            </Link>
-            <Button
-              type="submit"
-              label={pendente ? 'Salvando...' : ehEdicao ? 'Salvar alterações' : 'Cadastrar veículo'}
-              loading={pendente}
-              icon="pi pi-check"
-            />
-          </div>
-        </form>
+            <div className="flex justify-end gap-3 pt-4" style={{ borderTop: '1px solid #f1f5f9' }}>
+              <Link href="/veiculos" style={{ textDecoration: 'none' }}>
+                <Button variant="outline" color="default" type="button">Cancelar</Button>
+              </Link>
+              <Button
+                type="submit"
+                color="primary"
+                isLoading={pendente}
+                leftIcon="PiCheckBold"
+              >
+                {pendente ? 'Salvando...' : ehEdicao ? 'Salvar alterações' : 'Cadastrar veículo'}
+              </Button>
+            </div>
+          </form>
+        </Card.Body>
       </Card>
     </div>
   );

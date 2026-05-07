@@ -2,20 +2,20 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+// TODO: sem equivalente — DataTable e Column não têm par em @minha-empresa/components-react
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { Tag } from 'primereact/tag';
-import { Button } from 'primereact/button';
+import { Badge, Button } from '@minha-empresa/components-react';
 import { EstadoVazio } from '@/components/EstadoVazio';
 import { EstadoVazioFiltro } from '@/components/EstadoVazioFiltro';
 import type { ViagemDetalhada } from '@fleetops/types';
 
-type SeveridadeTag = 'info' | 'warning' | 'success' | 'danger' | undefined;
+type BadgeColor = 'info' | 'warning' | 'success' | 'default';
 
-const statusConfig: Record<string, { severity: SeveridadeTag; rotulo: string }> = {
-  CRIADA: { severity: 'info', rotulo: 'Criada' },
-  EM_ANDAMENTO: { severity: 'warning', rotulo: 'Em andamento' },
-  FINALIZADA: { severity: 'success', rotulo: 'Finalizada' },
+const statusConfig: Record<string, { color: BadgeColor; rotulo: string }> = {
+  CRIADA: { color: 'info', rotulo: 'Criada' },
+  EM_ANDAMENTO: { color: 'warning', rotulo: 'Em andamento' },
+  FINALIZADA: { color: 'success', rotulo: 'Finalizada' },
 };
 
 interface TabelaViagensProps {
@@ -43,14 +43,14 @@ export function TabelaViagens({ viagens, temFiltrosAtivos = false }: TabelaViage
   }
 
   function corpoStatus(rowData: ViagemDetalhada) {
-    const cfg = statusConfig[rowData.status] ?? { severity: undefined, rotulo: rowData.status };
-    return <Tag value={cfg.rotulo} severity={cfg.severity} />;
+    const cfg = statusConfig[rowData.status] ?? { color: 'default' as BadgeColor, rotulo: rowData.status };
+    return <Badge color={cfg.color} variant="light">{cfg.rotulo}</Badge>;
   }
 
   function corpoAcoes(rowData: ViagemDetalhada) {
     return (
       <Link href={`/viagens/${rowData.id}`} style={{ textDecoration: 'none' }}>
-        <Button label="Ver detalhes" size="small" text className="p-0" style={{ color: '#0066FF' }} />
+        <Button variant="ghost" color="primary" size="sm">Ver detalhes</Button>
       </Link>
     );
   }
@@ -64,7 +64,7 @@ export function TabelaViagens({ viagens, temFiltrosAtivos = false }: TabelaViage
       descricao="As viagens criadas aparecerão aqui. Crie a primeira para começar."
       cta={
         <Link href="/viagens/nova" style={{ textDecoration: 'none' }}>
-          <Button label="Nova viagem" icon="pi pi-plus" size="small" />
+          <Button color="primary" size="sm" leftIcon="PiPlusBold">Nova viagem</Button>
         </Link>
       }
     />

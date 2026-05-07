@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Button } from 'primereact/button';
+import { Button, Icon } from '@minha-empresa/components-react';
 
 const itensMenu = [
-  { href: '/veiculos', rotulo: 'Veículos', icone: 'pi pi-car' },
-  { href: '/viagens', rotulo: 'Viagens', icone: 'pi pi-map' },
-  { href: '/usuarios', rotulo: 'Usuários', icone: 'pi pi-users' },
+  { href: '/veiculos', rotulo: 'Veículos', icone: 'PiCarBold' as const },
+  { href: '/viagens', rotulo: 'Viagens', icone: 'PiMapBold' as const },
+  { href: '/usuarios', rotulo: 'Usuários', icone: 'PiUsersBold' as const },
 ];
 
 export function NavegacaoPrincipal() {
@@ -38,7 +38,7 @@ export function NavegacaoPrincipal() {
           className="flex items-center justify-center rounded-lg"
           style={{ background: '#0066FF', width: 32, height: 32 }}
         >
-          <i className="pi pi-truck text-white" style={{ fontSize: '1rem' }} />
+          <Icon name="PiTruckBold" size="sm" color="light" />
         </div>
         <span className="text-xl font-bold text-white">FleetOps</span>
       </div>
@@ -55,7 +55,7 @@ export function NavegacaoPrincipal() {
               className="nav-sidebar-item"
               data-active={ativo ? 'true' : undefined}
             >
-              <i className={item.icone} style={{ fontSize: '1rem', width: 20, textAlign: 'center' }} />
+              <Icon name={item.icone} size="md" />
               <span className="text-sm font-medium">{item.rotulo}</span>
             </Link>
           );
@@ -65,14 +65,16 @@ export function NavegacaoPrincipal() {
       {/* Sair */}
       <div className="p-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
         <Button
-          label="Sair"
-          icon="pi pi-sign-out"
+          variant="ghost"
+          color="default"
+          isBlock
+          leftIcon="PiSignOutBold"
           onClick={handleSair}
-          className="w-full"
-          severity="secondary"
-          text
-          style={{ color: 'rgba(255,255,255,0.65)', justifyContent: 'flex-start' }}
-        />
+          className="justify-start"
+          style={{ color: 'rgba(255,255,255,0.65)' }}
+        >
+          Sair
+        </Button>
       </div>
     </aside>
   );

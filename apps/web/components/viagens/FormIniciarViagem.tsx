@@ -1,9 +1,7 @@
 'use client';
 
 import { useActionState, useState } from 'react';
-import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
-import { Button } from 'primereact/button';
-import { Message } from 'primereact/message';
+import { NumberField, Button, Alert } from '@minha-empresa/components-react';
 
 type AcaoFormulario = (
   estadoAnterior: { erro?: string } | null,
@@ -23,39 +21,31 @@ export function FormIniciarViagem({ acao, odometroAtualVeiculo }: FormIniciarVia
     <form action={acaoForm} className="flex flex-col gap-4">
       <input type="hidden" name="odometroInicial" value={odometro} />
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="odometroInicial" className="text-sm font-medium" style={{ color: '#1e3a5f' }}>
-          Odômetro inicial (km) <span style={{ color: '#ef4444' }}>*</span>
-        </label>
-        <InputNumber
-          inputId="odometroInicial"
-          value={odometro}
-          onValueChange={(e: InputNumberValueChangeEvent) => setOdometro(e.value ?? odometroAtualVeiculo)}
-          min={odometroAtualVeiculo}
-          showButtons
-          buttonLayout="horizontal"
-          step={1}
-          suffix=" km"
-          locale="pt-BR"
-          className="w-full"
-          inputClassName="w-full"
-        />
-        <p className="text-xs" style={{ color: '#64748b' }}>
-          Odômetro atual do veículo: {odometroAtualVeiculo.toLocaleString('pt-BR')} km
-        </p>
-      </div>
+      <NumberField
+        id="odometroInicial"
+        label="Odômetro inicial (km)"
+        isRequired
+        value={odometro}
+        onChange={(v) => setOdometro(v ?? odometroAtualVeiculo)}
+        min={odometroAtualVeiculo}
+        step={1}
+        control
+        description={`Odômetro atual do veículo: ${odometroAtualVeiculo.toLocaleString('pt-BR')} km`}
+      />
 
       {estado?.erro && (
-        <Message severity="error" text={estado.erro} className="w-full justify-start" />
+        <Alert color="error">{estado.erro}</Alert>
       )}
 
       <Button
         type="submit"
-        label={pendente ? 'Iniciando...' : 'Iniciar viagem'}
-        loading={pendente}
-        icon="pi pi-play"
-        className="w-full"
-      />
+        color="primary"
+        isBlock
+        isLoading={pendente}
+        leftIcon="PiPlayBold"
+      >
+        {pendente ? 'Iniciando...' : 'Iniciar viagem'}
+      </Button>
     </form>
   );
 }
