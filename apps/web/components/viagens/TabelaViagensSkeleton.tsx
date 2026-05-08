@@ -1,34 +1,35 @@
+import { HStack, Placeload } from '@minha-empresa/components-react';
+
 export function TabelaViagensSkeleton() {
   return (
     <div className="w-full overflow-hidden rounded-xl" style={{ border: '1px solid #e2e8f0' }}>
       {/* Header */}
-      <div className="flex gap-6 px-4 py-3" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+      <HStack gap="6" className="px-4 py-3" style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
         {[70, 160, 140, 80, 120, 90, 100].map((w, i) => (
-          <div
-            key={i}
-            className="h-3 animate-pulse rounded"
-            style={{ width: w, background: '#e2e8f0' }}
-          />
+          <Placeload key={i} width={w} height={12} rounded />
         ))}
-      </div>
+      </HStack>
+
       {/* Linhas */}
       {Array.from({ length: 6 }).map((_, i) => (
-        <div
+        <HStack
           key={i}
-          className="flex items-center gap-6 px-4 py-4"
+          align="center"
+          gap="6"
+          className="px-4 py-4"
           style={{
             borderBottom: i < 5 ? '1px solid #f1f5f9' : 'none',
             background: i % 2 === 0 ? '#ffffff' : '#fafafa',
           }}
         >
-          <div className="h-4 animate-pulse rounded" style={{ width: 70, background: '#f1f5f9' }} />
-          <div className="h-4 animate-pulse rounded" style={{ width: 160, background: '#f1f5f9' }} />
-          <div className="h-4 animate-pulse rounded" style={{ width: 140, background: '#f1f5f9' }} />
-          <div className="h-4 animate-pulse rounded" style={{ width: 80, background: '#f1f5f9' }} />
-          <div className="h-4 animate-pulse rounded" style={{ width: 120, background: '#f1f5f9' }} />
-          <div className="h-5 animate-pulse rounded-full" style={{ width: 80, background: '#f1f5f9' }} />
-          <div className="h-4 animate-pulse rounded" style={{ width: 80, background: '#f1f5f9' }} />
-        </div>
+          <Placeload width={70} height={16} />
+          <Placeload width={160} height={16} />
+          <Placeload width={140} height={16} />
+          <Placeload width={80} height={16} />
+          <Placeload width={120} height={16} />
+          <Placeload width={80} height={20} rounded />
+          <Placeload width={80} height={16} />
+        </HStack>
       ))}
     </div>
   );
