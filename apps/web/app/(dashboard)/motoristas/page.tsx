@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Button, HStack, VStack, Heading, Text } from '@lojascem/components-react';
 import { TabelaMotoristas } from '@/components/motoristas/TabelaMotoristas';
+import { FiltrosMotoristas } from '@/components/motoristas/FiltrosMotoristas';
 import { buscarMotoristas } from './actions';
 import { Paginacao } from '@/components/Paginacao';
 
@@ -37,36 +38,7 @@ export default async function PaginaMotoristas({ searchParams }: PaginaMotorista
       </HStack>
 
       {/* Filtros */}
-      <form method="GET" className="mb-6 flex flex-wrap gap-3 items-end">
-        <input
-          name="nome"
-          defaultValue={params.nome ?? ''}
-          placeholder="Buscar por nome ou matrícula..."
-          className="rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          style={{ borderColor: '#d1d5db', height: '34px', color: '#111827', minWidth: '260px' }}
-        />
-
-        <select
-          name="ativo"
-          defaultValue={params.ativo ?? ''}
-          className="rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          style={{ borderColor: '#d1d5db', height: '34px', color: '#111827' }}
-        >
-          <option value="">Todos</option>
-          <option value="true">Ativos</option>
-          <option value="false">Inativos</option>
-        </select>
-
-        <Button type="submit" variant="outline" color="default" size="sm">
-          Filtrar
-        </Button>
-
-        {(params.nome || params.ativo) && (
-          <Link href="/motoristas" className="text-sm" style={{ color: '#64748b' }}>
-            Limpar filtros
-          </Link>
-        )}
-      </form>
+      <FiltrosMotoristas nomeInicial={params.nome ?? ''} ativoInicial={params.ativo ?? ''} />
 
       {/* Tabela */}
       <TabelaMotoristas motoristas={dados} />
