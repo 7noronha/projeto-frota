@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Badge, Button, Card, HStack, VStack, Heading, Text } from '@minha-empresa/components-react';
+import { Badge, Button, Card, HStack, VStack, Heading, Text } from '@lojascem/components-react';
 import { ErroApi } from '@/lib/api-servidor';
 import { buscarViagemPorId, acaoIniciarViagem, acaoFinalizarViagem } from '../actions';
 import { FormIniciarViagem } from '@/components/viagens/FormIniciarViagem';
@@ -48,18 +48,18 @@ export default async function PaginaDetalheViagem(props: { params: Params }) {
   const dataViagem = new Date(viagem.dataViagem + 'T00:00:00').toLocaleDateString('pt-BR');
 
   return (
-    <VStack gap="6" className="mx-auto max-w-3xl">
+    <VStack className="gap-6 mx-auto max-w-3xl">
       {/* Cabeçalho */}
-      <HStack align="center" justify="between">
-        <VStack gap="0">
-          <Heading as="h1" size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
+      <HStack alignItems="center" justifyContent="between">
+        <VStack>
+          <Heading size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
             Detalhe da viagem
           </Heading>
           <Text size="sm" className="mt-1" style={{ color: 'var(--fo-text-secondary)' }}>
             ID: {viagem.id}
           </Text>
         </VStack>
-        <HStack align="center" gap="3">
+        <HStack alignItems="center" className="gap-3">
           <Badge color={rotulo.color} variant="light" size="lg">{rotulo.texto}</Badge>
           <Link href="/viagens" style={{ textDecoration: 'none' }}>
             <Button variant="outline" color="default" size="sm" leftIcon="PiArrowLeftBold">
@@ -71,10 +71,10 @@ export default async function PaginaDetalheViagem(props: { params: Params }) {
 
       {/* Informações gerais */}
       <Card>
-        <Card.Header className="font-semibold text-base" style={{ color: '#1e293b' }}>
+        <Card.Header className="font-semibold text-base text-slate-800">
           Informações gerais
         </Card.Header>
-        <Card.Body>
+        <Card.Content>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
             <CampoDetalhe rotulo="Destino" valor={viagem.destino} />
             <CampoDetalhe rotulo="Data da viagem" valor={dataViagem} />
@@ -88,36 +88,36 @@ export default async function PaginaDetalheViagem(props: { params: Params }) {
               </div>
             )}
           </dl>
-        </Card.Body>
+        </Card.Content>
       </Card>
 
       {/* Motorista e Veículo */}
       <div className="grid grid-cols-2 gap-4">
         <Card>
-          <Card.Header className="font-semibold text-base" style={{ color: '#1e293b' }}>Motorista</Card.Header>
-          <Card.Body>
+          <Card.Header className="font-semibold text-base text-slate-800">Motorista</Card.Header>
+          <Card.Content>
             <dl className="flex flex-col gap-3">
               <CampoDetalhe rotulo="Nome" valor={viagem.motorista.nome} />
               <CampoDetalhe rotulo="Matrícula" valor={viagem.motorista.matricula} />
             </dl>
-          </Card.Body>
+          </Card.Content>
         </Card>
         <Card>
-          <Card.Header className="font-semibold text-base" style={{ color: '#1e293b' }}>Veículo</Card.Header>
-          <Card.Body>
+          <Card.Header className="font-semibold text-base text-slate-800">Veículo</Card.Header>
+          <Card.Content>
             <dl className="flex flex-col gap-3">
               <CampoDetalhe rotulo="Placa" valor={<span className="font-mono">{viagem.veiculo.placa}</span>} />
               <CampoDetalhe rotulo="Modelo" valor={`${viagem.veiculo.marca} ${viagem.veiculo.modelo}`} />
             </dl>
-          </Card.Body>
+          </Card.Content>
         </Card>
       </div>
 
       {/* Execução */}
       {viagem.status !== 'CRIADA' && (
         <Card>
-          <Card.Header className="font-semibold text-base" style={{ color: '#1e293b' }}>Execução</Card.Header>
-          <Card.Body>
+          <Card.Header className="font-semibold text-base text-slate-800">Execução</Card.Header>
+          <Card.Content>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
               <CampoDetalhe
                 rotulo="Início real"
@@ -144,34 +144,34 @@ export default async function PaginaDetalheViagem(props: { params: Params }) {
                 </div>
               )}
             </dl>
-          </Card.Body>
+          </Card.Content>
         </Card>
       )}
 
       {/* Ação: Iniciar */}
       {viagem.status === 'CRIADA' && (
         <Card style={{ borderColor: '#bfdbfe', background: '#eff6ff' }}>
-          <Card.Header className="font-semibold text-base" style={{ color: '#1e40af' }}>
+          <Card.Header className="font-semibold text-base text-blue-800">
             Iniciar viagem
           </Card.Header>
-          <Card.Body>
+          <Card.Content>
             <FormIniciarViagem
               acao={acaoIniciar}
               odometroAtualVeiculo={viagem.veiculo.odometroAtual}
             />
-          </Card.Body>
+          </Card.Content>
         </Card>
       )}
 
       {/* Ação: Finalizar */}
       {viagem.status === 'EM_ANDAMENTO' && viagem.odometroInicial != null && (
         <Card style={{ borderColor: '#fde68a', background: '#fffbeb' }}>
-          <Card.Header className="font-semibold text-base" style={{ color: '#92400e' }}>
+          <Card.Header className="font-semibold text-base text-amber-900">
             Finalizar viagem
           </Card.Header>
-          <Card.Body>
+          <Card.Content>
             <FormFinalizarViagem acao={acaoFinalizar} odometroInicial={viagem.odometroInicial} />
-          </Card.Body>
+          </Card.Content>
         </Card>
       )}
     </VStack>

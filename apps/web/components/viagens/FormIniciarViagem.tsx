@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useState } from 'react';
-import { NumberField, Button, Alert } from '@minha-empresa/components-react';
+import { NumberField, Button, Alert } from '@lojascem/components-react';
 
 type AcaoFormulario = (
   estadoAnterior: { erro?: string } | null,
@@ -27,7 +27,7 @@ export function FormIniciarViagem({ acao, odometroAtualVeiculo }: FormIniciarVia
         isRequired
         value={odometro}
         onChange={(v) => setOdometro(v ?? odometroAtualVeiculo)}
-        min={odometroAtualVeiculo}
+        minValue={odometroAtualVeiculo}
         step={1}
         control
         description={`Odômetro atual do veículo: ${odometroAtualVeiculo.toLocaleString('pt-BR')} km`}

@@ -1,19 +1,18 @@
-import { Icon } from '@minha-empresa/components-react';
-import { VStack, HStack, Text, Heading, Divider } from '@minha-empresa/components-react';
+import { Icon, VStack, HStack, Text, Heading } from '@lojascem/components-react';
 import { FormularioLogin } from './FormularioLogin';
 import { IlustracaoAuth } from './IlustracaoAuth';
 
 export default function PaginaLogin() {
   return (
-    <VStack gap="0" className="min-h-screen" style={{ background: '#f0f5ff' }}>
+    <VStack className="min-h-screen" style={{ background: '#f0f5ff' }}>
 
       {/* ── Navbar ──────────────────────────────────────────────────────────── */}
       <nav
         className="px-8 py-4"
         style={{ background: 'white', borderBottom: '1px solid #e8edf5' }}
       >
-        <HStack align="center" justify="between">
-          <HStack gap="0" align="center" className="gap-[10px]">
+        <HStack alignItems="center" justifyContent="between">
+          <HStack alignItems="center" className="gap-[10px]">
             <div
               className="flex items-center justify-center rounded-lg"
               style={{ width: 34, height: 34, background: '#0066FF' }}
@@ -63,7 +62,7 @@ export default function PaginaLogin() {
           }}
         >
           {/* Logo mobile */}
-          <HStack gap="0" align="center" className="lg:hidden mb-6 gap-[10px]">
+          <HStack alignItems="center" className="lg:hidden mb-6 gap-[10px]">
             <div
               className="flex items-center justify-center rounded-lg"
               style={{ width: 32, height: 32, background: '#0066FF' }}
@@ -74,7 +73,7 @@ export default function PaginaLogin() {
           </HStack>
 
           {/* Cabeçalho */}
-          <Heading as="h1" size="xl" weight="bold" className="mb-1" style={{ color: '#0A2540' }}>
+          <Heading size="xl" weight="bold" className="mb-1" style={{ color: '#0A2540' }}>
             Bem-vindo de volta
           </Heading>
           <Text size="sm" className="mb-8" style={{ color: '#94a3b8' }}>
@@ -85,14 +84,14 @@ export default function PaginaLogin() {
           <FormularioLogin />
 
           {/* Divisor */}
-          <HStack align="center" gap="4" className="my-6">
+          <HStack alignItems="center" gap={4} className="my-6">
             <div className="flex-1" style={{ height: 1, background: '#e8edf5' }} />
             <Text as="span" size="xs" className="font-medium" style={{ color: '#94a3b8' }}>acesso corporativo</Text>
             <div className="flex-1" style={{ height: 1, background: '#e8edf5' }} />
           </HStack>
 
           {/* Info de acesso */}
-          <HStack align="start" gap="3" className="rounded-xl p-4" style={{ background: '#f0f5ff', border: '1px solid #dbeafe' }}>
+          <HStack alignItems="start" className="gap-3 rounded-xl p-4" style={{ background: '#f0f5ff', border: '1px solid #dbeafe' }}>
             <Icon name="PiInfoBold" size="md" color="primary" />
             <Text size="xs" className="leading-relaxed" style={{ color: '#475569' }}>
               Acesso restrito a colaboradores autorizados. Em caso de dúvidas sobre sua matrícula ou senha, contate o administrador do sistema.

@@ -10,6 +10,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export enum PerfilEnum {
   ADMIN = 'admin',
@@ -19,6 +20,10 @@ export enum PerfilEnum {
   MOTORISTA = 'motorista',
 }
 
+const maiusculas = () => Transform(({ value }: { value: unknown }) =>
+  typeof value === 'string' ? value.trim().toUpperCase() : value,
+);
+
 export class CriarUsuarioDto {
   @ApiProperty({ example: '0009003656', description: 'Matrícula funcional (10 dígitos)' })
   @IsString()
@@ -26,7 +31,8 @@ export class CriarUsuarioDto {
   @Matches(/^\d{10}$/, { message: 'Matrícula deve conter apenas dígitos numéricos' })
   matricula: string;
 
-  @ApiProperty({ example: 'João da Silva', description: 'Nome completo' })
+  @ApiProperty({ example: 'JOÃO DA SILVA', description: 'Nome completo' })
+  @maiusculas()
   @IsString()
   @MinLength(3, { message: 'Nome deve ter no mínimo 3 caracteres' })
   @MaxLength(200)
@@ -48,12 +54,14 @@ export class CriarUsuarioDto {
   email?: string;
 
   @ApiPropertyOptional({ example: '(61) 99999-0000' })
+  @maiusculas()
   @IsOptional()
   @IsString()
   @MaxLength(20)
   telefone?: string;
 
   @ApiPropertyOptional({ example: '12345678900', description: 'Obrigatório para motoristas' })
+  @maiusculas()
   @IsOptional()
   @IsString()
   @MaxLength(20)

@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import { acaoLogin } from './actions';
-import { TextField, Button, Alert, Icon, VStack, Text } from '@minha-empresa/components-react';
+import { TextField, Button, Alert, Text } from '@lojascem/components-react';
 
 interface ErrosCampos {
   matricula?: string;
@@ -25,7 +25,6 @@ export function FormularioLogin() {
   const [estado, acao, pendente] = useActionState(acaoLogin, null);
   const [erros, setErros] = useState<ErrosCampos>({});
   const [tocados, setTocados] = useState<Record<string, boolean>>({});
-  const [senhaVisivel, setSenhaVisivel] = useState(false);
 
   function marcarTocado(campo: string) {
     setTocados((prev) => ({ ...prev, [campo]: true }));
@@ -50,7 +49,6 @@ export function FormularioLogin() {
         placeholder="Digite sua matrícula"
         maxLength={10}
         autoComplete="username"
-        required
         isRequired
         isInvalid={Boolean(erroMatricula)}
         errorMessage={erroMatricula}
@@ -58,7 +56,7 @@ export function FormularioLogin() {
         aria-required="true"
         onBlur={(e) => {
           marcarTocado('matricula');
-          validarCampo('matricula', e.target.value);
+          validarCampo('matricula', (e.target as HTMLInputElement).value);
         }}
       />
 
@@ -68,24 +66,16 @@ export function FormularioLogin() {
         name="senha"
         label="Senha"
         placeholder="Digite sua senha"
-        type={senhaVisivel ? 'text' : 'password'}
+        type="password"
         autoComplete="current-password"
-        required
         isRequired
         isInvalid={Boolean(erroSenha)}
         errorMessage={erroSenha}
         leftIcon="PiLockBold"
-        rightIcon={senhaVisivel ? 'PiEyeSlashBold' : 'PiEyeBold'}
         aria-required="true"
         onBlur={(e) => {
           marcarTocado('senha');
-          validarCampo('senha', e.target.value);
-        }}
-        classNames={{ inputOuter: 'cursor-pointer' }}
-        // Clique no ícone direito alterna visibilidade
-        onClick={(e) => {
-          const target = e.target as HTMLElement;
-          if (target.closest('[data-right-icon]')) setSenhaVisivel((v) => !v);
+          validarCampo('senha', (e.target as HTMLInputElement).value);
         }}
       />
 

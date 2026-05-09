@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Button, Icon, HStack, VStack, Text } from '@minha-empresa/components-react';
+import { Icon, HStack, VStack, Text } from '@lojascem/components-react';
 
 const itensMenu = [
   { href: '/veiculos', rotulo: 'Veículos', icone: 'PiCarBold' as const },
-  { href: '/viagens', rotulo: 'Viagens', icone: 'PiMapBold' as const },
+  { href: '/viagens', rotulo: 'Viagens', icone: 'PiMapTrifoldBold' as const },
   { href: '/usuarios', rotulo: 'Usuários', icone: 'PiUsersBold' as const },
 ];
 
@@ -31,8 +31,8 @@ export function NavegacaoPrincipal() {
     >
       {/* Logo */}
       <HStack
-        align="center"
-        gap="3"
+        alignItems="center"
+        gap={4}
         className="h-16 px-5"
         style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}
       >
@@ -47,7 +47,7 @@ export function NavegacaoPrincipal() {
 
       {/* Menu */}
       <nav aria-label="Menu" className="flex-1 px-3 py-4">
-        <VStack gap="2">
+        <VStack gap={2}>
           {itensMenu.map((item) => {
             const ativo = pathname.startsWith(item.href);
             return (
@@ -58,8 +58,8 @@ export function NavegacaoPrincipal() {
                 className="nav-sidebar-item"
                 data-active={ativo ? 'true' : undefined}
               >
-                <Icon name={item.icone} size="md" />
-                <Text as="span" size="sm" className="font-medium">{item.rotulo}</Text>
+                <Icon name={item.icone} size="md" color="light" />
+                <Text as="span" size="sm" className="font-medium text-white">{item.rotulo}</Text>
               </Link>
             );
           })}
@@ -68,17 +68,17 @@ export function NavegacaoPrincipal() {
 
       {/* Sair */}
       <div className="p-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <Button
-          variant="ghost"
-          color="default"
-          isBlock
-          leftIcon="PiSignOutBold"
+        <button
+          type="button"
           onClick={handleSair}
-          className="justify-start"
-          style={{ color: 'rgba(255,255,255,0.65)' }}
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors"
+          style={{ background: '#DC2626', color: '#ffffff' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#B91C1C'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = '#DC2626'; }}
         >
-          Sair
-        </Button>
+          <Icon name="PiSignOutBold" size="md" color="light" />
+          <span>Sair</span>
+        </button>
       </div>
     </aside>
   );

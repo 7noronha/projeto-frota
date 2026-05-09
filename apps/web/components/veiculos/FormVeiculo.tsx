@@ -1,8 +1,8 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { TextField, TextArea, SelectNative, NumberField, Button, Alert, Card, HStack, VStack, Heading } from '@minha-empresa/components-react';
+import { TextField, TextArea, NumberField, Button, Alert, Card, HStack, Heading } from '@lojascem/components-react';
 import type { VeiculoResposta } from '@fleetops/types';
 
 const ANO_MINIMO = 1950;
@@ -39,11 +39,20 @@ function naoVazio(valor: string, rotulo: string): string {
 }
 
 export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) {
-  const [estado, acaoForm, pendente] = useActionState(acao, null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [pendente, setPendente] = useState(false);
   const [erros, setErros] = useState<ErrosCampos>({});
   const [tocados, setTocados] = useState<Record<string, boolean>>({});
 
   const ehEdicao = Boolean(veiculoInicial);
+
+  const [placa, setPlaca] = useState(veiculoInicial?.placa ?? '');
+  const [marca, setMarca] = useState(veiculoInicial?.marca ?? '');
+  const [modelo, setModelo] = useState(veiculoInicial?.modelo ?? '');
+  const [cor, setCor] = useState(veiculoInicial?.cor ?? '');
+  const [renavam, setRenavam] = useState(veiculoInicial?.renavam ?? '');
+  const [dataAquisicao, setDataAquisicao] = useState(veiculoInicial?.dataAquisicao ?? '');
+  const [observacoes, setObservacoes] = useState(veiculoInicial?.observacoes ?? '');
 
   const [situacao, setSituacao] = useState<'ativo' | 'em_manutencao' | 'inativo' | 'baixado'>(
     (veiculoInicial?.situacao as 'ativo' | 'em_manutencao' | 'inativo' | 'baixado') ?? 'ativo',
@@ -51,6 +60,27 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
   const [anoFabricacao, setAnoFabricacao] = useState<number>(veiculoInicial?.anoFabricacao ?? anoAtual);
   const [anoModelo, setAnoModelo] = useState<number>(veiculoInicial?.anoModelo ?? anoAtual);
   const [odometro, setOdometro] = useState<number>(veiculoInicial?.odometroAtual ?? 0);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setErro(null);
+    setPendente(true);
+    const formData = new FormData();
+    formData.set('placa', placa);
+    formData.set('marca', marca);
+    formData.set('modelo', modelo);
+    formData.set('anoFabricacao', String(anoFabricacao));
+    formData.set('anoModelo', String(anoModelo));
+    formData.set('cor', cor);
+    formData.set('renavam', renavam);
+    formData.set('odometroAtual', String(odometro));
+    formData.set('dataAquisicao', dataAquisicao);
+    formData.set('situacao', situacao);
+    if (observacoes) formData.set('observacoes', observacoes);
+    const resultado = await acao(null, formData);
+    setPendente(false);
+    if (resultado?.erro) setErro(resultado.erro);
+  }
 
   function erroBlur(campo: keyof ErrosCampos, valor: string, rotulo: string) {
     setTocados((p) => ({ ...p, [campo]: true }));
@@ -63,8 +93,8 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
 
   return (
     <div className="mx-auto max-w-2xl">
-      <HStack align="center" justify="between" className="mb-6">
-        <Heading as="h1" size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
+      <HStack alignItems="center" justifyContent="between" className="mb-6">
+        <Heading size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
           {titulo}
         </Heading>
         <Link href="/veiculos" className="text-sm text-[var(--fo-text-secondary)]" style={{ textDecoration: 'none' }}>
@@ -73,167 +103,184 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
       </HStack>
 
       <Card>
-        <Card.Body>
-          <form action={acaoForm} className="flex flex-col gap-5">
+        <Card.Content>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             {/* Placa + Situação */}
             <div className="grid grid-cols-2 gap-4">
-              <TextField
-                id="placa"
-                name="placa"
-                label="Placa"
-                placeholder="ABC1D23"
-                defaultValue={veiculoInicial?.placa}
-                isDisabled={ehEdicao}
-                isRequired
-                isInvalid={Boolean(erroCampo('placa'))}
-                errorMessage={erroCampo('placa')}
-                aria-required="true"
-                className="uppercase"
-                onBlur={(e) => !ehEdicao && erroBlur('placa', e.target.value, 'a placa')}
-              />
-              <VStack gap="1">
-                <input type="hidden" name="situacao" value={situacao} />
-                <SelectNative
-                  id="situacao"
-                  label="Situação"
+              <div>
+                <TextField
+                  id="placa"
+                  label="Placa"
+                  placeholder="ABC1D23"
+                  value={placa}
+                  onChange={(v) => setPlaca(v.toUpperCase())}
+                  isDisabled={ehEdicao}
                   isRequired
+                  isInvalid={Boolean(erroCampo('placa'))}
+                  errorMessage={erroCampo('placa')}
+                  aria-required="true"
+                  className="uppercase"
+                  onBlur={() => !ehEdicao && erroBlur('placa', placa, 'a placa')}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="situacao"
+                  className="block text-xs font-semibold uppercase tracking-wide"
+                  style={{ color: '#374151' }}
+                >
+                  Situação <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <select
+                  id="situacao"
+                  name="situacao"
                   value={situacao}
                   onChange={(e) => setSituacao(e.target.value as typeof situacao)}
+                  required
+                  className="w-full rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{ borderColor: '#d1d5db', height: '38px', color: '#111827' }}
                 >
                   {SITUACOES.map((s) => (
-                    <SelectNative.Option key={s.value} value={s.value}>
+                    <option key={s.value} value={s.value}>
                       {s.label}
-                    </SelectNative.Option>
+                    </option>
                   ))}
-                </SelectNative>
-              </VStack>
+                </select>
+              </div>
             </div>
 
             {/* Marca + Modelo */}
             <div className="grid grid-cols-2 gap-4">
-              <TextField
-                id="marca"
-                name="marca"
-                label="Marca"
-                placeholder="Toyota"
-                defaultValue={veiculoInicial?.marca}
-                isRequired
-                isInvalid={Boolean(erroCampo('marca'))}
-                errorMessage={erroCampo('marca')}
-                aria-required="true"
-                onBlur={(e) => erroBlur('marca', e.target.value, 'a marca')}
-              />
-              <TextField
-                id="modelo"
-                name="modelo"
-                label="Modelo"
-                placeholder="Corolla"
-                defaultValue={veiculoInicial?.modelo}
-                isRequired
-                isInvalid={Boolean(erroCampo('modelo'))}
-                errorMessage={erroCampo('modelo')}
-                aria-required="true"
-                onBlur={(e) => erroBlur('modelo', e.target.value, 'o modelo')}
-              />
+              <div>
+                <TextField
+                  id="marca"
+                  label="Marca"
+                  placeholder="Toyota"
+                  value={marca}
+                  onChange={(v) => setMarca(v)}
+                  isRequired
+                  isInvalid={Boolean(erroCampo('marca'))}
+                  errorMessage={erroCampo('marca')}
+                  aria-required="true"
+                  onBlur={() => erroBlur('marca', marca, 'a marca')}
+                />
+              </div>
+              <div>
+                <TextField
+                  id="modelo"
+                  label="Modelo"
+                  placeholder="Corolla"
+                  value={modelo}
+                  onChange={(v) => setModelo(v)}
+                  isRequired
+                  isInvalid={Boolean(erroCampo('modelo'))}
+                  errorMessage={erroCampo('modelo')}
+                  aria-required="true"
+                  onBlur={() => erroBlur('modelo', modelo, 'o modelo')}
+                />
+              </div>
             </div>
 
             {/* Ano Fabricação + Ano Modelo */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <input type="hidden" name="anoFabricacao" value={anoFabricacao} />
                 <NumberField
                   id="anoFabricacao"
                   label="Ano de fabricação"
                   isRequired
                   value={anoFabricacao}
                   onChange={(v) => setAnoFabricacao(v ?? anoAtual)}
-                  min={ANO_MINIMO}
-                  max={anoAtual + 1}
+                  minValue={ANO_MINIMO}
+                  maxValue={anoAtual + 1}
                 />
               </div>
               <div>
-                <input type="hidden" name="anoModelo" value={anoModelo} />
                 <NumberField
                   id="anoModelo"
                   label="Ano do modelo"
                   isRequired
                   value={anoModelo}
                   onChange={(v) => setAnoModelo(v ?? anoAtual)}
-                  min={ANO_MINIMO}
-                  max={anoAtual + 2}
+                  minValue={ANO_MINIMO}
+                  maxValue={anoAtual + 2}
                 />
               </div>
             </div>
 
             {/* Cor + RENAVAM */}
             <div className="grid grid-cols-2 gap-4">
-              <TextField
-                id="cor"
-                name="cor"
-                label="Cor"
-                placeholder="Branco"
-                defaultValue={veiculoInicial?.cor}
-                isRequired
-                isInvalid={Boolean(erroCampo('cor'))}
-                errorMessage={erroCampo('cor')}
-                aria-required="true"
-                onBlur={(e) => erroBlur('cor', e.target.value, 'a cor')}
-              />
-              <TextField
-                id="renavam"
-                name="renavam"
-                label="RENAVAM"
-                placeholder="12345678901"
-                maxLength={11}
-                defaultValue={veiculoInicial?.renavam}
-                isDisabled={ehEdicao}
-                isRequired
-                isInvalid={Boolean(erroCampo('renavam'))}
-                errorMessage={erroCampo('renavam')}
-                aria-required="true"
-                onBlur={(e) => !ehEdicao && erroBlur('renavam', e.target.value, 'o RENAVAM')}
-              />
+              <div>
+                <TextField
+                  id="cor"
+                  label="Cor"
+                  placeholder="Branco"
+                  value={cor}
+                  onChange={(v) => setCor(v)}
+                  isRequired
+                  isInvalid={Boolean(erroCampo('cor'))}
+                  errorMessage={erroCampo('cor')}
+                  aria-required="true"
+                  onBlur={() => erroBlur('cor', cor, 'a cor')}
+                />
+              </div>
+              <div>
+                <TextField
+                  id="renavam"
+                  label="RENAVAM"
+                  placeholder="12345678901"
+                  maxLength={11}
+                  value={renavam}
+                  onChange={(v) => setRenavam(v)}
+                  isDisabled={ehEdicao}
+                  isRequired
+                  isInvalid={Boolean(erroCampo('renavam'))}
+                  errorMessage={erroCampo('renavam')}
+                  aria-required="true"
+                  onBlur={() => !ehEdicao && erroBlur('renavam', renavam, 'o RENAVAM')}
+                />
+              </div>
             </div>
 
             {/* Odômetro + Data Aquisição */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <input type="hidden" name="odometroAtual" value={odometro} />
                 <NumberField
                   id="odometroAtual"
                   label="Odômetro atual (km)"
                   isRequired
                   value={odometro}
                   onChange={(v) => setOdometro(v ?? 0)}
-                  min={0}
+                  minValue={0}
                 />
               </div>
-              <TextField
-                id="dataAquisicao"
-                name="dataAquisicao"
-                label="Data de aquisição"
-                type="date"
-                defaultValue={veiculoInicial?.dataAquisicao}
-                isRequired
-                aria-required="true"
-              />
+              <div>
+                <TextField
+                  id="dataAquisicao"
+                  label="Data de aquisição"
+                  type="date"
+                  value={dataAquisicao}
+                  onChange={(v) => setDataAquisicao(v)}
+                  isRequired
+                  aria-required="true"
+                />
+              </div>
             </div>
 
             {/* Observações */}
             <TextArea
               id="observacoes"
-              name="observacoes"
               label="Observações"
               placeholder="Informações adicionais sobre o veículo..."
-              defaultValue={veiculoInicial?.observacoes ?? ''}
-              rows={3}
+              value={observacoes}
+              onChange={(v) => setObservacoes(v)}
+              className="min-h-[80px]"
             />
 
-            {estado?.erro && (
-              <Alert color="error">{estado.erro}</Alert>
+            {erro && (
+              <Alert color="error">{erro}</Alert>
             )}
 
-            <HStack justify="end" gap="3" className="pt-4" style={{ borderTop: '1px solid #f1f5f9' }}>
+            <HStack justifyContent="end" className="gap-3 pt-4" style={{ borderTop: '1px solid #f1f5f9' }}>
               <Link href="/veiculos" style={{ textDecoration: 'none' }}>
                 <Button variant="outline" color="default" type="button">Cancelar</Button>
               </Link>
@@ -247,7 +294,7 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
               </Button>
             </HStack>
           </form>
-        </Card.Body>
+        </Card.Content>
       </Card>
     </div>
   );

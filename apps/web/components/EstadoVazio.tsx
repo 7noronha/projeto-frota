@@ -1,5 +1,5 @@
-import { Icon, VStack, Heading, Text } from '@minha-empresa/components-react';
-import type { IconType } from '@minha-empresa/components-react';
+import { Icon, VStack, Heading, Text } from '@lojascem/components-react';
+import type { IconType } from '@lojascem/components-react';
 
 interface EstadoVazioProps {
   icone: IconType;
@@ -11,8 +11,8 @@ interface EstadoVazioProps {
 export function EstadoVazio({ icone, titulo, descricao, cta }: EstadoVazioProps) {
   return (
     <VStack
-      align="center"
-      justify="center"
+      alignItems="center"
+      justifyContent="center"
       className="rounded-lg px-6 py-20 text-center"
       style={{
         border: '1.5px dashed #cbd5e1',
@@ -25,7 +25,7 @@ export function EstadoVazio({ icone, titulo, descricao, cta }: EstadoVazioProps)
       >
         <Icon name={icone} size="lg" color="contentTernary" />
       </div>
-      <Heading as="h3" size="sm" weight="semibold" className="mt-4" style={{ color: '#1e293b' }}>
+      <Heading size="sm" weight="semibold" className="mt-4" style={{ color: '#1e293b' }}>
         {titulo}
       </Heading>
       <Text size="sm" className="mt-1 max-w-sm" style={{ color: '#64748b' }}>

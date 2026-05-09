@@ -1,4 +1,4 @@
-import { Icon, Button, VStack, Heading, Text } from '@minha-empresa/components-react';
+import { Icon, Button, VStack, Heading, Text } from '@lojascem/components-react';
 
 interface EstadoVazioFiltroProps {
   onLimpar: () => void;
@@ -6,9 +6,9 @@ interface EstadoVazioFiltroProps {
 
 export function EstadoVazioFiltro({ onLimpar }: EstadoVazioFiltroProps) {
   return (
-    <VStack align="center" justify="center" className="px-6 py-16 text-center">
+    <VStack alignItems="center" justifyContent="center" className="px-6 py-16 text-center">
       <Icon name="PiMagnifyingGlassBold" size="xl" color="contentTernary" />
-      <Heading as="h3" size="sm" weight="semibold" className="mt-3" style={{ color: '#1e293b' }}>
+      <Heading size="sm" weight="semibold" className="mt-3" style={{ color: '#1e293b' }}>
         Nenhum resultado
       </Heading>
       <Text size="sm" className="mt-1 max-w-sm" style={{ color: '#64748b' }}>
@@ -19,7 +19,7 @@ export function EstadoVazioFiltro({ onLimpar }: EstadoVazioFiltroProps) {
         color="default"
         size="sm"
         className="mt-4"
-        onClick={onLimpar}
+        onPress={onLimpar}
         type="button"
       >
         Limpar filtros

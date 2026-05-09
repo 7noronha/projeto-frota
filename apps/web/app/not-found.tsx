@@ -1,11 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { VStack, Heading, Text } from '@minha-empresa/components-react';
+import { VStack, Heading, Text } from '@lojascem/components-react';
 
 export default function NaoEncontrado() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-[#f0f4ff] px-6">
-      <VStack gap="6" align="center" className="text-center">
+      <VStack alignItems="center" className="gap-6 text-center">
         <Image
           src="/404-ilustracao.svg"
           alt="Ilustração de página não encontrada"
@@ -14,8 +14,8 @@ export default function NaoEncontrado() {
           priority
         />
 
-        <VStack gap="2">
-          <Heading as="h1" size="2xl" weight="bold" style={{ color: '#0a2540' }}>
+        <VStack gap={2}>
+          <Heading size="2xl" weight="bold" style={{ color: '#0a2540' }}>
             Página não encontrada
           </Heading>
           <Text size="md" style={{ color: '#64748b' }}>

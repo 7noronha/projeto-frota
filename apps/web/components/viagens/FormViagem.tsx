@@ -1,8 +1,8 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { TextField, TextArea, SelectNative, Button, Alert, Card, HStack, VStack, Heading, Text } from '@minha-empresa/components-react';
+import { TextField, TextArea, Button, Alert, Card, HStack, VStack, Heading, Text } from '@lojascem/components-react';
 import type { UsuarioResposta, VeiculoResposta } from '@fleetops/types';
 
 type AcaoFormulario = (
@@ -29,35 +29,66 @@ function naoVazio(valor: string, rotulo: string): string {
   return valor.trim() ? '' : `Informe ${rotulo.toLowerCase()}`;
 }
 
+const labelSelect = 'block text-xs font-semibold uppercase tracking-wide mb-1';
+const estiloSelect: React.CSSProperties = {
+  borderColor: '#d1d5db',
+  height: '38px',
+  color: '#111827',
+};
+
 export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
-  const [estado, acaoForm, pendente] = useActionState(acao, null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [pendente, setPendente] = useState(false);
   const [erros, setErros] = useState<ErrosCampos>({});
   const [tocados, setTocados] = useState<Record<string, boolean>>({});
 
-  const hoje = new Date().toISOString().split('T')[0] ?? '';
+  const [destino, setDestino] = useState('');
+  const [dataViagem, setDataViagem] = useState('');
+  const [horaInicioPrevista, setHoraInicioPrevista] = useState('');
+  const [horaFimPrevista, setHoraFimPrevista] = useState('');
+  const [motoristaId, setMotoristaId] = useState('');
+  const [veiculoId, setVeiculoId] = useState('');
+  const [solicitadoPor, setSolicitadoPor] = useState('');
+  const [autorizadoPor, setAutorizadoPor] = useState('');
+  const [observacoes, setObservacoes] = useState('');
 
-  function tocar(campo: string) {
-    setTocados((p) => ({ ...p, [campo]: true }));
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setErro(null);
+    setPendente(true);
+    const formData = new FormData();
+    formData.set('destino', destino);
+    formData.set('dataViagem', dataViagem);
+    formData.set('horaInicioPrevista', horaInicioPrevista);
+    formData.set('horaFimPrevista', horaFimPrevista);
+    formData.set('motoristaId', motoristaId);
+    formData.set('veiculoId', veiculoId);
+    formData.set('solicitadoPor', solicitadoPor);
+    formData.set('autorizadoPor', autorizadoPor);
+    if (observacoes) formData.set('observacoes', observacoes);
+    const resultado = await acao(null, formData);
+    setPendente(false);
+    if (resultado?.erro) setErro(resultado.erro);
   }
 
   function erroBlur(campo: keyof ErrosCampos, valor: string, rotulo: string) {
-    tocar(campo);
+    setTocados((p) => ({ ...p, [campo]: true }));
     setErros((p) => ({ ...p, [campo]: naoVazio(valor, rotulo) }));
   }
 
   function erroSelect(campo: keyof ErrosCampos, valor: string, rotulo: string) {
-    tocar(campo);
+    setTocados((p) => ({ ...p, [campo]: true }));
     setErros((p) => ({ ...p, [campo]: valor ? '' : `Selecione ${rotulo.toLowerCase()}` }));
   }
 
   function erroCampo(campo: keyof ErrosCampos) {
-    return tocados[campo] ? erros[campo] : '';
+    return tocados[campo] ? (erros[campo] ?? '') : '';
   }
 
   return (
     <div className="mx-auto max-w-2xl">
-      <HStack align="center" justify="between" className="mb-6">
-        <Heading as="h1" size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
+      <HStack alignItems="center" justifyContent="between" className="mb-6">
+        <Heading size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
           Nova viagem
         </Heading>
         <Link href="/viagens" className="text-sm text-[var(--fo-text-secondary)]" style={{ textDecoration: 'none' }}>
@@ -66,48 +97,51 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
       </HStack>
 
       <Card>
-        <Card.Body>
-          <form action={acaoForm} className="flex flex-col gap-5">
+        <Card.Content>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             {/* Destino */}
             <TextField
               id="destino"
-              name="destino"
               label="Destino"
               placeholder="Av. Paulista, 1000 — São Paulo, SP"
+              value={destino}
+              onChange={(v) => setDestino(v)}
               isRequired
               isInvalid={Boolean(erroCampo('destino'))}
               errorMessage={erroCampo('destino')}
               aria-required="true"
-              onBlur={(e) => erroBlur('destino', e.target.value, 'o destino')}
+              onBlur={() => erroBlur('destino', destino, 'o destino')}
             />
 
             {/* Data + Horários */}
             <div className="grid grid-cols-3 gap-4">
               <TextField
                 id="dataViagem"
-                name="dataViagem"
                 label="Data da viagem"
                 type="date"
-                min={hoje}
+                value={dataViagem}
+                onChange={(v) => setDataViagem(v)}
                 isRequired
                 isInvalid={Boolean(erroCampo('dataViagem'))}
                 errorMessage={erroCampo('dataViagem')}
                 aria-required="true"
-                onBlur={(e) => erroBlur('dataViagem', e.target.value, 'a data')}
+                onBlur={() => erroBlur('dataViagem', dataViagem, 'a data')}
               />
               <TextField
                 id="horaInicioPrevista"
-                name="horaInicioPrevista"
                 label="Hora início"
                 type="time"
+                value={horaInicioPrevista}
+                onChange={(v) => setHoraInicioPrevista(v)}
                 isRequired
                 aria-required="true"
               />
               <TextField
                 id="horaFimPrevista"
-                name="horaFimPrevista"
                 label="Hora fim"
                 type="time"
+                value={horaFimPrevista}
+                onChange={(v) => setHoraFimPrevista(v)}
                 isRequired
                 aria-required="true"
               />
@@ -115,24 +149,34 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
 
             {/* Motorista + Veículo */}
             <div className="grid grid-cols-2 gap-4">
-              <VStack gap="1">
-                <SelectNative
-                  id="motoristaId"
-                  name="motoristaId"
-                  label="Motorista"
-                  isRequired
-                  isInvalid={Boolean(erroCampo('motoristaId'))}
-                  errorMessage={erroCampo('motoristaId')}
-                  placeholder="Selecione um motorista"
-                  onChange={(e) => erroSelect('motoristaId', e.target.value, 'um motorista')}
-                  onBlur={(e) => erroSelect('motoristaId', e.target.value, 'um motorista')}
-                >
-                  {motoristas.map((m) => (
-                    <SelectNative.Option key={m.id} value={m.id}>
-                      {m.nome} ({m.matricula})
-                    </SelectNative.Option>
-                  ))}
-                </SelectNative>
+              <VStack gap={1}>
+                <div className="flex flex-col">
+                  <label htmlFor="motoristaId" className={labelSelect} style={{ color: '#374151' }}>
+                    Motorista <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <select
+                    id="motoristaId"
+                    value={motoristaId}
+                    onChange={(e) => {
+                      setMotoristaId(e.target.value);
+                      erroSelect('motoristaId', e.target.value, 'um motorista');
+                    }}
+                    onBlur={(e) => erroSelect('motoristaId', e.target.value, 'um motorista')}
+                    required
+                    className="w-full rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={estiloSelect}
+                  >
+                    <option value="">Selecione um motorista</option>
+                    {motoristas.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.nome} ({m.matricula})
+                      </option>
+                    ))}
+                  </select>
+                  {erroCampo('motoristaId') && (
+                    <span className="mt-1 text-xs" style={{ color: '#dc2626' }}>{erroCampo('motoristaId')}</span>
+                  )}
+                </div>
                 {motoristas.length === 0 && (
                   <Text size="xs" style={{ color: '#d97706' }}>
                     Nenhum motorista ativo cadastrado.
@@ -140,24 +184,34 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
                 )}
               </VStack>
 
-              <VStack gap="1">
-                <SelectNative
-                  id="veiculoId"
-                  name="veiculoId"
-                  label="Veículo"
-                  isRequired
-                  isInvalid={Boolean(erroCampo('veiculoId'))}
-                  errorMessage={erroCampo('veiculoId')}
-                  placeholder="Selecione um veículo"
-                  onChange={(e) => erroSelect('veiculoId', e.target.value, 'um veículo')}
-                  onBlur={(e) => erroSelect('veiculoId', e.target.value, 'um veículo')}
-                >
-                  {veiculos.map((v) => (
-                    <SelectNative.Option key={v.id} value={v.id}>
-                      {v.placa} — {v.marca} {v.modelo}
-                    </SelectNative.Option>
-                  ))}
-                </SelectNative>
+              <VStack gap={1}>
+                <div className="flex flex-col">
+                  <label htmlFor="veiculoId" className={labelSelect} style={{ color: '#374151' }}>
+                    Veículo <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <select
+                    id="veiculoId"
+                    value={veiculoId}
+                    onChange={(e) => {
+                      setVeiculoId(e.target.value);
+                      erroSelect('veiculoId', e.target.value, 'um veículo');
+                    }}
+                    onBlur={(e) => erroSelect('veiculoId', e.target.value, 'um veículo')}
+                    required
+                    className="w-full rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={estiloSelect}
+                  >
+                    <option value="">Selecione um veículo</option>
+                    {veiculos.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.placa} — {v.marca} {v.modelo}
+                      </option>
+                    ))}
+                  </select>
+                  {erroCampo('veiculoId') && (
+                    <span className="mt-1 text-xs" style={{ color: '#dc2626' }}>{erroCampo('veiculoId')}</span>
+                  )}
+                </div>
                 {veiculos.length === 0 && (
                   <Text size="xs" style={{ color: '#d97706' }}>
                     Nenhum veículo ativo disponível.
@@ -170,42 +224,45 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
             <div className="grid grid-cols-2 gap-4">
               <TextField
                 id="solicitadoPor"
-                name="solicitadoPor"
                 label="Solicitado por"
                 placeholder="Nome do solicitante"
+                value={solicitadoPor}
+                onChange={(v) => setSolicitadoPor(v)}
                 isRequired
                 isInvalid={Boolean(erroCampo('solicitadoPor'))}
                 errorMessage={erroCampo('solicitadoPor')}
                 aria-required="true"
-                onBlur={(e) => erroBlur('solicitadoPor', e.target.value, 'o solicitante')}
+                onBlur={() => erroBlur('solicitadoPor', solicitadoPor, 'o solicitante')}
               />
               <TextField
                 id="autorizadoPor"
-                name="autorizadoPor"
                 label="Autorizado por"
                 placeholder="Nome do autorizador"
+                value={autorizadoPor}
+                onChange={(v) => setAutorizadoPor(v)}
                 isRequired
                 isInvalid={Boolean(erroCampo('autorizadoPor'))}
                 errorMessage={erroCampo('autorizadoPor')}
                 aria-required="true"
-                onBlur={(e) => erroBlur('autorizadoPor', e.target.value, 'o autorizador')}
+                onBlur={() => erroBlur('autorizadoPor', autorizadoPor, 'o autorizador')}
               />
             </div>
 
             {/* Observações */}
             <TextArea
               id="observacoes"
-              name="observacoes"
               label="Observações"
               placeholder="Informações adicionais..."
-              rows={3}
+              value={observacoes}
+              onChange={(v) => setObservacoes(v)}
+              className="min-h-[80px]"
             />
 
-            {estado?.erro && (
-              <Alert color="error">{estado.erro}</Alert>
+            {erro && (
+              <Alert color="error">{erro}</Alert>
             )}
 
-            <HStack justify="end" gap="3" className="pt-4" style={{ borderTop: '1px solid #f1f5f9' }}>
+            <HStack justifyContent="end" className="gap-3 pt-4" style={{ borderTop: '1px solid #f1f5f9' }}>
               <Link href="/viagens" style={{ textDecoration: 'none' }}>
                 <Button variant="outline" color="default" type="button">Cancelar</Button>
               </Link>
@@ -219,7 +276,7 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
               </Button>
             </HStack>
           </form>
-        </Card.Body>
+        </Card.Content>
       </Card>
     </div>
   );

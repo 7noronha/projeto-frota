@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { TabelaVeiculos } from '@/components/veiculos/TabelaVeiculos';
 import { buscarVeiculos } from './actions';
-import { Button, HStack, VStack, Heading, Text } from '@minha-empresa/components-react';
+import { Button, HStack, VStack, Heading, Text } from '@lojascem/components-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,9 +22,9 @@ export default async function PaginaVeiculos({ searchParams }: PaginaVeiculosPro
   return (
     <div>
       {/* Cabeçalho */}
-      <HStack align="center" justify="between" className="mb-6">
-        <VStack gap="0">
-          <Heading as="h1" size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
+      <HStack alignItems="center" justifyContent="between" className="mb-6">
+        <VStack>
+          <Heading size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
             Veículos
           </Heading>
           <Text size="sm" className="mt-1" style={{ color: 'var(--fo-text-secondary)' }}>

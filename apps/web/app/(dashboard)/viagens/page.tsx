@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { TabelaViagens } from '@/components/viagens/TabelaViagens';
 import { buscarViagens } from './actions';
-import { Button, SelectNative, TextField, HStack, VStack, Heading, Text } from '@minha-empresa/components-react';
+import { Button, TextField, HStack, VStack, Heading, Text } from '@lojascem/components-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,9 +31,9 @@ export default async function PaginaViagens({ searchParams }: PaginaViagensProps
   return (
     <div>
       {/* Cabeçalho */}
-      <HStack align="center" justify="between" className="mb-6">
-        <VStack gap="0">
-          <Heading as="h1" size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
+      <HStack alignItems="center" justifyContent="between" className="mb-6">
+        <VStack>
+          <Heading size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
             Viagens
           </Heading>
           <Text size="sm" className="mt-1" style={{ color: 'var(--fo-text-secondary)' }}>
@@ -47,17 +47,18 @@ export default async function PaginaViagens({ searchParams }: PaginaViagensProps
 
       {/* Filtros */}
       <form method="GET" className="mb-6 flex flex-wrap gap-3 items-end">
-        <SelectNative
+        <select
           name="status"
           defaultValue={params.status ?? ''}
-          size="sm"
+          className="rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          style={{ borderColor: '#d1d5db', height: '34px', color: '#111827' }}
         >
           {STATUS_OPCOES.map((o) => (
-            <SelectNative.Option key={o.valor} value={o.valor}>
+            <option key={o.valor} value={o.valor}>
               {o.rotulo}
-            </SelectNative.Option>
+            </option>
           ))}
-        </SelectNative>
+        </select>
 
         <TextField
           type="date"

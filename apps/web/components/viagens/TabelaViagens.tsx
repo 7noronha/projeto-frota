@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-// TODO: sem equivalente — DataTable e Column não têm par em @minha-empresa/components-react
+// TODO: sem equivalente — DataTable e Column não têm par em @lojascem/components-react
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { Badge, Button } from '@minha-empresa/components-react';
+import { Badge, Button } from '@lojascem/components-react';
 import { EstadoVazio } from '@/components/EstadoVazio';
 import { EstadoVazioFiltro } from '@/components/EstadoVazioFiltro';
 import type { ViagemDetalhada } from '@fleetops/types';
@@ -50,7 +50,7 @@ export function TabelaViagens({ viagens, temFiltrosAtivos = false }: TabelaViage
   function corpoAcoes(rowData: ViagemDetalhada) {
     return (
       <Link href={`/viagens/${rowData.id}`} style={{ textDecoration: 'none' }}>
-        <Button variant="ghost" color="primary" size="sm">Ver detalhes</Button>
+        <Button variant="light" color="primary" size="sm">Ver detalhes</Button>
       </Link>
     );
   }
@@ -59,7 +59,7 @@ export function TabelaViagens({ viagens, temFiltrosAtivos = false }: TabelaViage
     <EstadoVazioFiltro onLimpar={() => router.push('/viagens')} />
   ) : (
     <EstadoVazio
-      icone="PiMapBold"
+      icone="PiMapTrifoldBold"
       titulo="Nenhuma viagem ainda"
       descricao="As viagens criadas aparecerão aqui. Crie a primeira para começar."
       cta={

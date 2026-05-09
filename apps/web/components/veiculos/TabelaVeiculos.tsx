@@ -2,10 +2,10 @@
 
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
-// TODO: sem equivalente — DataTable e Column não têm par em @minha-empresa/components-react
+// TODO: sem equivalente — DataTable e Column não têm par em @lojascem/components-react
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { Badge, Button, Alert, HStack } from '@minha-empresa/components-react';
+import { Badge, Button, Alert, HStack } from '@lojascem/components-react';
 import { acaoExcluirVeiculo } from '@/app/(dashboard)/veiculos/actions';
 import { EstadoVazio } from '@/components/EstadoVazio';
 import { DialogConfirmacao } from '@/components/DialogConfirmacao';
@@ -60,10 +60,6 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
     return `${rowData.marca} ${rowData.modelo}`;
   }
 
-  function corpoAno(rowData: VeiculoResposta) {
-    return `${rowData.anoFabricacao}/${rowData.anoModelo}`;
-  }
-
   function corpoOdometro(rowData: VeiculoResposta) {
     return `${rowData.odometroAtual.toLocaleString('pt-BR')} km`;
   }
@@ -75,19 +71,19 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
 
   function corpoAcoes(rowData: VeiculoResposta) {
     return (
-      <HStack align="center" gap="2">
+      <HStack alignItems="center" gap={2}>
         <Link href={`/veiculos/${rowData.id}/editar`} style={{ textDecoration: 'none' }}>
-          <Button variant="ghost" color="primary" size="sm" leftIcon="PiPencilBold">
+          <Button variant="light" color="primary" size="sm" leftIcon="PiPencilBold">
             Editar
           </Button>
         </Link>
         <Button
-          variant="ghost"
+          variant="light"
           color="error"
           size="sm"
           leftIcon="PiTrashBold"
           aria-label={`Excluir veículo ${rowData.placa}`}
-          onClick={() => abrirDialogExclusao(rowData.id, rowData.placa)}
+          onPress={() => abrirDialogExclusao(rowData.id, rowData.placa)}
         >
           Excluir
         </Button>
@@ -121,7 +117,8 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
       >
         <Column field="placa" header="Placa" body={corpoPlaca} />
         <Column header="Marca / Modelo" body={corpoMarcaModelo} />
-        <Column header="Ano" body={corpoAno} />
+        <Column field="anoFabricacao" header="Ano Fab." />
+        <Column field="anoModelo" header="Ano Mod." />
         <Column field="cor" header="Cor" />
         <Column header="Odômetro" body={corpoOdometro} />
         <Column field="situacao" header="Situação" body={corpoSituacao} />

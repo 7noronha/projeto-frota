@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Modal, TextField, Button, HStack, Text } from '@minha-empresa/components-react';
+import { useState, useEffect, useRef } from 'react';
+import { TextField, Button, HStack, Text } from '@lojascem/components-react';
 
 interface DialogConfirmacaoProps {
   visivel: boolean;
@@ -26,6 +26,17 @@ export function DialogConfirmacao({
 }: DialogConfirmacaoProps) {
   const [texto, setTexto] = useState('');
   const confirmado = texto === palavraConfirmacao;
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (visivel) {
+      if (!dialog.open) dialog.showModal();
+    } else {
+      if (dialog.open) dialog.close();
+    }
+  }, [visivel]);
 
   function handleClose() {
     if (!carregando) {
@@ -39,48 +50,41 @@ export function DialogConfirmacao({
   }
 
   return (
-    <Modal
-      isOpen={visivel}
-      onClose={handleClose}
-      title={titulo}
-      size="sm"
-      hideCloseButton={carregando}
-      footer={
-        <HStack justify="end" gap="3">
+    <dialog ref={dialogRef} onClose={handleClose}>
+      <div style={{ padding: '24px' }}>
+        <h2 style={{ fontSize: 18, fontWeight: 600, color: '#1e293b', marginBottom: 16, marginTop: 0 }}>
+          {titulo}
+        </h2>
+        <Text size="sm" className="mb-5" style={{ color: '#475569' }}>
+          {descricao}
+        </Text>
+        <TextField
+          label={`Digite "${palavraConfirmacao}" para confirmar`}
+          value={texto}
+          onChange={(value) => setTexto(value)}
+          autoComplete="off"
+          placeholder={palavraConfirmacao}
+          isDisabled={carregando}
+        />
+        <HStack justifyContent="end" gap={4} className="mt-5">
           <Button
             variant="outline"
             color="default"
-            onClick={handleClose}
-            disabled={carregando}
-            type="button"
+            onPress={handleClose}
+            isDisabled={carregando}
           >
             Cancelar
           </Button>
           <Button
             color="error"
             isLoading={carregando}
-            disabled={!confirmado || carregando}
-            onClick={handleConfirmar}
-            type="button"
+            isDisabled={!confirmado || carregando}
+            onPress={handleConfirmar}
           >
             {carregando ? 'Excluindo...' : labelConfirmar}
           </Button>
         </HStack>
-      }
-    >
-      <Text size="sm" className="mb-5" style={{ color: '#475569' }}>
-        {descricao}
-      </Text>
-
-      <TextField
-        id="confirmacao-texto"
-        label={`Digite "${palavraConfirmacao}" para confirmar`}
-        value={texto}
-        onChange={(e) => setTexto(e.target.value)}
-        autoComplete="off"
-        placeholder={palavraConfirmacao}
-        isDisabled={carregando}
-      />
-    </Modal>
+      </div>
+    </dialog>
   );
 }
