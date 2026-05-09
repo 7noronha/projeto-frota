@@ -1,14 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength } from 'class-validator';
-import { Transform } from 'class-transformer';
-
-const maiusculas = () => Transform(({ value }: { value: unknown }) =>
-  typeof value === 'string' ? value.trim().toUpperCase() : value,
-);
+import { Maiusculas } from '../../../common/decorators/maiusculas.decorator';
 
 export class CriarViagemDto {
   @ApiProperty({ example: 'AV. PAULISTA, 1000 — SÃO PAULO, SP', description: 'Endereço de destino' })
-  @maiusculas()
+  @Maiusculas()
   @IsString()
   @MinLength(5, { message: 'Destino deve ter no mínimo 5 caracteres' })
   @MaxLength(500)
@@ -20,12 +16,12 @@ export class CriarViagemDto {
 
   @ApiProperty({ example: '08:00', description: 'Hora planejada de início (HH:MM)' })
   @IsString()
-  @Matches(/^\d{2}:\d{2}$/, { message: 'Hora de início deve estar no formato HH:MM' })
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'Hora de início inválida (use HH:MM, ex.: 08:00)' })
   horaInicioPrevista: string;
 
   @ApiProperty({ example: '12:00', description: 'Hora planejada de fim (HH:MM)' })
   @IsString()
-  @Matches(/^\d{2}:\d{2}$/, { message: 'Hora de fim deve estar no formato HH:MM' })
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'Hora de fim inválida (use HH:MM, ex.: 12:00)' })
   horaFimPrevista: string;
 
   @ApiProperty({ example: 'uuid-do-motorista' })
@@ -37,21 +33,21 @@ export class CriarViagemDto {
   veiculoId: string;
 
   @ApiProperty({ example: 'JOÃO DA SILVA', description: 'Nome de quem solicitou a viagem' })
-  @maiusculas()
+  @Maiusculas()
   @IsString()
-  @MinLength(3)
-  @MaxLength(200)
+  @MinLength(3, { message: 'Solicitado por deve ter no mínimo 3 caracteres' })
+  @MaxLength(200, { message: 'Solicitado por deve ter no máximo 200 caracteres' })
   solicitadoPor: string;
 
   @ApiProperty({ example: 'MARIA SANTOS', description: 'Nome de quem autorizou a viagem' })
-  @maiusculas()
+  @Maiusculas()
   @IsString()
-  @MinLength(3)
-  @MaxLength(200)
+  @MinLength(3, { message: 'Autorizado por deve ter no mínimo 3 caracteres' })
+  @MaxLength(200, { message: 'Autorizado por deve ter no máximo 200 caracteres' })
   autorizadoPor: string;
 
   @ApiPropertyOptional({ example: 'LEVAR DOCUMENTOS PARA ASSINATURA' })
-  @maiusculas()
+  @Maiusculas()
   @IsOptional()
   @IsString()
   observacoes?: string;

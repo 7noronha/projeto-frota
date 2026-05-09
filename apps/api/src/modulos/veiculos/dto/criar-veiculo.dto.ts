@@ -11,7 +11,8 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
+import { Maiusculas } from '../../../common/decorators/maiusculas.decorator';
 
 export enum SituacaoVeiculoEnum {
   ATIVO = 'ativo',
@@ -23,16 +24,12 @@ export enum SituacaoVeiculoEnum {
 const ANO_MINIMO = 1950;
 const ANO_MAXIMO = new Date().getFullYear() + 2;
 
-const maiusculas = () => Transform(({ value }: { value: unknown }) =>
-  typeof value === 'string' ? value.trim().toUpperCase() : value,
-);
-
 export class CriarVeiculoDto {
   @ApiProperty({
     example: 'ABC1D23',
     description: 'Placa no formato antigo (ABC1234) ou Mercosul (ABC1D23)',
   })
-  @maiusculas()
+  @Maiusculas()
   @IsString()
   @Matches(/^[A-Z]{3}\d{4}$|^[A-Z]{3}\d[A-Z]\d{2}$/, {
     message: 'Placa inválida. Use o formato ABC1234 (antigo) ou ABC1D23 (Mercosul)',
@@ -40,38 +37,38 @@ export class CriarVeiculoDto {
   placa: string;
 
   @ApiProperty({ example: 'TOYOTA' })
-  @maiusculas()
+  @Maiusculas()
   @IsString()
-  @MinLength(1)
-  @MaxLength(80)
+  @MinLength(1, { message: 'Marca é obrigatória' })
+  @MaxLength(80, { message: 'Marca deve ter no máximo 80 caracteres' })
   marca: string;
 
   @ApiProperty({ example: 'COROLLA' })
-  @maiusculas()
+  @Maiusculas()
   @IsString()
-  @MinLength(1)
-  @MaxLength(100)
+  @MinLength(1, { message: 'Modelo é obrigatório' })
+  @MaxLength(100, { message: 'Modelo deve ter no máximo 100 caracteres' })
   modelo: string;
 
   @ApiProperty({ example: 2023 })
   @Type(() => Number)
   @IsInt()
   @Min(ANO_MINIMO, { message: `Ano de fabricação mínimo: ${ANO_MINIMO}` })
-  @Max(ANO_MAXIMO)
+  @Max(ANO_MAXIMO, { message: `Ano de fabricação máximo: ${ANO_MAXIMO}` })
   anoFabricacao: number;
 
   @ApiProperty({ example: 2024 })
   @Type(() => Number)
   @IsInt()
   @Min(ANO_MINIMO, { message: `Ano do modelo mínimo: ${ANO_MINIMO}` })
-  @Max(ANO_MAXIMO)
+  @Max(ANO_MAXIMO, { message: `Ano do modelo máximo: ${ANO_MAXIMO}` })
   anoModelo: number;
 
   @ApiProperty({ example: 'BRANCO' })
-  @maiusculas()
+  @Maiusculas()
   @IsString()
-  @MinLength(1)
-  @MaxLength(50)
+  @MinLength(1, { message: 'Cor é obrigatória' })
+  @MaxLength(50, { message: 'Cor deve ter no máximo 50 caracteres' })
   cor: string;
 
   @ApiProperty({ example: '12345678901', description: 'RENAVAM (11 dígitos)' })
@@ -96,7 +93,7 @@ export class CriarVeiculoDto {
   situacao: SituacaoVeiculoEnum;
 
   @ApiPropertyOptional({ example: 'REVISÃO REALIZADA EM 10/2024' })
-  @maiusculas()
+  @Maiusculas()
   @IsOptional()
   @IsString()
   observacoes?: string;

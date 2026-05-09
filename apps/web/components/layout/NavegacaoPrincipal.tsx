@@ -6,8 +6,8 @@ import { Icon, HStack, VStack, Text } from '@lojascem/components-react';
 
 const itensMenu = [
   { href: '/veiculos', rotulo: 'Veículos', icone: 'PiCarBold' as const },
+  { href: '/motoristas', rotulo: 'Motoristas', icone: 'PiUsersBold' as const },
   { href: '/viagens', rotulo: 'Viagens', icone: 'PiMapTrifoldBold' as const },
-  { href: '/usuarios', rotulo: 'Usuários', icone: 'PiUsersBold' as const },
 ];
 
 export function NavegacaoPrincipal() {
@@ -71,10 +71,8 @@ export function NavegacaoPrincipal() {
         <button
           type="button"
           onClick={handleSair}
-          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors"
-          style={{ background: '#DC2626', color: '#ffffff' }}
-          onMouseEnter={(e) => { e.currentTarget.style.background = '#B91C1C'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = '#DC2626'; }}
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+          style={{ background: '#DC2626' }}
         >
           <Icon name="PiSignOutBold" size="md" color="light" />
           <span>Sair</span>

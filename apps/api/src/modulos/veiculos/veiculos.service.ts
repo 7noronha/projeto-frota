@@ -1,3 +1,4 @@
+import { calcularPaginacao } from '../../common/utils/paginacao';
 import {
   ConflictException,
   Injectable,
@@ -48,9 +49,7 @@ export class VeiculosService {
   constructor(private readonly prisma: PrismaService) {}
 
   async listar(filtros: FiltrosListarVeiculosDto): Promise<RespostaPaginada<VeiculoRespostaDto>> {
-    const pagina = filtros.pagina ?? 1;
-    const tamanhoPagina = filtros.tamanhoPagina ?? 20;
-    const skip = (pagina - 1) * tamanhoPagina;
+    const { pagina, tamanhoPagina, skip } = calcularPaginacao(filtros);
 
     const where = {
       dataExclusao: null as null,

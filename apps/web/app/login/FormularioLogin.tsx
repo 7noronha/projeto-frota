@@ -17,7 +17,7 @@ function validarMatricula(valor: string): string {
 
 function validarSenha(valor: string): string {
   if (!valor) return 'Informe sua senha';
-  if (valor.length < 4) return 'Senha muito curta';
+  if (valor.length < 8) return 'Senha deve ter no mínimo 8 caracteres';
   return '';
 }
 

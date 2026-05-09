@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { PerfilEnum } from './criar-usuario.dto';
 
 export class FiltrosListarUsuariosDto {
@@ -13,6 +13,17 @@ export class FiltrosListarUsuariosDto {
   @IsOptional()
   @IsString()
   matricula?: string;
+
+  @ApiPropertyOptional({ example: 'JOÃO', description: 'Filtrar por nome (busca parcial)' })
+  @IsOptional()
+  @IsString()
+  nome?: string;
+
+  @ApiPropertyOptional({ example: true, description: 'Filtrar por status ativo/inativo' })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) => value === 'true' ? true : value === 'false' ? false : value)
+  @IsBoolean()
+  ativo?: boolean;
 
   @ApiPropertyOptional({ default: 1, minimum: 1 })
   @IsOptional()

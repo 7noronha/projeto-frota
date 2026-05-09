@@ -10,7 +10,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Maiusculas } from '../../../common/decorators/maiusculas.decorator';
 
 export enum PerfilEnum {
   ADMIN = 'admin',
@@ -20,10 +20,6 @@ export enum PerfilEnum {
   MOTORISTA = 'motorista',
 }
 
-const maiusculas = () => Transform(({ value }: { value: unknown }) =>
-  typeof value === 'string' ? value.trim().toUpperCase() : value,
-);
-
 export class CriarUsuarioDto {
   @ApiProperty({ example: '0009003656', description: 'Matrícula funcional (10 dígitos)' })
   @IsString()
@@ -32,10 +28,10 @@ export class CriarUsuarioDto {
   matricula: string;
 
   @ApiProperty({ example: 'JOÃO DA SILVA', description: 'Nome completo' })
-  @maiusculas()
+  @Maiusculas()
   @IsString()
   @MinLength(3, { message: 'Nome deve ter no mínimo 3 caracteres' })
-  @MaxLength(200)
+  @MaxLength(200, { message: 'Nome deve ter no máximo 200 caracteres' })
   nome: string;
 
   @ApiProperty({ example: 'MinhaS3nha!', description: 'Senha (mínimo 8 caracteres)' })
@@ -54,17 +50,17 @@ export class CriarUsuarioDto {
   email?: string;
 
   @ApiPropertyOptional({ example: '(61) 99999-0000' })
-  @maiusculas()
+  @Maiusculas()
   @IsOptional()
   @IsString()
-  @MaxLength(20)
+  @MaxLength(20, { message: 'Telefone deve ter no máximo 20 caracteres' })
   telefone?: string;
 
   @ApiPropertyOptional({ example: '12345678900', description: 'Obrigatório para motoristas' })
-  @maiusculas()
+  @Maiusculas()
   @IsOptional()
   @IsString()
-  @MaxLength(20)
+  @MaxLength(20, { message: 'CNH deve ter no máximo 20 caracteres' })
   cnh?: string;
 
   @ApiPropertyOptional({ example: '2028-12-31', description: 'Obrigatório para motoristas (YYYY-MM-DD)' })

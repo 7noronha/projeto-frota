@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -79,12 +80,30 @@ export class UsuariosController {
     return this.usuariosService.atualizar(id, dto);
   }
 
-  @Delete(':id')
+  @Patch(':id/inativar')
   @Roles('admin')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Inativa usuário (exclusão lógica)' })
+  @ApiOperation({ summary: 'Inativa usuário (ativo = false)' })
   @ApiNotFoundResponse({ description: 'Usuário não encontrado' })
   async inativar(@Param('id') id: string): Promise<void> {
     return this.usuariosService.inativar(id);
+  }
+
+  @Patch(':id/reativar')
+  @Roles('admin')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Reativa usuário (ativo = true)' })
+  @ApiNotFoundResponse({ description: 'Usuário não encontrado' })
+  async reativar(@Param('id') id: string): Promise<void> {
+    await this.usuariosService.atualizar(id, { ativo: true });
+  }
+
+  @Delete(':id')
+  @Roles('admin')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Remove usuário do sistema (soft delete via data_exclusao)' })
+  @ApiNotFoundResponse({ description: 'Usuário não encontrado' })
+  async excluir(@Param('id') id: string): Promise<void> {
+    return this.usuariosService.excluir(id);
   }
 }

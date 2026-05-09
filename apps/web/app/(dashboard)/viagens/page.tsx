@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { TabelaViagens } from '@/components/viagens/TabelaViagens';
 import { buscarViagens } from './actions';
 import { Button, TextField, HStack, VStack, Heading, Text } from '@lojascem/components-react';
+import { Paginacao } from '@/components/Paginacao';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,35 +91,12 @@ export default async function PaginaViagens({ searchParams }: PaginaViagensProps
       {/* Tabela */}
       <TabelaViagens viagens={dados} temFiltrosAtivos={temFiltrosAtivos} />
 
-      {/* Paginação */}
-      {totalPaginas > 1 && (
-        <nav aria-label="Paginação" className="mt-6 flex items-center justify-center gap-2">
-          {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((p) => {
-            const sp = new URLSearchParams();
-            if (params.status) sp.set('status', params.status);
-            if (params.dataInicio) sp.set('dataInicio', params.dataInicio);
-            if (params.dataFim) sp.set('dataFim', params.dataFim);
-            sp.set('pagina', String(p));
-            return (
-              <Link
-                key={p}
-                href={`/viagens?${sp.toString()}`}
-                aria-label={`Página ${p}${p === pagina ? ' (atual)' : ''}`}
-                aria-current={p === pagina ? 'page' : undefined}
-                className="flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium"
-                style={{
-                  background: p === pagina ? '#0066FF' : 'white',
-                  color: p === pagina ? 'white' : '#374151',
-                  border: p === pagina ? 'none' : '1px solid #e2e8f0',
-                  textDecoration: 'none',
-                }}
-              >
-                {p}
-              </Link>
-            );
-          })}
-        </nav>
-      )}
+      <Paginacao
+        totalPaginas={totalPaginas}
+        paginaAtual={pagina}
+        baseHref="/viagens"
+        params={{ status: params.status, dataInicio: params.dataInicio, dataFim: params.dataFim }}
+      />
     </div>
   );
 }

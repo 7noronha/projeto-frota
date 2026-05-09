@@ -1,9 +1,11 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+
+const logger = new Logger('Bootstrap');
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -37,8 +39,8 @@ async function bootstrap(): Promise<void> {
   const porta = process.env.API_PORT ? parseInt(process.env.API_PORT, 10) : 3001;
   await app.listen(porta, '0.0.0.0');
 
-  console.log(`FleetOps API rodando em http://localhost:${porta}`);
-  console.log(`Swagger disponível em http://localhost:${porta}/docs`);
+  logger.log(`FleetOps API rodando em http://localhost:${porta}`);
+  logger.log(`Swagger disponível em http://localhost:${porta}/docs`);
 }
 
 bootstrap();

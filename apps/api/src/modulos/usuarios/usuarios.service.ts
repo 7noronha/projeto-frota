@@ -1,3 +1,4 @@
+import { calcularPaginacao } from '../../common/utils/paginacao';
 import {
   BadRequestException,
   ConflictException,
@@ -34,14 +35,14 @@ export class UsuariosService {
   constructor(private readonly prisma: PrismaService) {}
 
   async listar(filtros: FiltrosListarUsuariosDto): Promise<RespostaPaginada<UsuarioRespostaDto>> {
-    const pagina = filtros.pagina ?? 1;
-    const tamanhoPagina = filtros.tamanhoPagina ?? 20;
-    const skip = (pagina - 1) * tamanhoPagina;
+    const { pagina, tamanhoPagina, skip } = calcularPaginacao(filtros);
 
     const where = {
       dataExclusao: null as null,
       ...(filtros.perfil && { perfil: filtros.perfil }),
       ...(filtros.matricula && { matricula: { contains: filtros.matricula } }),
+      ...(filtros.nome && { nome: { contains: filtros.nome, mode: 'insensitive' as const } }),
+      ...(filtros.ativo !== undefined && { ativo: filtros.ativo }),
     };
 
     const [total, usuarios] = await Promise.all([
@@ -192,10 +193,19 @@ export class UsuariosService {
 
     await this.prisma.usuario.update({
       where: { id },
-      data: {
-        ativo: false,
-        dataExclusao: agoraBrasilia(),
-      },
+      data: { ativo: false },
+    });
+  }
+
+  async excluir(id: string): Promise<void> {
+    const usuario = await this.prisma.usuario.findFirst({
+      where: { id, dataExclusao: null },
+    });
+    if (!usuario) throw new NotFoundException('Usuário não encontrado');
+
+    await this.prisma.usuario.update({
+      where: { id },
+      data: { dataExclusao: agoraBrasilia() },
     });
   }
 

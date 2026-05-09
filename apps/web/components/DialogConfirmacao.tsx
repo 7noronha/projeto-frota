@@ -25,7 +25,7 @@ export function DialogConfirmacao({
   carregando = false,
 }: DialogConfirmacaoProps) {
   const [texto, setTexto] = useState('');
-  const confirmado = texto === palavraConfirmacao;
+  const confirmado = texto.toUpperCase() === palavraConfirmacao.toUpperCase();
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export function DialogConfirmacao({
         <TextField
           label={`Digite "${palavraConfirmacao}" para confirmar`}
           value={texto}
-          onChange={(value) => setTexto(value)}
+          onChange={(value) => setTexto(value.toUpperCase())}
           autoComplete="off"
           placeholder={palavraConfirmacao}
           isDisabled={carregando}

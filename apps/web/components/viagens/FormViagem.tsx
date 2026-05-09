@@ -36,7 +36,16 @@ const estiloSelect: React.CSSProperties = {
   color: '#111827',
 };
 
+function hojeEmBrasilia(): string {
+  return new Date(
+    new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }),
+  )
+    .toISOString()
+    .split('T')[0];
+}
+
 export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
+  const hoje = hojeEmBrasilia();
   const [erro, setErro] = useState<string | null>(null);
   const [pendente, setPendente] = useState(false);
   const [erros, setErros] = useState<ErrosCampos>({});
@@ -115,36 +124,53 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
 
             {/* Data + Horários */}
             <div className="grid grid-cols-3 gap-4">
-              <TextField
-                id="dataViagem"
-                label="Data da viagem"
-                type="date"
-                value={dataViagem}
-                onChange={(v) => setDataViagem(v)}
-                isRequired
-                isInvalid={Boolean(erroCampo('dataViagem'))}
-                errorMessage={erroCampo('dataViagem')}
-                aria-required="true"
-                onBlur={() => erroBlur('dataViagem', dataViagem, 'a data')}
-              />
-              <TextField
-                id="horaInicioPrevista"
-                label="Hora início"
-                type="time"
-                value={horaInicioPrevista}
-                onChange={(v) => setHoraInicioPrevista(v)}
-                isRequired
-                aria-required="true"
-              />
-              <TextField
-                id="horaFimPrevista"
-                label="Hora fim"
-                type="time"
-                value={horaFimPrevista}
-                onChange={(v) => setHoraFimPrevista(v)}
-                isRequired
-                aria-required="true"
-              />
+              <div className="flex flex-col">
+                <label htmlFor="dataViagem" className={labelSelect} style={{ color: '#374151' }}>
+                  Data da viagem <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  id="dataViagem"
+                  type="date"
+                  value={dataViagem}
+                  min={hoje}
+                  required
+                  onChange={(e) => setDataViagem(e.target.value)}
+                  onBlur={() => erroBlur('dataViagem', dataViagem, 'a data')}
+                  className="w-full rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={estiloSelect}
+                />
+                {erroCampo('dataViagem') && (
+                  <span className="mt-1 text-xs" style={{ color: '#dc2626' }}>{erroCampo('dataViagem')}</span>
+                )}
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="horaInicioPrevista" className={labelSelect} style={{ color: '#374151' }}>
+                  Hora início <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  id="horaInicioPrevista"
+                  type="time"
+                  value={horaInicioPrevista}
+                  required
+                  onChange={(e) => setHoraInicioPrevista(e.target.value)}
+                  className="w-full rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={estiloSelect}
+                />
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="horaFimPrevista" className={labelSelect} style={{ color: '#374151' }}>
+                  Hora fim <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  id="horaFimPrevista"
+                  type="time"
+                  value={horaFimPrevista}
+                  required
+                  onChange={(e) => setHoraFimPrevista(e.target.value)}
+                  className="w-full rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={estiloSelect}
+                />
+              </div>
             </div>
 
             {/* Motorista + Veículo */}

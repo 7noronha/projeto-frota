@@ -1,3 +1,4 @@
+import { calcularPaginacao } from '../../common/utils/paginacao';
 import {
   BadRequestException,
   ForbiddenException,
@@ -57,14 +58,30 @@ const INCLUDE_RELACOES = {
 
 @Injectable()
 export class ViagensService {
+  private cacheSede: { valor: string; expiradoEm: number } | null = null;
+
   constructor(private readonly prisma: PrismaService) {}
+
+  private async obterEnderecoSede(): Promise<string> {
+    const agora = Date.now();
+    if (this.cacheSede && this.cacheSede.expiradoEm > agora) {
+      return this.cacheSede.valor;
+    }
+    const config = await this.prisma.configuracao.findFirst({
+      where: { chave: 'endereco_sede' },
+    });
+    if (!config) {
+      throw new BadRequestException('Endereço da sede não configurado no sistema');
+    }
+    this.cacheSede = { valor: config.valor, expiradoEm: agora + 5 * 60 * 1000 };
+    return config.valor;
+  }
 
   async listar(
     filtros: FiltrosListarViagensDto,
     usuario: UsuarioJwt,
   ): Promise<RespostaPaginada<ViagemRespostaDto>> {
-    const pagina = filtros.pagina ?? 1;
-    const tamanhoPagina = filtros.tamanhoPagina ?? 20;
+    const { pagina, tamanhoPagina, skip } = calcularPaginacao(filtros);
     const ehMotorista = usuario.perfil === 'motorista';
 
     const where = {
@@ -85,7 +102,7 @@ export class ViagensService {
       this.prisma.viagem.count({ where }),
       this.prisma.viagem.findMany({
         where,
-        skip: (pagina - 1) * tamanhoPagina,
+        skip,
         take: tamanhoPagina,
         orderBy: { dataViagem: 'desc' },
         include: INCLUDE_RELACOES,
@@ -117,13 +134,8 @@ export class ViagensService {
   }
 
   async criar(dto: CriarViagemDto, operadorId: string): Promise<ViagemRespostaDto> {
-    // 1. Endereço da sede
-    const configSede = await this.prisma.configuracao.findFirst({
-      where: { chave: 'endereco_sede' },
-    });
-    if (!configSede) {
-      throw new BadRequestException('Endereço da sede não configurado no sistema');
-    }
+    // 1. Endereço da sede (cacheado por 5 min)
+    const enderecoSede = await this.obterEnderecoSede();
 
     // 2. Validar hora (fim > início)
     if (dto.horaFimPrevista <= dto.horaInicioPrevista) {
@@ -187,7 +199,7 @@ export class ViagensService {
 
     const viagem = await this.prisma.viagem.create({
       data: {
-        origem: configSede.valor,
+        origem: enderecoSede,
         destino: dto.destino,
         dataViagem,
         horaInicioPrevista: horaParaDate(dto.horaInicioPrevista),
