@@ -57,3 +57,14 @@ web-build/
 
 # Cobertura de testes
 coverage/
+
+# Claude Code (settings locais)
+.claude/settings.local.json
+
+# Artefatos de refatoração local (não versionar)
+refactor-report.json
+refactor-to-lib.mjs
+setup-lib.bat
+apps/web/setup-lib.bat
+files/
+packages/components-react/
