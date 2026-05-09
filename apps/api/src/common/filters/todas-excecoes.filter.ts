@@ -33,7 +33,7 @@ export class TodasExcecoesFilter implements ExceptionFilter {
 
     const mensagem = this.extrairMensagem(corpoErro);
 
-    // Disponibiliza a mensagem para o LoggerMiddleware capturar no res.on('finish')
+    // Disponibiliza a mensagem para o hook onResponse capturar no log
     requisicao.errorMessage = mensagem;
 
     // Loga stack trace de erros 500

@@ -5,6 +5,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { TodasExcecoesFilter } from './common/filters/todas-excecoes.filter';
+import { registrarLoggerHttp } from './common/hooks/registrar-logger-http';
 
 const logger = new Logger('Bootstrap');
 
@@ -13,6 +14,9 @@ async function bootstrap(): Promise<void> {
     AppModule,
     new FastifyAdapter({ logger: false }),
   );
+
+  // Hook de monitoria HTTP (todas as requisições)
+  registrarLoggerHttp(app);
 
   app.useGlobalPipes(
     new ValidationPipe({
