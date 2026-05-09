@@ -1,13 +1,8 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { InputText } from 'primereact/inputtext';
-import { Dropdown } from 'primereact/dropdown';
-import { Button } from 'primereact/button';
-import { Message } from 'primereact/message';
-import { Card } from 'primereact/card';
-import { InputTextarea } from 'primereact/inputtextarea';
+import { TextField, TextArea, Button, Alert, Card, HStack, VStack, Heading, Text } from '@lojascem/components-react';
 import type { UsuarioResposta, VeiculoResposta } from '@fleetops/types';
 
 type AcaoFormulario = (
@@ -21,193 +16,267 @@ interface FormViagemProps {
   veiculos: VeiculoResposta[];
 }
 
-export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
-  const [estado, acaoForm, pendente] = useActionState(acao, null);
+interface ErrosCampos {
+  destino?: string;
+  dataViagem?: string;
+  motoristaId?: string;
+  veiculoId?: string;
+  solicitadoPor?: string;
+  autorizadoPor?: string;
+}
 
+function naoVazio(valor: string, rotulo: string): string {
+  return valor.trim() ? '' : `Informe ${rotulo.toLowerCase()}`;
+}
+
+const labelSelect = 'block text-xs font-semibold uppercase tracking-wide mb-1';
+const estiloSelect: React.CSSProperties = {
+  borderColor: '#d1d5db',
+  height: '38px',
+  color: '#111827',
+};
+
+export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
+  const [erro, setErro] = useState<string | null>(null);
+  const [pendente, setPendente] = useState(false);
+  const [erros, setErros] = useState<ErrosCampos>({});
+  const [tocados, setTocados] = useState<Record<string, boolean>>({});
+
+  const [destino, setDestino] = useState('');
+  const [dataViagem, setDataViagem] = useState('');
+  const [horaInicioPrevista, setHoraInicioPrevista] = useState('');
+  const [horaFimPrevista, setHoraFimPrevista] = useState('');
   const [motoristaId, setMotoristaId] = useState('');
   const [veiculoId, setVeiculoId] = useState('');
+  const [solicitadoPor, setSolicitadoPor] = useState('');
+  const [autorizadoPor, setAutorizadoPor] = useState('');
+  const [observacoes, setObservacoes] = useState('');
 
-  const hoje = new Date().toISOString().split('T')[0] ?? '';
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setErro(null);
+    setPendente(true);
+    const formData = new FormData();
+    formData.set('destino', destino);
+    formData.set('dataViagem', dataViagem);
+    formData.set('horaInicioPrevista', horaInicioPrevista);
+    formData.set('horaFimPrevista', horaFimPrevista);
+    formData.set('motoristaId', motoristaId);
+    formData.set('veiculoId', veiculoId);
+    formData.set('solicitadoPor', solicitadoPor);
+    formData.set('autorizadoPor', autorizadoPor);
+    if (observacoes) formData.set('observacoes', observacoes);
+    const resultado = await acao(null, formData);
+    setPendente(false);
+    if (resultado?.erro) setErro(resultado.erro);
+  }
 
-  const opcoesMotoristas = motoristas.map((m) => ({
-    label: `${m.nome} (${m.matricula})`,
-    value: m.id,
-  }));
+  function erroBlur(campo: keyof ErrosCampos, valor: string, rotulo: string) {
+    setTocados((p) => ({ ...p, [campo]: true }));
+    setErros((p) => ({ ...p, [campo]: naoVazio(valor, rotulo) }));
+  }
 
-  const opcoesVeiculos = veiculos.map((v) => ({
-    label: `${v.placa} — ${v.marca} ${v.modelo}`,
-    value: v.id,
-  }));
+  function erroSelect(campo: keyof ErrosCampos, valor: string, rotulo: string) {
+    setTocados((p) => ({ ...p, [campo]: true }));
+    setErros((p) => ({ ...p, [campo]: valor ? '' : `Selecione ${rotulo.toLowerCase()}` }));
+  }
+
+  function erroCampo(campo: keyof ErrosCampos) {
+    return tocados[campo] ? (erros[campo] ?? '') : '';
+  }
 
   return (
     <div className="mx-auto max-w-2xl">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold" style={{ color: '#0A2540' }}>
+      <HStack alignItems="center" justifyContent="between" className="mb-6">
+        <Heading size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
           Nova viagem
-        </h1>
-        <Link href="/viagens" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem' }}>
+        </Heading>
+        <Link href="/viagens" className="text-sm text-[var(--fo-text-secondary)]" style={{ textDecoration: 'none' }}>
           ← Voltar
         </Link>
-      </div>
+      </HStack>
 
       <Card>
-        <form action={acaoForm} className="flex flex-col gap-5">
-          {/* Destino */}
-          <div className="flex flex-col gap-2">
-            <label htmlFor="destino" className="text-sm font-medium" style={{ color: '#374151' }}>
-              Destino <span style={{ color: '#ef4444' }}>*</span>
-            </label>
-            <InputText
+        <Card.Content>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            {/* Destino */}
+            <TextField
               id="destino"
-              name="destino"
+              label="Destino"
               placeholder="Av. Paulista, 1000 — São Paulo, SP"
-              required
-              className="w-full"
+              value={destino}
+              onChange={(v) => setDestino(v)}
+              isRequired
+              isInvalid={Boolean(erroCampo('destino'))}
+              errorMessage={erroCampo('destino')}
+              aria-required="true"
+              onBlur={() => erroBlur('destino', destino, 'o destino')}
             />
-          </div>
 
-          {/* Data + Horários */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="dataViagem" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Data da viagem <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <InputText
+            {/* Data + Horários */}
+            <div className="grid grid-cols-3 gap-4">
+              <TextField
                 id="dataViagem"
-                name="dataViagem"
+                label="Data da viagem"
                 type="date"
-                min={hoje}
-                required
-                className="w-full"
+                value={dataViagem}
+                onChange={(v) => setDataViagem(v)}
+                isRequired
+                isInvalid={Boolean(erroCampo('dataViagem'))}
+                errorMessage={erroCampo('dataViagem')}
+                aria-required="true"
+                onBlur={() => erroBlur('dataViagem', dataViagem, 'a data')}
               />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="horaInicioPrevista" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Hora início <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <InputText
+              <TextField
                 id="horaInicioPrevista"
-                name="horaInicioPrevista"
+                label="Hora início"
                 type="time"
-                required
-                className="w-full"
+                value={horaInicioPrevista}
+                onChange={(v) => setHoraInicioPrevista(v)}
+                isRequired
+                aria-required="true"
               />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="horaFimPrevista" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Hora fim <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <InputText
+              <TextField
                 id="horaFimPrevista"
-                name="horaFimPrevista"
+                label="Hora fim"
                 type="time"
-                required
-                className="w-full"
+                value={horaFimPrevista}
+                onChange={(v) => setHoraFimPrevista(v)}
+                isRequired
+                aria-required="true"
               />
             </div>
-          </div>
 
-          {/* Motorista + Veículo */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium" style={{ color: '#374151' }}>
-                Motorista <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <input type="hidden" name="motoristaId" value={motoristaId} />
-              <Dropdown
-                value={motoristaId}
-                onChange={(e: { value: string }) => setMotoristaId(e.value)}
-                options={opcoesMotoristas}
-                placeholder="Selecione um motorista"
-                className="w-full"
-                emptyMessage="Nenhum motorista disponível"
-              />
-              {motoristas.length === 0 && (
-                <p className="text-xs" style={{ color: '#d97706' }}>
-                  Nenhum motorista ativo cadastrado.
-                </p>
-              )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium" style={{ color: '#374151' }}>
-                Veículo <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <input type="hidden" name="veiculoId" value={veiculoId} />
-              <Dropdown
-                value={veiculoId}
-                onChange={(e: { value: string }) => setVeiculoId(e.value)}
-                options={opcoesVeiculos}
-                placeholder="Selecione um veículo"
-                className="w-full"
-                emptyMessage="Nenhum veículo disponível"
-              />
-              {veiculos.length === 0 && (
-                <p className="text-xs" style={{ color: '#d97706' }}>
-                  Nenhum veículo ativo disponível.
-                </p>
-              )}
-            </div>
-          </div>
+            {/* Motorista + Veículo */}
+            <div className="grid grid-cols-2 gap-4">
+              <VStack gap={1}>
+                <div className="flex flex-col">
+                  <label htmlFor="motoristaId" className={labelSelect} style={{ color: '#374151' }}>
+                    Motorista <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <select
+                    id="motoristaId"
+                    value={motoristaId}
+                    onChange={(e) => {
+                      setMotoristaId(e.target.value);
+                      erroSelect('motoristaId', e.target.value, 'um motorista');
+                    }}
+                    onBlur={(e) => erroSelect('motoristaId', e.target.value, 'um motorista')}
+                    required
+                    className="w-full rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={estiloSelect}
+                  >
+                    <option value="">Selecione um motorista</option>
+                    {motoristas.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.nome} ({m.matricula})
+                      </option>
+                    ))}
+                  </select>
+                  {erroCampo('motoristaId') && (
+                    <span className="mt-1 text-xs" style={{ color: '#dc2626' }}>{erroCampo('motoristaId')}</span>
+                  )}
+                </div>
+                {motoristas.length === 0 && (
+                  <Text size="xs" style={{ color: '#d97706' }}>
+                    Nenhum motorista ativo cadastrado.
+                  </Text>
+                )}
+              </VStack>
 
-          {/* Solicitado + Autorizado */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="solicitadoPor" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Solicitado por <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <InputText
+              <VStack gap={1}>
+                <div className="flex flex-col">
+                  <label htmlFor="veiculoId" className={labelSelect} style={{ color: '#374151' }}>
+                    Veículo <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <select
+                    id="veiculoId"
+                    value={veiculoId}
+                    onChange={(e) => {
+                      setVeiculoId(e.target.value);
+                      erroSelect('veiculoId', e.target.value, 'um veículo');
+                    }}
+                    onBlur={(e) => erroSelect('veiculoId', e.target.value, 'um veículo')}
+                    required
+                    className="w-full rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    style={estiloSelect}
+                  >
+                    <option value="">Selecione um veículo</option>
+                    {veiculos.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.placa} — {v.marca} {v.modelo}
+                      </option>
+                    ))}
+                  </select>
+                  {erroCampo('veiculoId') && (
+                    <span className="mt-1 text-xs" style={{ color: '#dc2626' }}>{erroCampo('veiculoId')}</span>
+                  )}
+                </div>
+                {veiculos.length === 0 && (
+                  <Text size="xs" style={{ color: '#d97706' }}>
+                    Nenhum veículo ativo disponível.
+                  </Text>
+                )}
+              </VStack>
+            </div>
+
+            {/* Solicitado + Autorizado */}
+            <div className="grid grid-cols-2 gap-4">
+              <TextField
                 id="solicitadoPor"
-                name="solicitadoPor"
+                label="Solicitado por"
                 placeholder="Nome do solicitante"
-                required
-                className="w-full"
+                value={solicitadoPor}
+                onChange={(v) => setSolicitadoPor(v)}
+                isRequired
+                isInvalid={Boolean(erroCampo('solicitadoPor'))}
+                errorMessage={erroCampo('solicitadoPor')}
+                aria-required="true"
+                onBlur={() => erroBlur('solicitadoPor', solicitadoPor, 'o solicitante')}
               />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="autorizadoPor" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Autorizado por <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <InputText
+              <TextField
                 id="autorizadoPor"
-                name="autorizadoPor"
+                label="Autorizado por"
                 placeholder="Nome do autorizador"
-                required
-                className="w-full"
+                value={autorizadoPor}
+                onChange={(v) => setAutorizadoPor(v)}
+                isRequired
+                isInvalid={Boolean(erroCampo('autorizadoPor'))}
+                errorMessage={erroCampo('autorizadoPor')}
+                aria-required="true"
+                onBlur={() => erroBlur('autorizadoPor', autorizadoPor, 'o autorizador')}
               />
             </div>
-          </div>
 
-          {/* Observações */}
-          <div className="flex flex-col gap-2">
-            <label htmlFor="observacoes" className="text-sm font-medium" style={{ color: '#374151' }}>
-              Observações
-            </label>
-            <InputTextarea
+            {/* Observações */}
+            <TextArea
               id="observacoes"
-              name="observacoes"
+              label="Observações"
               placeholder="Informações adicionais..."
-              rows={3}
-              className="w-full"
-              autoResize={false}
+              value={observacoes}
+              onChange={(v) => setObservacoes(v)}
+              className="min-h-[80px]"
             />
-          </div>
 
-          {estado?.erro && (
-            <Message severity="error" text={estado.erro} className="w-full justify-start" />
-          )}
+            {erro && (
+              <Alert color="error">{erro}</Alert>
+            )}
 
-          <div className="flex justify-end gap-3 pt-4" style={{ borderTop: '1px solid #f1f5f9' }}>
-            <Link href="/viagens" style={{ textDecoration: 'none' }}>
-              <Button label="Cancelar" severity="secondary" outlined type="button" />
-            </Link>
-            <Button
-              type="submit"
-              label={pendente ? 'Criando...' : 'Criar viagem'}
-              loading={pendente}
-              icon="pi pi-check"
-            />
-          </div>
-        </form>
+            <HStack justifyContent="end" className="gap-3 pt-4" style={{ borderTop: '1px solid #f1f5f9' }}>
+              <Link href="/viagens" style={{ textDecoration: 'none' }}>
+                <Button variant="outline" color="default" type="button">Cancelar</Button>
+              </Link>
+              <Button
+                type="submit"
+                color="primary"
+                isLoading={pendente}
+                leftIcon="PiCheckBold"
+              >
+                {pendente ? 'Criando...' : 'Criar viagem'}
+              </Button>
+            </HStack>
+          </form>
+        </Card.Content>
       </Card>
     </div>
   );

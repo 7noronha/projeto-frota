@@ -1,9 +1,7 @@
 'use client';
 
 import { useActionState, useState } from 'react';
-import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
-import { Button } from 'primereact/button';
-import { Message } from 'primereact/message';
+import { NumberField, Button, Alert } from '@lojascem/components-react';
 
 type AcaoFormulario = (
   estadoAnterior: { erro?: string } | null,
@@ -23,40 +21,31 @@ export function FormFinalizarViagem({ acao, odometroInicial }: FormFinalizarViag
     <form action={acaoForm} className="flex flex-col gap-4">
       <input type="hidden" name="odometroFinal" value={odometro} />
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="odometroFinal" className="text-sm font-medium" style={{ color: '#78350f' }}>
-          Odômetro final (km) <span style={{ color: '#ef4444' }}>*</span>
-        </label>
-        <InputNumber
-          inputId="odometroFinal"
-          value={odometro}
-          onValueChange={(e: InputNumberValueChangeEvent) => setOdometro(e.value ?? odometroInicial + 1)}
-          min={odometroInicial + 1}
-          showButtons
-          buttonLayout="horizontal"
-          step={1}
-          suffix=" km"
-          locale="pt-BR"
-          className="w-full"
-          inputClassName="w-full"
-        />
-        <p className="text-xs" style={{ color: '#64748b' }}>
-          Odômetro na saída: {odometroInicial.toLocaleString('pt-BR')} km
-        </p>
-      </div>
+      <NumberField
+        id="odometroFinal"
+        label="Odômetro final (km)"
+        isRequired
+        value={odometro}
+        onChange={(v) => setOdometro(v ?? odometroInicial + 1)}
+        minValue={odometroInicial + 1}
+        step={1}
+        control
+        description={`Odômetro na saída: ${odometroInicial.toLocaleString('pt-BR')} km`}
+      />
 
       {estado?.erro && (
-        <Message severity="error" text={estado.erro} className="w-full justify-start" />
+        <Alert color="error">{estado.erro}</Alert>
       )}
 
       <Button
         type="submit"
-        label={pendente ? 'Finalizando...' : 'Finalizar viagem'}
-        loading={pendente}
-        icon="pi pi-flag-fill"
-        severity="success"
-        className="w-full"
-      />
+        color="success"
+        isBlock
+        isLoading={pendente}
+        leftIcon="PiFlagBold"
+      >
+        {pendente ? 'Finalizando...' : 'Finalizar viagem'}
+      </Button>
     </form>
   );
 }

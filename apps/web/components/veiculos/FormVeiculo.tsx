@@ -1,14 +1,8 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { InputText } from 'primereact/inputtext';
-import { InputNumber, InputNumberValueChangeEvent } from 'primereact/inputnumber';
-import { Dropdown } from 'primereact/dropdown';
-import { InputTextarea } from 'primereact/inputtextarea';
-import { Button } from 'primereact/button';
-import { Message } from 'primereact/message';
-import { Card } from 'primereact/card';
+import { TextField, TextArea, NumberField, Button, Alert, Card, HStack, Heading } from '@lojascem/components-react';
 import type { VeiculoResposta } from '@fleetops/types';
 
 const ANO_MINIMO = 1950;
@@ -32,221 +26,275 @@ interface FormVeiculoProps {
   titulo: string;
 }
 
+interface ErrosCampos {
+  placa?: string;
+  marca?: string;
+  modelo?: string;
+  cor?: string;
+  renavam?: string;
+}
+
+function naoVazio(valor: string, rotulo: string): string {
+  return valor.trim() ? '' : `Informe ${rotulo.toLowerCase()}`;
+}
+
 export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) {
-  const [estado, acaoForm, pendente] = useActionState(acao, null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [pendente, setPendente] = useState(false);
+  const [erros, setErros] = useState<ErrosCampos>({});
+  const [tocados, setTocados] = useState<Record<string, boolean>>({});
 
   const ehEdicao = Boolean(veiculoInicial);
 
-  const [situacao, setSituacao] = useState(veiculoInicial?.situacao ?? 'ativo');
+  const [placa, setPlaca] = useState(veiculoInicial?.placa ?? '');
+  const [marca, setMarca] = useState(veiculoInicial?.marca ?? '');
+  const [modelo, setModelo] = useState(veiculoInicial?.modelo ?? '');
+  const [cor, setCor] = useState(veiculoInicial?.cor ?? '');
+  const [renavam, setRenavam] = useState(veiculoInicial?.renavam ?? '');
+  const [dataAquisicao, setDataAquisicao] = useState(veiculoInicial?.dataAquisicao ?? '');
+  const [observacoes, setObservacoes] = useState(veiculoInicial?.observacoes ?? '');
+
+  const [situacao, setSituacao] = useState<'ativo' | 'em_manutencao' | 'inativo' | 'baixado'>(
+    (veiculoInicial?.situacao as 'ativo' | 'em_manutencao' | 'inativo' | 'baixado') ?? 'ativo',
+  );
   const [anoFabricacao, setAnoFabricacao] = useState<number>(veiculoInicial?.anoFabricacao ?? anoAtual);
   const [anoModelo, setAnoModelo] = useState<number>(veiculoInicial?.anoModelo ?? anoAtual);
   const [odometro, setOdometro] = useState<number>(veiculoInicial?.odometroAtual ?? 0);
 
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setErro(null);
+    setPendente(true);
+    const formData = new FormData();
+    formData.set('placa', placa);
+    formData.set('marca', marca);
+    formData.set('modelo', modelo);
+    formData.set('anoFabricacao', String(anoFabricacao));
+    formData.set('anoModelo', String(anoModelo));
+    formData.set('cor', cor);
+    formData.set('renavam', renavam);
+    formData.set('odometroAtual', String(odometro));
+    formData.set('dataAquisicao', dataAquisicao);
+    formData.set('situacao', situacao);
+    if (observacoes) formData.set('observacoes', observacoes);
+    const resultado = await acao(null, formData);
+    setPendente(false);
+    if (resultado?.erro) setErro(resultado.erro);
+  }
+
+  function erroBlur(campo: keyof ErrosCampos, valor: string, rotulo: string) {
+    setTocados((p) => ({ ...p, [campo]: true }));
+    setErros((p) => ({ ...p, [campo]: naoVazio(valor, rotulo) }));
+  }
+
+  function erroCampo(campo: keyof ErrosCampos) {
+    return tocados[campo] ? erros[campo] : '';
+  }
+
   return (
     <div className="mx-auto max-w-2xl">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold" style={{ color: '#0A2540' }}>
+      <HStack alignItems="center" justifyContent="between" className="mb-6">
+        <Heading size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
           {titulo}
-        </h1>
-        <Link href="/veiculos" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem' }}>
+        </Heading>
+        <Link href="/veiculos" className="text-sm text-[var(--fo-text-secondary)]" style={{ textDecoration: 'none' }}>
           ← Voltar
         </Link>
-      </div>
+      </HStack>
 
       <Card>
-        <form action={acaoForm} className="flex flex-col gap-5">
-          {/* Placa + Situação */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="placa" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Placa <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <InputText
-                id="placa"
-                name="placa"
-                placeholder="ABC1D23"
-                defaultValue={veiculoInicial?.placa}
-                disabled={ehEdicao}
-                required
-                className="w-full uppercase"
-                style={ehEdicao ? { background: '#f8fafc' } : {}}
-              />
+        <Card.Content>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            {/* Placa + Situação */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <TextField
+                  id="placa"
+                  label="Placa"
+                  placeholder="ABC1D23"
+                  value={placa}
+                  onChange={(v) => setPlaca(v.toUpperCase())}
+                  isDisabled={ehEdicao}
+                  isRequired
+                  isInvalid={Boolean(erroCampo('placa'))}
+                  errorMessage={erroCampo('placa')}
+                  aria-required="true"
+                  className="uppercase"
+                  onBlur={() => !ehEdicao && erroBlur('placa', placa, 'a placa')}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="situacao"
+                  className="block text-xs font-semibold uppercase tracking-wide"
+                  style={{ color: '#374151' }}
+                >
+                  Situação <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <select
+                  id="situacao"
+                  name="situacao"
+                  value={situacao}
+                  onChange={(e) => setSituacao(e.target.value as typeof situacao)}
+                  required
+                  className="w-full rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{ borderColor: '#d1d5db', height: '38px', color: '#111827' }}
+                >
+                  {SITUACOES.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium" style={{ color: '#374151' }}>
-                Situação <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <input type="hidden" name="situacao" value={situacao} />
-              <Dropdown
-                value={situacao}
-                onChange={(e: { value: string }) => setSituacao(e.value)}
-                options={SITUACOES}
-                className="w-full"
-              />
-            </div>
-          </div>
 
-          {/* Marca + Modelo */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="marca" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Marca <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <InputText
-                id="marca"
-                name="marca"
-                placeholder="Toyota"
-                defaultValue={veiculoInicial?.marca}
-                required
-                className="w-full"
-              />
+            {/* Marca + Modelo */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <TextField
+                  id="marca"
+                  label="Marca"
+                  placeholder="Toyota"
+                  value={marca}
+                  onChange={(v) => setMarca(v)}
+                  isRequired
+                  isInvalid={Boolean(erroCampo('marca'))}
+                  errorMessage={erroCampo('marca')}
+                  aria-required="true"
+                  onBlur={() => erroBlur('marca', marca, 'a marca')}
+                />
+              </div>
+              <div>
+                <TextField
+                  id="modelo"
+                  label="Modelo"
+                  placeholder="Corolla"
+                  value={modelo}
+                  onChange={(v) => setModelo(v)}
+                  isRequired
+                  isInvalid={Boolean(erroCampo('modelo'))}
+                  errorMessage={erroCampo('modelo')}
+                  aria-required="true"
+                  onBlur={() => erroBlur('modelo', modelo, 'o modelo')}
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="modelo" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Modelo <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <InputText
-                id="modelo"
-                name="modelo"
-                placeholder="Corolla"
-                defaultValue={veiculoInicial?.modelo}
-                required
-                className="w-full"
-              />
-            </div>
-          </div>
 
-          {/* Ano Fabricação + Ano Modelo */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium" style={{ color: '#374151' }}>
-                Ano de fabricação <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <input type="hidden" name="anoFabricacao" value={anoFabricacao} />
-              <InputNumber
-                value={anoFabricacao}
-                onValueChange={(e: InputNumberValueChangeEvent) => setAnoFabricacao(e.value ?? anoAtual)}
-                min={ANO_MINIMO}
-                max={anoAtual + 1}
-                useGrouping={false}
-                className="w-full"
-                inputClassName="w-full"
-              />
+            {/* Ano Fabricação + Ano Modelo */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <NumberField
+                  id="anoFabricacao"
+                  label="Ano de fabricação"
+                  isRequired
+                  value={anoFabricacao}
+                  onChange={(v) => setAnoFabricacao(v ?? anoAtual)}
+                  minValue={ANO_MINIMO}
+                  maxValue={anoAtual + 1}
+                />
+              </div>
+              <div>
+                <NumberField
+                  id="anoModelo"
+                  label="Ano do modelo"
+                  isRequired
+                  value={anoModelo}
+                  onChange={(v) => setAnoModelo(v ?? anoAtual)}
+                  minValue={ANO_MINIMO}
+                  maxValue={anoAtual + 2}
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium" style={{ color: '#374151' }}>
-                Ano do modelo <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <input type="hidden" name="anoModelo" value={anoModelo} />
-              <InputNumber
-                value={anoModelo}
-                onValueChange={(e: InputNumberValueChangeEvent) => setAnoModelo(e.value ?? anoAtual)}
-                min={ANO_MINIMO}
-                max={anoAtual + 2}
-                useGrouping={false}
-                className="w-full"
-                inputClassName="w-full"
-              />
-            </div>
-          </div>
 
-          {/* Cor + RENAVAM */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label htmlFor="cor" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Cor <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <InputText
-                id="cor"
-                name="cor"
-                placeholder="Branco"
-                defaultValue={veiculoInicial?.cor}
-                required
-                className="w-full"
-              />
+            {/* Cor + RENAVAM */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <TextField
+                  id="cor"
+                  label="Cor"
+                  placeholder="Branco"
+                  value={cor}
+                  onChange={(v) => setCor(v)}
+                  isRequired
+                  isInvalid={Boolean(erroCampo('cor'))}
+                  errorMessage={erroCampo('cor')}
+                  aria-required="true"
+                  onBlur={() => erroBlur('cor', cor, 'a cor')}
+                />
+              </div>
+              <div>
+                <TextField
+                  id="renavam"
+                  label="RENAVAM"
+                  placeholder="12345678901"
+                  maxLength={11}
+                  value={renavam}
+                  onChange={(v) => setRenavam(v)}
+                  isDisabled={ehEdicao}
+                  isRequired
+                  isInvalid={Boolean(erroCampo('renavam'))}
+                  errorMessage={erroCampo('renavam')}
+                  aria-required="true"
+                  onBlur={() => !ehEdicao && erroBlur('renavam', renavam, 'o RENAVAM')}
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="renavam" className="text-sm font-medium" style={{ color: '#374151' }}>
-                RENAVAM <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <InputText
-                id="renavam"
-                name="renavam"
-                placeholder="12345678901"
-                maxLength={11}
-                defaultValue={veiculoInicial?.renavam}
-                disabled={ehEdicao}
-                required
-                className="w-full"
-                style={ehEdicao ? { background: '#f8fafc' } : {}}
-              />
-            </div>
-          </div>
 
-          {/* Odômetro + Data Aquisição */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium" style={{ color: '#374151' }}>
-                Odômetro atual (km) <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <input type="hidden" name="odometroAtual" value={odometro} />
-              <InputNumber
-                value={odometro}
-                onValueChange={(e: InputNumberValueChangeEvent) => setOdometro(e.value ?? 0)}
-                min={0}
-                suffix=" km"
-                locale="pt-BR"
-                className="w-full"
-                inputClassName="w-full"
-              />
+            {/* Odômetro + Data Aquisição */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <NumberField
+                  id="odometroAtual"
+                  label="Odômetro atual (km)"
+                  isRequired
+                  value={odometro}
+                  onChange={(v) => setOdometro(v ?? 0)}
+                  minValue={0}
+                />
+              </div>
+              <div>
+                <TextField
+                  id="dataAquisicao"
+                  label="Data de aquisição"
+                  type="date"
+                  value={dataAquisicao}
+                  onChange={(v) => setDataAquisicao(v)}
+                  isRequired
+                  aria-required="true"
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor="dataAquisicao" className="text-sm font-medium" style={{ color: '#374151' }}>
-                Data de aquisição <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <InputText
-                id="dataAquisicao"
-                name="dataAquisicao"
-                type="date"
-                defaultValue={veiculoInicial?.dataAquisicao}
-                required
-                className="w-full"
-              />
-            </div>
-          </div>
 
-          {/* Observações */}
-          <div className="flex flex-col gap-2">
-            <label htmlFor="observacoes" className="text-sm font-medium" style={{ color: '#374151' }}>
-              Observações
-            </label>
-            <InputTextarea
+            {/* Observações */}
+            <TextArea
               id="observacoes"
-              name="observacoes"
+              label="Observações"
               placeholder="Informações adicionais sobre o veículo..."
-              defaultValue={veiculoInicial?.observacoes ?? ''}
-              rows={3}
-              className="w-full"
-              autoResize={false}
+              value={observacoes}
+              onChange={(v) => setObservacoes(v)}
+              className="min-h-[80px]"
             />
-          </div>
 
-          {estado?.erro && (
-            <Message severity="error" text={estado.erro} className="w-full justify-start" />
-          )}
+            {erro && (
+              <Alert color="error">{erro}</Alert>
+            )}
 
-          <div className="flex justify-end gap-3 pt-4" style={{ borderTop: '1px solid #f1f5f9' }}>
-            <Link href="/veiculos" style={{ textDecoration: 'none' }}>
-              <Button label="Cancelar" severity="secondary" outlined type="button" />
-            </Link>
-            <Button
-              type="submit"
-              label={pendente ? 'Salvando...' : ehEdicao ? 'Salvar alterações' : 'Cadastrar veículo'}
-              loading={pendente}
-              icon="pi pi-check"
-            />
-          </div>
-        </form>
+            <HStack justifyContent="end" className="gap-3 pt-4" style={{ borderTop: '1px solid #f1f5f9' }}>
+              <Link href="/veiculos" style={{ textDecoration: 'none' }}>
+                <Button variant="outline" color="default" type="button">Cancelar</Button>
+              </Link>
+              <Button
+                type="submit"
+                color="primary"
+                isLoading={pendente}
+                leftIcon="PiCheckBold"
+              >
+                {pendente ? 'Salvando...' : ehEdicao ? 'Salvar alterações' : 'Cadastrar veículo'}
+              </Button>
+            </HStack>
+          </form>
+        </Card.Content>
       </Card>
     </div>
   );

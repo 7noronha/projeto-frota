@@ -11,7 +11,7 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export enum SituacaoVeiculoEnum {
   ATIVO = 'ativo',
@@ -23,24 +23,31 @@ export enum SituacaoVeiculoEnum {
 const ANO_MINIMO = 1950;
 const ANO_MAXIMO = new Date().getFullYear() + 2;
 
+const maiusculas = () => Transform(({ value }: { value: unknown }) =>
+  typeof value === 'string' ? value.trim().toUpperCase() : value,
+);
+
 export class CriarVeiculoDto {
   @ApiProperty({
     example: 'ABC1D23',
     description: 'Placa no formato antigo (ABC1234) ou Mercosul (ABC1D23)',
   })
+  @maiusculas()
   @IsString()
   @Matches(/^[A-Z]{3}\d{4}$|^[A-Z]{3}\d[A-Z]\d{2}$/, {
     message: 'Placa inválida. Use o formato ABC1234 (antigo) ou ABC1D23 (Mercosul)',
   })
   placa: string;
 
-  @ApiProperty({ example: 'Toyota' })
+  @ApiProperty({ example: 'TOYOTA' })
+  @maiusculas()
   @IsString()
   @MinLength(1)
   @MaxLength(80)
   marca: string;
 
-  @ApiProperty({ example: 'Corolla' })
+  @ApiProperty({ example: 'COROLLA' })
+  @maiusculas()
   @IsString()
   @MinLength(1)
   @MaxLength(100)
@@ -60,7 +67,8 @@ export class CriarVeiculoDto {
   @Max(ANO_MAXIMO)
   anoModelo: number;
 
-  @ApiProperty({ example: 'Branco' })
+  @ApiProperty({ example: 'BRANCO' })
+  @maiusculas()
   @IsString()
   @MinLength(1)
   @MaxLength(50)
@@ -87,7 +95,8 @@ export class CriarVeiculoDto {
   @IsEnum(SituacaoVeiculoEnum, { message: 'Situação inválida' })
   situacao: SituacaoVeiculoEnum;
 
-  @ApiPropertyOptional({ example: 'Revisão realizada em 10/2024' })
+  @ApiPropertyOptional({ example: 'REVISÃO REALIZADA EM 10/2024' })
+  @maiusculas()
   @IsOptional()
   @IsString()
   observacoes?: string;

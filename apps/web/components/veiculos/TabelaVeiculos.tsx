@@ -2,21 +2,22 @@
 
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
+// TODO: sem equivalente — DataTable e Column não têm par em @lojascem/components-react
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { Tag } from 'primereact/tag';
-import { Button } from 'primereact/button';
-import { Message } from 'primereact/message';
+import { Badge, Button, Alert, HStack } from '@lojascem/components-react';
 import { acaoExcluirVeiculo } from '@/app/(dashboard)/veiculos/actions';
+import { EstadoVazio } from '@/components/EstadoVazio';
+import { DialogConfirmacao } from '@/components/DialogConfirmacao';
 import type { VeiculoResposta } from '@fleetops/types';
 
-type SeveridadeTag = 'success' | 'warning' | 'danger' | 'info' | undefined;
+type BadgeColor = 'success' | 'warning' | 'default' | 'error';
 
-const situacaoConfig: Record<string, { severity: SeveridadeTag; rotulo: string }> = {
-  ativo: { severity: 'success', rotulo: 'Ativo' },
-  em_manutencao: { severity: 'warning', rotulo: 'Em manutenção' },
-  inativo: { severity: undefined, rotulo: 'Inativo' },
-  baixado: { severity: 'danger', rotulo: 'Baixado' },
+const situacaoConfig: Record<string, { color: BadgeColor; rotulo: string }> = {
+  ativo: { color: 'success', rotulo: 'Ativo' },
+  em_manutencao: { color: 'warning', rotulo: 'Em manutenção' },
+  inativo: { color: 'default', rotulo: 'Inativo' },
+  baixado: { color: 'error', rotulo: 'Baixado' },
 };
 
 interface TabelaVeiculosProps {
@@ -26,12 +27,28 @@ interface TabelaVeiculosProps {
 export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
   const [erro, setErro] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [veiculoParaExcluir, setVeiculoParaExcluir] = useState<{
+    id: string;
+    placa: string;
+  } | null>(null);
 
-  function confirmarExclusao(id: string, placa: string) {
-    if (!confirm(`Tem certeza que deseja excluir o veículo ${placa}?`)) return;
+  function abrirDialogExclusao(id: string, placa: string) {
+    setErro(null);
+    setVeiculoParaExcluir({ id, placa });
+  }
+
+  function fecharDialog() {
+    if (!isPending) setVeiculoParaExcluir(null);
+  }
+
+  function confirmarExclusao() {
+    if (!veiculoParaExcluir) return;
     startTransition(async () => {
-      const resultado = await acaoExcluirVeiculo(id);
-      if (resultado?.erro) setErro(resultado.erro);
+      const resultado = await acaoExcluirVeiculo(veiculoParaExcluir.id);
+      if (resultado?.erro) {
+        setErro(resultado.erro);
+      }
+      setVeiculoParaExcluir(null);
     });
   }
 
@@ -43,59 +60,56 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
     return `${rowData.marca} ${rowData.modelo}`;
   }
 
-  function corpoAno(rowData: VeiculoResposta) {
-    return `${rowData.anoFabricacao}/${rowData.anoModelo}`;
-  }
-
   function corpoOdometro(rowData: VeiculoResposta) {
     return `${rowData.odometroAtual.toLocaleString('pt-BR')} km`;
   }
 
   function corpoSituacao(rowData: VeiculoResposta) {
-    const cfg = situacaoConfig[rowData.situacao] ?? { severity: undefined, rotulo: rowData.situacao };
-    return <Tag value={cfg.rotulo} severity={cfg.severity} />;
+    const cfg = situacaoConfig[rowData.situacao] ?? { color: 'default' as BadgeColor, rotulo: rowData.situacao };
+    return <Badge color={cfg.color} variant="light">{cfg.rotulo}</Badge>;
   }
 
   function corpoAcoes(rowData: VeiculoResposta) {
     return (
-      <div className="flex items-center gap-2">
+      <HStack alignItems="center" gap={2}>
         <Link href={`/veiculos/${rowData.id}/editar`} style={{ textDecoration: 'none' }}>
-          <Button
-            label="Editar"
-            icon="pi pi-pencil"
-            size="small"
-            text
-            style={{ color: '#0066FF', padding: '0.25rem 0.5rem' }}
-          />
+          <Button variant="light" color="primary" size="sm" leftIcon="PiPencilBold">
+            Editar
+          </Button>
         </Link>
         <Button
-          label="Excluir"
-          icon="pi pi-trash"
-          size="small"
-          text
-          severity="danger"
-          loading={isPending}
-          onClick={() => confirmarExclusao(rowData.id, rowData.placa)}
-          style={{ padding: '0.25rem 0.5rem' }}
-        />
-      </div>
+          variant="light"
+          color="error"
+          size="sm"
+          leftIcon="PiTrashBold"
+          aria-label={`Excluir veículo ${rowData.placa}`}
+          onPress={() => abrirDialogExclusao(rowData.id, rowData.placa)}
+        >
+          Excluir
+        </Button>
+      </HStack>
     );
   }
 
   return (
     <div>
       {erro && (
-        <Message severity="error" text={erro} className="w-full justify-start mb-4" />
+        <Alert color="error" className="mb-4">{erro}</Alert>
       )}
+
       <DataTable
         value={veiculos}
         emptyMessage={
-          <div className="text-center py-8">
-            <p style={{ color: '#64748b' }}>Nenhum veículo cadastrado.</p>
-            <Link href="/veiculos/novo" style={{ color: '#0066FF', fontSize: '0.875rem' }}>
-              Cadastrar primeiro veículo
-            </Link>
-          </div>
+          <EstadoVazio
+            icone="PiCarBold"
+            titulo="Nenhum veículo cadastrado"
+            descricao="Os veículos da frota aparecerão aqui. Cadastre o primeiro para começar."
+            cta={
+              <Link href="/veiculos/novo" style={{ textDecoration: 'none' }}>
+                <Button color="primary" size="sm" leftIcon="PiPlusBold">Cadastrar veículo</Button>
+              </Link>
+            }
+          />
         }
         stripedRows
         className="w-full"
@@ -103,12 +117,24 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
       >
         <Column field="placa" header="Placa" body={corpoPlaca} />
         <Column header="Marca / Modelo" body={corpoMarcaModelo} />
-        <Column header="Ano" body={corpoAno} />
+        <Column field="anoFabricacao" header="Ano Fab." />
+        <Column field="anoModelo" header="Ano Mod." />
         <Column field="cor" header="Cor" />
         <Column header="Odômetro" body={corpoOdometro} />
         <Column field="situacao" header="Situação" body={corpoSituacao} />
         <Column header="Ações" body={corpoAcoes} style={{ width: 180 }} />
       </DataTable>
+
+      <DialogConfirmacao
+        visivel={veiculoParaExcluir !== null}
+        titulo="Excluir veículo"
+        descricao={`Esta ação é irreversível. O veículo ${veiculoParaExcluir?.placa ?? ''} e todos os seus dados serão removidos permanentemente.`}
+        palavraConfirmacao={veiculoParaExcluir?.placa ?? ''}
+        labelConfirmar="Excluir veículo"
+        onConfirmar={confirmarExclusao}
+        onCancelar={fecharDialog}
+        carregando={isPending}
+      />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { TabelaViagens } from '@/components/viagens/TabelaViagens';
 import { buscarViagens } from './actions';
-import { Button } from 'primereact/button';
+import { Button, TextField, HStack, VStack, Heading, Text } from '@lojascem/components-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +20,8 @@ export default async function PaginaViagens({ searchParams }: PaginaViagensProps
   const params = await searchParams;
   const pagina = Number(params.pagina ?? 1);
 
+  const temFiltrosAtivos = Boolean(params.status ?? params.dataInicio ?? params.dataFim);
+
   const { dados, total, totalPaginas } = await buscarViagens(pagina, {
     status: params.status,
     dataInicio: params.dataInicio,
@@ -29,27 +31,27 @@ export default async function PaginaViagens({ searchParams }: PaginaViagensProps
   return (
     <div>
       {/* Cabeçalho */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#0A2540' }}>
+      <HStack alignItems="center" justifyContent="between" className="mb-6">
+        <VStack>
+          <Heading size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
             Viagens
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: '#64748b' }}>
+          </Heading>
+          <Text size="sm" className="mt-1" style={{ color: 'var(--fo-text-secondary)' }}>
             {total} {total === 1 ? 'viagem encontrada' : 'viagens encontradas'}
-          </p>
-        </div>
+          </Text>
+        </VStack>
         <Link href="/viagens/nova" style={{ textDecoration: 'none' }}>
-          <Button label="Nova viagem" icon="pi pi-plus" />
+          <Button color="primary" leftIcon="PiPlusBold">Nova viagem</Button>
         </Link>
-      </div>
+      </HStack>
 
       {/* Filtros */}
-      <form method="GET" className="mb-6 flex flex-wrap gap-3 items-center">
+      <form method="GET" className="mb-6 flex flex-wrap gap-3 items-end">
         <select
           name="status"
           defaultValue={params.status ?? ''}
-          className="h-9 rounded-md border px-3 text-sm"
-          style={{ borderColor: '#e2e8f0', color: '#374151' }}
+          className="rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          style={{ borderColor: '#d1d5db', height: '34px', color: '#111827' }}
         >
           {STATUS_OPCOES.map((o) => (
             <option key={o.valor} value={o.valor}>
@@ -57,27 +59,27 @@ export default async function PaginaViagens({ searchParams }: PaginaViagensProps
             </option>
           ))}
         </select>
-        <input
+
+        <TextField
           type="date"
           name="dataInicio"
           defaultValue={params.dataInicio}
-          className="h-9 rounded-md border px-3 text-sm"
-          style={{ borderColor: '#e2e8f0', color: '#374151' }}
+          size="sm"
+          placeholder="Data início"
         />
-        <input
+
+        <TextField
           type="date"
           name="dataFim"
           defaultValue={params.dataFim}
-          className="h-9 rounded-md border px-3 text-sm"
-          style={{ borderColor: '#e2e8f0', color: '#374151' }}
+          size="sm"
+          placeholder="Data fim"
         />
-        <button
-          type="submit"
-          className="h-9 rounded-md border px-4 text-sm font-medium cursor-pointer"
-          style={{ borderColor: '#e2e8f0', color: '#374151', background: 'white' }}
-        >
+
+        <Button type="submit" variant="outline" color="default" size="sm">
           Filtrar
-        </button>
+        </Button>
+
         {(params.status || params.dataInicio || params.dataFim) && (
           <Link href="/viagens" className="text-sm" style={{ color: '#64748b' }}>
             Limpar filtros
@@ -86,27 +88,36 @@ export default async function PaginaViagens({ searchParams }: PaginaViagensProps
       </form>
 
       {/* Tabela */}
-      <TabelaViagens viagens={dados} />
+      <TabelaViagens viagens={dados} temFiltrosAtivos={temFiltrosAtivos} />
 
       {/* Paginação */}
       {totalPaginas > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-2">
-          {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((p) => (
-            <Link
-              key={p}
-              href={`/viagens?pagina=${p}`}
-              className="flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium"
-              style={{
-                background: p === pagina ? '#0066FF' : 'white',
-                color: p === pagina ? 'white' : '#374151',
-                border: p === pagina ? 'none' : '1px solid #e2e8f0',
-                textDecoration: 'none',
-              }}
-            >
-              {p}
-            </Link>
-          ))}
-        </div>
+        <nav aria-label="Paginação" className="mt-6 flex items-center justify-center gap-2">
+          {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((p) => {
+            const sp = new URLSearchParams();
+            if (params.status) sp.set('status', params.status);
+            if (params.dataInicio) sp.set('dataInicio', params.dataInicio);
+            if (params.dataFim) sp.set('dataFim', params.dataFim);
+            sp.set('pagina', String(p));
+            return (
+              <Link
+                key={p}
+                href={`/viagens?${sp.toString()}`}
+                aria-label={`Página ${p}${p === pagina ? ' (atual)' : ''}`}
+                aria-current={p === pagina ? 'page' : undefined}
+                className="flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium"
+                style={{
+                  background: p === pagina ? '#0066FF' : 'white',
+                  color: p === pagina ? 'white' : '#374151',
+                  border: p === pagina ? 'none' : '1px solid #e2e8f0',
+                  textDecoration: 'none',
+                }}
+              >
+                {p}
+              </Link>
+            );
+          })}
+        </nav>
       )}
     </div>
   );

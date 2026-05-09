@@ -1,8 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength } from 'class-validator';
+import { Transform } from 'class-transformer';
+
+const maiusculas = () => Transform(({ value }: { value: unknown }) =>
+  typeof value === 'string' ? value.trim().toUpperCase() : value,
+);
 
 export class CriarViagemDto {
-  @ApiProperty({ example: 'Av. Paulista, 1000 — São Paulo, SP', description: 'Endereço de destino' })
+  @ApiProperty({ example: 'AV. PAULISTA, 1000 — SÃO PAULO, SP', description: 'Endereço de destino' })
+  @maiusculas()
   @IsString()
   @MinLength(5, { message: 'Destino deve ter no mínimo 5 caracteres' })
   @MaxLength(500)
@@ -30,19 +36,22 @@ export class CriarViagemDto {
   @IsUUID('4', { message: 'veiculoId inválido' })
   veiculoId: string;
 
-  @ApiProperty({ example: 'João da Silva', description: 'Nome de quem solicitou a viagem' })
+  @ApiProperty({ example: 'JOÃO DA SILVA', description: 'Nome de quem solicitou a viagem' })
+  @maiusculas()
   @IsString()
   @MinLength(3)
   @MaxLength(200)
   solicitadoPor: string;
 
-  @ApiProperty({ example: 'Maria Santos', description: 'Nome de quem autorizou a viagem' })
+  @ApiProperty({ example: 'MARIA SANTOS', description: 'Nome de quem autorizou a viagem' })
+  @maiusculas()
   @IsString()
   @MinLength(3)
   @MaxLength(200)
   autorizadoPor: string;
 
-  @ApiPropertyOptional({ example: 'Levar documentos para assinatura' })
+  @ApiPropertyOptional({ example: 'LEVAR DOCUMENTOS PARA ASSINATURA' })
+  @maiusculas()
   @IsOptional()
   @IsString()
   observacoes?: string;

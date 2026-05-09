@@ -1,25 +1,31 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+// TODO: sem equivalente — DataTable e Column não têm par em @lojascem/components-react
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { Tag } from 'primereact/tag';
-import { Button } from 'primereact/button';
+import { Badge, Button } from '@lojascem/components-react';
+import { EstadoVazio } from '@/components/EstadoVazio';
+import { EstadoVazioFiltro } from '@/components/EstadoVazioFiltro';
 import type { ViagemDetalhada } from '@fleetops/types';
 
-type SeveridadeTag = 'info' | 'warning' | 'success' | 'danger' | undefined;
+type BadgeColor = 'info' | 'warning' | 'success' | 'default';
 
-const statusConfig: Record<string, { severity: SeveridadeTag; rotulo: string }> = {
-  CRIADA: { severity: 'info', rotulo: 'Criada' },
-  EM_ANDAMENTO: { severity: 'warning', rotulo: 'Em andamento' },
-  FINALIZADA: { severity: 'success', rotulo: 'Finalizada' },
+const statusConfig: Record<string, { color: BadgeColor; rotulo: string }> = {
+  CRIADA: { color: 'info', rotulo: 'Criada' },
+  EM_ANDAMENTO: { color: 'warning', rotulo: 'Em andamento' },
+  FINALIZADA: { color: 'success', rotulo: 'Finalizada' },
 };
 
 interface TabelaViagensProps {
   viagens: ViagemDetalhada[];
+  temFiltrosAtivos?: boolean;
 }
 
-export function TabelaViagens({ viagens }: TabelaViagensProps) {
+export function TabelaViagens({ viagens, temFiltrosAtivos = false }: TabelaViagensProps) {
+  const router = useRouter();
+
   function corpoData(rowData: ViagemDetalhada) {
     return new Date(rowData.dataViagem + 'T00:00:00').toLocaleDateString('pt-BR');
   }
@@ -37,29 +43,37 @@ export function TabelaViagens({ viagens }: TabelaViagensProps) {
   }
 
   function corpoStatus(rowData: ViagemDetalhada) {
-    const cfg = statusConfig[rowData.status] ?? { severity: undefined, rotulo: rowData.status };
-    return <Tag value={cfg.rotulo} severity={cfg.severity} />;
+    const cfg = statusConfig[rowData.status] ?? { color: 'default' as BadgeColor, rotulo: rowData.status };
+    return <Badge color={cfg.color} variant="light">{cfg.rotulo}</Badge>;
   }
 
   function corpoAcoes(rowData: ViagemDetalhada) {
     return (
       <Link href={`/viagens/${rowData.id}`} style={{ textDecoration: 'none' }}>
-        <Button label="Ver detalhes" size="small" text className="p-0" style={{ color: '#0066FF' }} />
+        <Button variant="light" color="primary" size="sm">Ver detalhes</Button>
       </Link>
     );
   }
 
+  const emptyMessage = temFiltrosAtivos ? (
+    <EstadoVazioFiltro onLimpar={() => router.push('/viagens')} />
+  ) : (
+    <EstadoVazio
+      icone="PiMapTrifoldBold"
+      titulo="Nenhuma viagem ainda"
+      descricao="As viagens criadas aparecerão aqui. Crie a primeira para começar."
+      cta={
+        <Link href="/viagens/nova" style={{ textDecoration: 'none' }}>
+          <Button color="primary" size="sm" leftIcon="PiPlusBold">Nova viagem</Button>
+        </Link>
+      }
+    />
+  );
+
   return (
     <DataTable
       value={viagens}
-      emptyMessage={
-        <div className="text-center py-8">
-          <p style={{ color: '#64748b' }}>Nenhuma viagem encontrada.</p>
-          <Link href="/viagens/nova" style={{ color: '#0066FF', fontSize: '0.875rem' }}>
-            Criar primeira viagem
-          </Link>
-        </div>
-      }
+      emptyMessage={emptyMessage}
       stripedRows
       className="w-full"
       style={{ borderRadius: 12, overflow: 'hidden' }}
