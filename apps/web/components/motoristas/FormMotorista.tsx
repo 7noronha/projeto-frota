@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { TextField, Button, Alert, Card, HStack, Heading, ComboBox, ListBox } from '@lojascem/components-react';
+import { TextField, Button, Alert, Card, HStack, Heading, SelectField, ListBox } from '@lojascem/components-react';
 import type { UsuarioResposta } from '@fleetops/types';
 
 type AcaoFormulario = (
@@ -104,14 +104,14 @@ export function FormMotorista({ acao, motoristaInicial, titulo }: FormMotoristaP
                 onBlur={() => !ehEdicao && erroBlur('matricula', matricula, 'a matrícula')}
               />
               {ehEdicao && (
-                <ComboBox
+                <SelectField
                   label="Status"
-                  selectedKey={String(ativo)}
-                  onSelectionChange={(chave) => setAtivo(chave === 'true')}
+                  value={String(ativo)}
+                  onChange={(valor) => setAtivo(valor === 'true')}
                 >
                   <ListBox.Item key="true">Ativo</ListBox.Item>
                   <ListBox.Item key="false">Inativo</ListBox.Item>
-                </ComboBox>
+                </SelectField>
               )}
             </div>
 

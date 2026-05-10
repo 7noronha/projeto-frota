@@ -12,7 +12,7 @@ import {
   VStack,
   Heading,
   Text,
-  ComboBox,
+  SelectField,
   ListBox,
 } from '@lojascem/components-react';
 import type { UsuarioResposta, VeiculoResposta } from '@fleetops/types';
@@ -171,16 +171,16 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
             {/* Motorista + Veículo */}
             <div className="grid grid-cols-2 gap-4">
               <VStack gap={1}>
-                <ComboBox
+                <SelectField
                   label="Motorista"
                   placeholder="Selecione um motorista"
                   isRequired
                   aria-required="true"
-                  selectedKey={motoristaId || null}
-                  onSelectionChange={(chave) => {
-                    const valor = chave ?? '';
-                    setMotoristaId(valor);
-                    erroSelect('motoristaId', valor, 'um motorista');
+                  value={motoristaId || null}
+                  onChange={(valor) => {
+                    const escolha = typeof valor === 'string' ? valor : '';
+                    setMotoristaId(escolha);
+                    erroSelect('motoristaId', escolha, 'um motorista');
                   }}
                   isInvalid={Boolean(erroCampo('motoristaId'))}
                   errorMessage={erroCampo('motoristaId')}
@@ -190,7 +190,7 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
                       {m.nome} ({m.matricula})
                     </ListBox.Item>
                   ))}
-                </ComboBox>
+                </SelectField>
                 {motoristas.length === 0 && (
                   <Text size="xs" style={{ color: '#d97706' }}>
                     Nenhum motorista ativo cadastrado.
@@ -199,16 +199,16 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
               </VStack>
 
               <VStack gap={1}>
-                <ComboBox
+                <SelectField
                   label="Veículo"
                   placeholder="Selecione um veículo"
                   isRequired
                   aria-required="true"
-                  selectedKey={veiculoId || null}
-                  onSelectionChange={(chave) => {
-                    const valor = chave ?? '';
-                    setVeiculoId(valor);
-                    erroSelect('veiculoId', valor, 'um veículo');
+                  value={veiculoId || null}
+                  onChange={(valor) => {
+                    const escolha = typeof valor === 'string' ? valor : '';
+                    setVeiculoId(escolha);
+                    erroSelect('veiculoId', escolha, 'um veículo');
                   }}
                   isInvalid={Boolean(erroCampo('veiculoId'))}
                   errorMessage={erroCampo('veiculoId')}
@@ -218,7 +218,7 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
                       {v.placa} — {v.marca} {v.modelo}
                     </ListBox.Item>
                   ))}
-                </ComboBox>
+                </SelectField>
                 {veiculos.length === 0 && (
                   <Text size="xs" style={{ color: '#d97706' }}>
                     Nenhum veículo ativo disponível.

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { TextField, TextArea, NumberField, Button, Alert, Card, HStack, Heading, ComboBox, ListBox } from '@lojascem/components-react';
+import { TextField, TextArea, NumberField, Button, Alert, Card, HStack, Heading, SelectField, ListBox } from '@lojascem/components-react';
 import type { VeiculoResposta } from '@fleetops/types';
 
 const ANO_MINIMO = 1950;
@@ -123,19 +123,19 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
                   onBlur={() => !ehEdicao && erroBlur('placa', placa, 'a placa')}
                 />
               </div>
-              <ComboBox
+              <SelectField
                 label="Situação"
                 isRequired
                 aria-required="true"
-                selectedKey={situacao}
-                onSelectionChange={(chave) => {
-                  if (chave) setSituacao(chave as typeof situacao);
+                value={situacao}
+                onChange={(valor) => {
+                  if (typeof valor === 'string') setSituacao(valor as typeof situacao);
                 }}
               >
                 {SITUACOES.map((s) => (
                   <ListBox.Item key={s.value}>{s.label}</ListBox.Item>
                 ))}
-              </ComboBox>
+              </SelectField>
             </div>
 
             {/* Marca + Modelo */}
