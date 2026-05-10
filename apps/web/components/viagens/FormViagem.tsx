@@ -173,6 +173,7 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
               <SelectField
                 label="Motorista"
                 placeholder="Selecione um motorista"
+                isBlock
                 isRequired
                 aria-required="true"
                 value={motoristaId || null}
@@ -202,6 +203,7 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
               <SelectField
                 label="Veículo"
                 placeholder="Selecione um veículo"
+                isBlock
                 isRequired
                 aria-required="true"
                 value={veiculoId || null}
