@@ -168,64 +168,63 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
               />
             </div>
 
-            {/* Motorista + Veículo */}
-            <div className="grid grid-cols-2 gap-4">
-              <VStack gap={1}>
-                <SelectField
-                  label="Motorista"
-                  placeholder="Selecione um motorista"
-                  isRequired
-                  aria-required="true"
-                  value={motoristaId || null}
-                  onChange={(valor) => {
-                    const escolha = typeof valor === 'string' ? valor : '';
-                    setMotoristaId(escolha);
-                    erroSelect('motoristaId', escolha, 'um motorista');
-                  }}
-                  isInvalid={Boolean(erroCampo('motoristaId'))}
-                  errorMessage={erroCampo('motoristaId')}
-                >
-                  {motoristas.map((m) => (
-                    <ListBox.Item key={m.id}>
-                      {m.nome} ({m.matricula})
-                    </ListBox.Item>
-                  ))}
-                </SelectField>
-                {motoristas.length === 0 && (
-                  <Text size="xs" style={{ color: '#d97706' }}>
-                    Nenhum motorista ativo cadastrado.
-                  </Text>
-                )}
-              </VStack>
+            {/* Motorista (acima) */}
+            <VStack gap={1}>
+              <SelectField
+                label="Motorista"
+                placeholder="Selecione um motorista"
+                isRequired
+                aria-required="true"
+                value={motoristaId || null}
+                onChange={(valor) => {
+                  const escolha = typeof valor === 'string' ? valor : '';
+                  setMotoristaId(escolha);
+                  erroSelect('motoristaId', escolha, 'um motorista');
+                }}
+                isInvalid={Boolean(erroCampo('motoristaId'))}
+                errorMessage={erroCampo('motoristaId')}
+              >
+                {motoristas.map((m) => (
+                  <ListBox.Item key={m.id}>
+                    {m.nome} ({m.matricula})
+                  </ListBox.Item>
+                ))}
+              </SelectField>
+              {motoristas.length === 0 && (
+                <Text size="xs" style={{ color: '#d97706' }}>
+                  Nenhum motorista ativo cadastrado.
+                </Text>
+              )}
+            </VStack>
 
-              <VStack gap={1}>
-                <SelectField
-                  label="Veículo"
-                  placeholder="Selecione um veículo"
-                  isRequired
-                  aria-required="true"
-                  value={veiculoId || null}
-                  onChange={(valor) => {
-                    const escolha = typeof valor === 'string' ? valor : '';
-                    setVeiculoId(escolha);
-                    erroSelect('veiculoId', escolha, 'um veículo');
-                  }}
-                  isInvalid={Boolean(erroCampo('veiculoId'))}
-                  errorMessage={erroCampo('veiculoId')}
-                >
-                  {veiculos.map((v) => (
-                    <ListBox.Item key={v.id}>
-                      {v.placa} — {v.marca} {v.modelo}
-                    </ListBox.Item>
-                  ))}
-                </SelectField>
-                {veiculos.length === 0 && (
-                  <Text size="xs" style={{ color: '#d97706' }}>
-                    Nenhum veículo ativo disponível.
-                  </Text>
-                )}
-              </VStack>
-            </div>
+            {/* Veículo (abaixo) */}
+            <VStack gap={1}>
+              <SelectField
+                label="Veículo"
+                placeholder="Selecione um veículo"
+                isRequired
+                aria-required="true"
+                value={veiculoId || null}
+                onChange={(valor) => {
+                  const escolha = typeof valor === 'string' ? valor : '';
+                  setVeiculoId(escolha);
+                  erroSelect('veiculoId', escolha, 'um veículo');
+                }}
+                isInvalid={Boolean(erroCampo('veiculoId'))}
+                errorMessage={erroCampo('veiculoId')}
+              >
+                {veiculos.map((v) => (
+                  <ListBox.Item key={v.id}>
+                    {v.placa} — {v.marca} {v.modelo}
+                  </ListBox.Item>
+                ))}
+              </SelectField>
+              {veiculos.length === 0 && (
+                <Text size="xs" style={{ color: '#d97706' }}>
+                  Nenhum veículo ativo disponível.
+                </Text>
+              )}
+            </VStack>
 
             {/* Solicitado + Autorizado */}
             <div className="grid grid-cols-2 gap-4">
