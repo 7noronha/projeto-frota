@@ -1,13 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsDateString, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength, IsNotEmpty } from 'class-validator';
 import { Maiusculas } from '../../../common/decorators/maiusculas.decorator';
 
 export class CriarViagemDto {
   @ApiProperty({ example: 'AV. PAULISTA, 1000 — SÃO PAULO, SP', description: 'Endereço de destino' })
   @Maiusculas()
   @IsString()
-  @MinLength(5, { message: 'Destino deve ter no mínimo 5 caracteres' })
-  @MaxLength(500)
+  @IsNotEmpty({ message: 'Informe o destino' })
+  @MaxLength(500, { message: 'Destino deve ter no máximo 500 caracteres' })
   destino: string;
 
   @ApiProperty({ example: '2026-05-10', description: 'Data da viagem (YYYY-MM-DD)' })
