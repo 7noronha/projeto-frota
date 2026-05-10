@@ -9,24 +9,21 @@ interface FiltrosMotoristasProps {
   ativoInicial?: string;
 }
 
-const OPCOES_STATUS = [
-  { id: '', nome: 'Todos' },
-  { id: 'true', nome: 'Ativos' },
-  { id: 'false', nome: 'Inativos' },
-];
+// Sentinel para representar "Todos" sem usar string vazia (incompatível com selectedKey do react-aria)
+const TODOS = 'todos';
 
 export function FiltrosMotoristas({ nomeInicial = '', ativoInicial = '' }: FiltrosMotoristasProps) {
   const router = useRouter();
   const [pendente, iniciarTransicao] = useTransition();
   const [nome, setNome] = useState(nomeInicial);
-  const [ativo, setAtivo] = useState(ativoInicial);
+  const [ativo, setAtivo] = useState(ativoInicial || TODOS);
 
-  const temFiltro = nome.trim() !== '' || ativo !== '';
+  const temFiltro = nome.trim() !== '' || ativo !== TODOS;
 
   function aplicarFiltros(novoNome: string, novoAtivo: string) {
     const params = new URLSearchParams();
     if (novoNome.trim()) params.set('nome', novoNome.trim());
-    if (novoAtivo) params.set('ativo', novoAtivo);
+    if (novoAtivo && novoAtivo !== TODOS) params.set('ativo', novoAtivo);
     const query = params.toString();
     iniciarTransicao(() => {
       router.push(query ? `/motoristas?${query}` : '/motoristas', { scroll: false });
@@ -39,14 +36,14 @@ export function FiltrosMotoristas({ nomeInicial = '', ativoInicial = '' }: Filtr
   }
 
   function aoMudarStatus(chave: string | null) {
-    const valor = chave ?? '';
+    const valor = chave ?? TODOS;
     setAtivo(valor);
     aplicarFiltros(nome, valor);
   }
 
   function aoLimpar() {
     setNome('');
-    setAtivo('');
+    setAtivo(TODOS);
     iniciarTransicao(() => {
       router.push('/motoristas', { scroll: false });
     });
@@ -71,11 +68,12 @@ export function FiltrosMotoristas({ nomeInicial = '', ativoInicial = '' }: Filtr
             aria-label="Filtrar por status"
             size="sm"
             placeholder="Status"
-            defaultItems={OPCOES_STATUS}
             selectedKey={ativo}
             onSelectionChange={aoMudarStatus}
           >
-            {(item) => <ListBox.Item key={item.id}>{item.nome}</ListBox.Item>}
+            <ListBox.Item key={TODOS}>Todos</ListBox.Item>
+            <ListBox.Item key="true">Ativos</ListBox.Item>
+            <ListBox.Item key="false">Inativos</ListBox.Item>
           </ComboBox>
         </div>
 
