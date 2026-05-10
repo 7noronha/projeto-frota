@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { TextField, Button, Alert, Card, HStack, Heading } from '@lojascem/components-react';
+import { TextField, Button, Alert, Card, HStack, Heading, ComboBox, ListBox } from '@lojascem/components-react';
 import type { UsuarioResposta } from '@fleetops/types';
 
 type AcaoFormulario = (
@@ -104,25 +104,14 @@ export function FormMotorista({ acao, motoristaInicial, titulo }: FormMotoristaP
                 onBlur={() => !ehEdicao && erroBlur('matricula', matricula, 'a matrícula')}
               />
               {ehEdicao && (
-                <div className="flex flex-col gap-1">
-                  <label
-                    htmlFor="ativo"
-                    className="block text-xs font-semibold uppercase tracking-wide"
-                    style={{ color: '#374151' }}
-                  >
-                    Status
-                  </label>
-                  <select
-                    id="ativo"
-                    value={String(ativo)}
-                    onChange={(e) => setAtivo(e.target.value === 'true')}
-                    className="w-full rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    style={{ borderColor: '#d1d5db', height: '38px', color: '#111827' }}
-                  >
-                    <option value="true">Ativo</option>
-                    <option value="false">Inativo</option>
-                  </select>
-                </div>
+                <ComboBox
+                  label="Status"
+                  selectedKey={String(ativo)}
+                  onSelectionChange={(chave) => setAtivo(chave === 'true')}
+                >
+                  <ListBox.Item key="true">Ativo</ListBox.Item>
+                  <ListBox.Item key="false">Inativo</ListBox.Item>
+                </ComboBox>
               )}
             </div>
 

@@ -1,17 +1,11 @@
 import Link from 'next/link';
 import { TabelaViagens } from '@/components/viagens/TabelaViagens';
+import { FiltrosViagens } from '@/components/viagens/FiltrosViagens';
 import { buscarViagens } from './actions';
-import { Button, TextField, HStack, VStack, Heading, Text } from '@lojascem/components-react';
+import { Button, HStack, VStack, Heading, Text } from '@lojascem/components-react';
 import { Paginacao } from '@/components/Paginacao';
 
 export const dynamic = 'force-dynamic';
-
-const STATUS_OPCOES = [
-  { valor: '', rotulo: 'Todos os status' },
-  { valor: 'CRIADA', rotulo: 'Criadas' },
-  { valor: 'EM_ANDAMENTO', rotulo: 'Em andamento' },
-  { valor: 'FINALIZADA', rotulo: 'Finalizadas' },
-];
 
 interface PaginaViagensProps {
   searchParams: Promise<{ pagina?: string; status?: string; dataInicio?: string; dataFim?: string }>;
@@ -47,46 +41,11 @@ export default async function PaginaViagens({ searchParams }: PaginaViagensProps
       </HStack>
 
       {/* Filtros */}
-      <form method="GET" className="mb-6 flex flex-wrap gap-3 items-end">
-        <select
-          name="status"
-          defaultValue={params.status ?? ''}
-          className="rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          style={{ borderColor: '#d1d5db', height: '34px', color: '#111827' }}
-        >
-          {STATUS_OPCOES.map((o) => (
-            <option key={o.valor} value={o.valor}>
-              {o.rotulo}
-            </option>
-          ))}
-        </select>
-
-        <TextField
-          type="date"
-          name="dataInicio"
-          defaultValue={params.dataInicio}
-          size="sm"
-          placeholder="Data início"
-        />
-
-        <TextField
-          type="date"
-          name="dataFim"
-          defaultValue={params.dataFim}
-          size="sm"
-          placeholder="Data fim"
-        />
-
-        <Button type="submit" variant="outline" color="default" size="sm">
-          Filtrar
-        </Button>
-
-        {(params.status || params.dataInicio || params.dataFim) && (
-          <Link href="/viagens" className="text-sm" style={{ color: '#64748b' }}>
-            Limpar filtros
-          </Link>
-        )}
-      </form>
+      <FiltrosViagens
+        statusInicial={params.status ?? ''}
+        dataInicioInicial={params.dataInicio ?? ''}
+        dataFimInicial={params.dataFim ?? ''}
+      />
 
       {/* Tabela */}
       <TabelaViagens viagens={dados} temFiltrosAtivos={temFiltrosAtivos} />
