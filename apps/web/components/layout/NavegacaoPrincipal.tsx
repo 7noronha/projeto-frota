@@ -74,6 +74,7 @@ export function NavegacaoPrincipal() {
           leftIcon="PiSignOutBold"
           onPress={handleSair}
           aria-label="Sair do sistema"
+          className="btn-sair"
         >
           Sair
         </Button>
