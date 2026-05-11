@@ -4,8 +4,10 @@ import {
   ApiOperation,
   ApiOkResponse,
   ApiUnauthorizedResponse,
+  ApiTooManyRequestsResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { UsuarioJwt } from '@fleetops/types';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -20,9 +22,12 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  // Rate limit específico do login: 5 tentativas por minuto por IP — proteção anti brute-force
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @ApiOperation({ summary: 'Realiza login com matrícula e senha' })
   @ApiOkResponse({ type: RespostaLoginDto, description: 'Login realizado com sucesso' })
   @ApiUnauthorizedResponse({ description: 'Matrícula ou senha incorretos' })
+  @ApiTooManyRequestsResponse({ description: 'Muitas tentativas de login. Aguarde 1 minuto.' })
   async login(@Body() dto: LoginDto): Promise<RespostaLoginDto> {
     return this.authService.login(dto);
   }
