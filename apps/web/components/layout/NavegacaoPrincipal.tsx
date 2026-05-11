@@ -9,6 +9,7 @@ const itensMenu = [
   { href: '/veiculos', rotulo: 'Veículos', icone: 'PiCarBold' as const },
   { href: '/motoristas', rotulo: 'Motoristas', icone: 'PiUsersBold' as const },
   { href: '/viagens', rotulo: 'Viagens', icone: 'PiMapTrifoldBold' as const },
+  { href: '/usuarios', rotulo: 'Usuários', icone: 'PiUserListBold' as const },
   { href: '/configuracoes', rotulo: 'Configurações', icone: 'PiGearBold' as const },
 ];
 
