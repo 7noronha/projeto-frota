@@ -147,7 +147,11 @@ export function TabelaUsuarios({ usuarios }: TabelaUsuariosProps) {
 
   return (
     <div>
-      {erro && <Alert color="error" className="mb-4">{erro}</Alert>}
+      {erro && (
+        <div role="alert" aria-live="polite" className="mb-4">
+          <Alert color="error">{erro}</Alert>
+        </div>
+      )}
 
       <DataTable
         value={usuarios}

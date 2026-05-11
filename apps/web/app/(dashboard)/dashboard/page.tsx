@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Badge, Button, HStack, VStack, Heading, Text, Icon } from '@lojascem/components-react';
 import { buscarViagens } from '../viagens/actions';
@@ -6,6 +7,7 @@ import { EstadoVazio } from '@/components/EstadoVazio';
 import type { ViagemDetalhada } from '@fleetops/types';
 
 export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Painel — FleetOps' };
 
 interface AtrasoCalc {
   estaAtrasada: boolean;
