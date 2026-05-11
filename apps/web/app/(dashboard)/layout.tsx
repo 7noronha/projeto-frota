@@ -1,4 +1,4 @@
-import { HStack } from '@lojascem/components-react';
+import { HStack, Toaster } from '@lojascem/components-react';
 import { NavegacaoPrincipal } from '@/components/layout/NavegacaoPrincipal';
 
 export default function LayoutDashboard({ children }: { children: React.ReactNode }) {
@@ -8,6 +8,7 @@ export default function LayoutDashboard({ children }: { children: React.ReactNod
       <main className="flex-1 overflow-auto">
         <div className="p-8">{children}</div>
       </main>
+      <Toaster position="top-right" richColors closeButton />
     </HStack>
   );
 }
