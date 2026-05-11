@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { TextField, TextArea, NumberField, Button, Alert, Card, HStack, Heading } from '@lojascem/components-react';
+import { TextField, TextArea, NumberField, Button, Alert, Card, HStack, Heading, SelectField, ListBox } from '@lojascem/components-react';
 import type { VeiculoResposta } from '@fleetops/types';
 
 const ANO_MINIMO = 1950;
@@ -123,30 +123,19 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
                   onBlur={() => !ehEdicao && erroBlur('placa', placa, 'a placa')}
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="situacao"
-                  className="block text-xs font-semibold uppercase tracking-wide"
-                  style={{ color: '#374151' }}
-                >
-                  Situação <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <select
-                  id="situacao"
-                  name="situacao"
-                  value={situacao}
-                  onChange={(e) => setSituacao(e.target.value as typeof situacao)}
-                  required
-                  className="w-full rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={{ borderColor: '#d1d5db', height: '38px', color: '#111827' }}
-                >
-                  {SITUACOES.map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SelectField
+                label="Situação"
+                isRequired
+                aria-required="true"
+                value={situacao}
+                onChange={(valor) => {
+                  if (typeof valor === 'string') setSituacao(valor as typeof situacao);
+                }}
+              >
+                {SITUACOES.map((s) => (
+                  <ListBox.Item key={s.value}>{s.label}</ListBox.Item>
+                ))}
+              </SelectField>
             </div>
 
             {/* Marca + Modelo */}

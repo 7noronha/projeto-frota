@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Icon, HStack, VStack, Text } from '@lojascem/components-react';
+import { Icon, HStack, VStack, Text, Button } from '@lojascem/components-react';
 
 const itensMenu = [
   { href: '/veiculos', rotulo: 'Veículos', icone: 'PiCarBold' as const },
@@ -68,15 +68,16 @@ export function NavegacaoPrincipal() {
 
       {/* Sair */}
       <div className="p-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <button
-          type="button"
-          onClick={handleSair}
-          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
-          style={{ background: '#DC2626' }}
+        <Button
+          color="error"
+          isBlock
+          leftIcon="PiSignOutBold"
+          onPress={handleSair}
+          aria-label="Sair do sistema"
+          className="btn-sair"
         >
-          <Icon name="PiSignOutBold" size="md" color="light" />
-          <span>Sair</span>
-        </button>
+          Sair
+        </Button>
       </div>
     </aside>
   );

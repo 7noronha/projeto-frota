@@ -2,7 +2,19 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { TextField, TextArea, Button, Alert, Card, HStack, VStack, Heading, Text } from '@lojascem/components-react';
+import {
+  TextField,
+  TextArea,
+  Button,
+  Alert,
+  Card,
+  HStack,
+  VStack,
+  Heading,
+  Text,
+  SelectField,
+  ListBox,
+} from '@lojascem/components-react';
 import type { UsuarioResposta, VeiculoResposta } from '@fleetops/types';
 
 type AcaoFormulario = (
@@ -28,13 +40,6 @@ interface ErrosCampos {
 function naoVazio(valor: string, rotulo: string): string {
   return valor.trim() ? '' : `Informe ${rotulo.toLowerCase()}`;
 }
-
-const labelSelect = 'block text-xs font-semibold uppercase tracking-wide mb-1';
-const estiloSelect: React.CSSProperties = {
-  borderColor: '#d1d5db',
-  height: '38px',
-  color: '#111827',
-};
 
 function hojeEmBrasilia(): string {
   return new Date(
@@ -64,6 +69,13 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setErro(null);
+
+    if (dataViagem && dataViagem < hoje) {
+      setErros((p) => ({ ...p, dataViagem: 'A data da viagem não pode estar no passado' }));
+      setTocados((p) => ({ ...p, dataViagem: true }));
+      return;
+    }
+
     setPendente(true);
     const formData = new FormData();
     formData.set('destino', destino);
@@ -124,127 +136,97 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
 
             {/* Data + Horários */}
             <div className="grid grid-cols-3 gap-4">
-              <div className="flex flex-col">
-                <label htmlFor="dataViagem" className={labelSelect} style={{ color: '#374151' }}>
-                  Data da viagem <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <input
-                  id="dataViagem"
-                  type="date"
-                  value={dataViagem}
-                  min={hoje}
-                  required
-                  onChange={(e) => setDataViagem(e.target.value)}
-                  onBlur={() => erroBlur('dataViagem', dataViagem, 'a data')}
-                  className="w-full rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={estiloSelect}
-                />
-                {erroCampo('dataViagem') && (
-                  <span className="mt-1 text-xs" style={{ color: '#dc2626' }}>{erroCampo('dataViagem')}</span>
-                )}
-              </div>
-              <div className="flex flex-col">
-                <label htmlFor="horaInicioPrevista" className={labelSelect} style={{ color: '#374151' }}>
-                  Hora início <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <input
-                  id="horaInicioPrevista"
-                  type="time"
-                  value={horaInicioPrevista}
-                  required
-                  onChange={(e) => setHoraInicioPrevista(e.target.value)}
-                  className="w-full rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={estiloSelect}
-                />
-              </div>
-              <div className="flex flex-col">
-                <label htmlFor="horaFimPrevista" className={labelSelect} style={{ color: '#374151' }}>
-                  Hora fim <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <input
-                  id="horaFimPrevista"
-                  type="time"
-                  value={horaFimPrevista}
-                  required
-                  onChange={(e) => setHoraFimPrevista(e.target.value)}
-                  className="w-full rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  style={estiloSelect}
-                />
-              </div>
+              <TextField
+                id="dataViagem"
+                label="Data da viagem"
+                type="date"
+                value={dataViagem}
+                onChange={setDataViagem}
+                isRequired
+                isInvalid={Boolean(erroCampo('dataViagem'))}
+                errorMessage={erroCampo('dataViagem')}
+                aria-required="true"
+                onBlur={() => erroBlur('dataViagem', dataViagem, 'a data')}
+              />
+              <TextField
+                id="horaInicioPrevista"
+                label="Hora início"
+                type="time"
+                value={horaInicioPrevista}
+                onChange={setHoraInicioPrevista}
+                isRequired
+                aria-required="true"
+              />
+              <TextField
+                id="horaFimPrevista"
+                label="Hora fim"
+                type="time"
+                value={horaFimPrevista}
+                onChange={setHoraFimPrevista}
+                isRequired
+                aria-required="true"
+              />
             </div>
 
-            {/* Motorista + Veículo */}
-            <div className="grid grid-cols-2 gap-4">
-              <VStack gap={1}>
-                <div className="flex flex-col">
-                  <label htmlFor="motoristaId" className={labelSelect} style={{ color: '#374151' }}>
-                    Motorista <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
-                  </label>
-                  <select
-                    id="motoristaId"
-                    value={motoristaId}
-                    onChange={(e) => {
-                      setMotoristaId(e.target.value);
-                      erroSelect('motoristaId', e.target.value, 'um motorista');
-                    }}
-                    onBlur={(e) => erroSelect('motoristaId', e.target.value, 'um motorista')}
-                    required
-                    className="w-full rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    style={estiloSelect}
-                  >
-                    <option value="">Selecione um motorista</option>
-                    {motoristas.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.nome} ({m.matricula})
-                      </option>
-                    ))}
-                  </select>
-                  {erroCampo('motoristaId') && (
-                    <span className="mt-1 text-xs" style={{ color: '#dc2626' }}>{erroCampo('motoristaId')}</span>
-                  )}
-                </div>
-                {motoristas.length === 0 && (
-                  <Text size="xs" style={{ color: '#d97706' }}>
-                    Nenhum motorista ativo cadastrado.
-                  </Text>
-                )}
-              </VStack>
+            {/* Motorista (acima) */}
+            <VStack gap={1}>
+              <SelectField
+                label="Motorista"
+                placeholder="Selecione um motorista"
+                isBlock
+                isRequired
+                aria-required="true"
+                value={motoristaId || null}
+                onChange={(valor) => {
+                  const escolha = typeof valor === 'string' ? valor : '';
+                  setMotoristaId(escolha);
+                  erroSelect('motoristaId', escolha, 'um motorista');
+                }}
+                isInvalid={Boolean(erroCampo('motoristaId'))}
+                errorMessage={erroCampo('motoristaId')}
+              >
+                {motoristas.map((m) => (
+                  <ListBox.Item key={m.id}>
+                    {m.nome} ({m.matricula})
+                  </ListBox.Item>
+                ))}
+              </SelectField>
+              {motoristas.length === 0 && (
+                <Text size="xs" style={{ color: '#d97706' }}>
+                  Nenhum motorista ativo cadastrado.
+                </Text>
+              )}
+            </VStack>
 
-              <VStack gap={1}>
-                <div className="flex flex-col">
-                  <label htmlFor="veiculoId" className={labelSelect} style={{ color: '#374151' }}>
-                    Veículo <span aria-hidden="true" style={{ color: '#ef4444' }}>*</span>
-                  </label>
-                  <select
-                    id="veiculoId"
-                    value={veiculoId}
-                    onChange={(e) => {
-                      setVeiculoId(e.target.value);
-                      erroSelect('veiculoId', e.target.value, 'um veículo');
-                    }}
-                    onBlur={(e) => erroSelect('veiculoId', e.target.value, 'um veículo')}
-                    required
-                    className="w-full rounded-md border bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    style={estiloSelect}
-                  >
-                    <option value="">Selecione um veículo</option>
-                    {veiculos.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.placa} — {v.marca} {v.modelo}
-                      </option>
-                    ))}
-                  </select>
-                  {erroCampo('veiculoId') && (
-                    <span className="mt-1 text-xs" style={{ color: '#dc2626' }}>{erroCampo('veiculoId')}</span>
-                  )}
-                </div>
-                {veiculos.length === 0 && (
-                  <Text size="xs" style={{ color: '#d97706' }}>
-                    Nenhum veículo ativo disponível.
-                  </Text>
-                )}
-              </VStack>
-            </div>
+            {/* Veículo (abaixo) */}
+            <VStack gap={1}>
+              <SelectField
+                label="Veículo"
+                placeholder="Selecione um veículo"
+                isBlock
+                isRequired
+                aria-required="true"
+                value={veiculoId || null}
+                onChange={(valor) => {
+                  const escolha = typeof valor === 'string' ? valor : '';
+                  setVeiculoId(escolha);
+                  erroSelect('veiculoId', escolha, 'um veículo');
+                }}
+                isInvalid={Boolean(erroCampo('veiculoId'))}
+                errorMessage={erroCampo('veiculoId')}
+              >
+                {veiculos.map((v) => (
+                  <ListBox.Item key={v.id}>
+                    {v.placa} — {v.marca} {v.modelo}
+                  </ListBox.Item>
+                ))}
+              </SelectField>
+              {veiculos.length === 0 && (
+                <Text size="xs" style={{ color: '#d97706' }}>
+                  Nenhum veículo ativo disponível.
+                </Text>
+              )}
+            </VStack>
 
             {/* Solicitado + Autorizado */}
             <div className="grid grid-cols-2 gap-4">

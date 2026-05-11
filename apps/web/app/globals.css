@@ -112,6 +112,24 @@ body {
   letter-spacing: 0.02em !important;
 }
 
+/* ─── Botão Sair na sidebar — vermelho saturado, escurece no hover ────────── */
+.btn-sair,
+.btn-sair button {
+  background-color: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+  transition: background-color 150ms ease-out !important;
+}
+
+.btn-sair:hover,
+.btn-sair button:hover,
+.btn-sair:focus-visible,
+.btn-sair button:focus-visible {
+  background-color: #991b1b !important;
+  border-color: #991b1b !important;
+  color: #ffffff !important;
+}
+
 /* ─── PrimeReact ajustes visuais ──────────────────────────────────────────── */
 .p-inputtext,
 .p-dropdown,
