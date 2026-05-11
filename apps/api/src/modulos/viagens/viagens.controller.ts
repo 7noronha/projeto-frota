@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Patch,
   Body,
   Param,
@@ -21,6 +22,7 @@ import {
 import { RespostaPaginada, UsuarioJwt } from '@fleetops/types';
 import { ViagensService } from './viagens.service';
 import { CriarViagemDto } from './dto/criar-viagem.dto';
+import { AtualizarViagemDto } from './dto/atualizar-viagem.dto';
 import { IniciarViagemDto } from './dto/iniciar-viagem.dto';
 import { FinalizarViagemDto } from './dto/finalizar-viagem.dto';
 import { ViagemRespostaDto } from './dto/viagem-resposta.dto';
@@ -71,6 +73,19 @@ export class ViagensController {
     @UsuarioAutenticado() usuario: UsuarioJwt,
   ): Promise<ViagemRespostaDto> {
     return this.viagensService.criar(dto, usuario.sub);
+  }
+
+  @Put(':id')
+  @Roles('admin', 'operador', 'gerente', 'encarregado')
+  @ApiOperation({ summary: 'Atualiza dados de uma viagem (apenas status CRIADA)' })
+  @ApiOkResponse({ type: ViagemRespostaDto })
+  @ApiNotFoundResponse({ description: 'Viagem não encontrada' })
+  @ApiBadRequestResponse({ description: 'Viagem não está no status CRIADA ou dados inválidos' })
+  async atualizar(
+    @Param('id') id: string,
+    @Body() dto: AtualizarViagemDto,
+  ): Promise<ViagemRespostaDto> {
+    return this.viagensService.atualizar(id, dto);
   }
 
   @Patch(':id/iniciar')

@@ -63,6 +63,34 @@ export async function acaoCriarViagem(
   redirect('/viagens');
 }
 
+export async function acaoAtualizarViagem(
+  id: string,
+  _estadoAnterior: { erro?: string } | null,
+  formData: FormData,
+): Promise<{ erro?: string } | null> {
+  const corpo = {
+    destino: formData.get('destino'),
+    dataViagem: formData.get('dataViagem'),
+    horaInicioPrevista: formData.get('horaInicioPrevista'),
+    horaFimPrevista: formData.get('horaFimPrevista'),
+    motoristaId: formData.get('motoristaId'),
+    veiculoId: formData.get('veiculoId'),
+    solicitadoPor: formData.get('solicitadoPor'),
+    autorizadoPor: formData.get('autorizadoPor'),
+    observacoes: formData.get('observacoes') || undefined,
+  };
+
+  try {
+    await fetchServidor(`/viagens/${id}`, { method: 'PUT', body: JSON.stringify(corpo) });
+  } catch (erro) {
+    return { erro: erro instanceof Error ? erro.message : 'Erro ao atualizar viagem' };
+  }
+
+  revalidatePath(`/viagens/${id}`);
+  revalidatePath('/viagens');
+  redirect(`/viagens/${id}`);
+}
+
 export async function acaoIniciarViagem(
   id: string,
   _estadoAnterior: { erro?: string } | null,
