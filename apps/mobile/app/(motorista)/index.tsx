@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import {
   Box,
   VStack,
@@ -8,14 +8,12 @@ import {
   Spinner,
   Badge,
   BadgeText,
-  Divider,
   ScrollView,
 } from '@gluestack-ui/themed';
 import { RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { fetchApi } from '@/lib/api';
-import { removerToken } from '@/lib/auth';
 import type { RespostaPaginada, ViagemDetalhada, StatusViagem } from '@fleetops/types';
 
 const CONFIG_STATUS: Record<StatusViagem, { rotulo: string; cor: string; fundo: string }> = {
@@ -95,7 +93,7 @@ const FILTROS_STATUS = [
 ];
 
 export default function TelaViagens() {
-  const router = useRouter();
+  // router não é usado mais aqui (handleSair foi para o header)
   const [filtroStatus, setFiltroStatus] = useState<StatusViagem | undefined>();
 
   const params = new URLSearchParams({ tamanhoPagina: '50' });
@@ -105,11 +103,6 @@ export default function TelaViagens() {
     queryKey: ['viagens', filtroStatus],
     queryFn: () => fetchApi<RespostaPaginada<ViagemDetalhada>>(`/viagens?${params}`),
   });
-
-  const handleSair = useCallback(async () => {
-    await removerToken();
-    router.replace('/login');
-  }, [router]);
 
   return (
     <Box flex={1} backgroundColor="#F8FAFC">
@@ -178,18 +171,10 @@ export default function TelaViagens() {
               </Text>
             </Box>
           ) : (
-            <VStack>
+            <VStack pb="$8">
               {data?.dados.map((v) => <CartaoViagem key={v.id} viagem={v} />)}
             </VStack>
           )}
-
-          {/* Botão sair no rodapé */}
-          <Divider mt="$4" mb="$3" />
-          <Pressable onPress={handleSair} mb="$8" alignItems="center">
-            <Text color="$textLight400" size="sm">
-              Sair da conta
-            </Text>
-          </Pressable>
         </ScrollView>
       )}
     </Box>
