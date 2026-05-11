@@ -158,14 +158,53 @@ describe('ViagensService', () => {
       await expect(service.criar(mockCriarDto(), 'uuid-operador')).rejects.toThrow(BadRequestException);
     });
 
-    it('deve lançar BadRequestException se motorista já tiver viagem ativa na data', async () => {
-      // Arrange
+    it('deve lançar BadRequestException com horário do conflito se motorista já tiver viagem ativa sobreposta', async () => {
+      // Arrange — conflito retorna horario sobreposto
       prisma.viagem.findFirst
-        .mockResolvedValueOnce({ id: 'uuid-conflito', status: 'CRIADA' }) // conflito motorista
+        .mockResolvedValueOnce({
+          id: 'uuid-conflito',
+          horaInicioPrevista: new Date(Date.UTC(1970, 0, 1, 9, 0)),
+          horaFimPrevista: new Date(Date.UTC(1970, 0, 1, 11, 0)),
+        }) // conflito motorista
         .mockResolvedValueOnce(null);
 
       // Act & Assert
-      await expect(service.criar(mockCriarDto(), 'uuid-operador')).rejects.toThrow(BadRequestException);
+      await expect(service.criar(mockCriarDto(), 'uuid-operador')).rejects.toThrow(
+        /Motorista já possui viagem das 09:00 às 11:00/,
+      );
+    });
+
+    it('deve permitir criação se não houver sobreposição de horário no mesmo dia', async () => {
+      // Arrange — sem conflito (buscarConflitoDePeriodo retorna null para ambos)
+      prisma.viagem.findFirst.mockResolvedValue(null);
+
+      // Act
+      const resultado = await service.criar(mockCriarDto(), 'uuid-operador');
+
+      // Assert
+      expect(resultado.status).toBe('CRIADA');
+      // Garante que a query usou AND com lt/gt nos horários
+      const chamada = prisma.viagem.findFirst.mock.calls[0][0];
+      expect(chamada.where.AND).toEqual([
+        { horaInicioPrevista: { lt: expect.any(Date) } },
+        { horaFimPrevista: { gt: expect.any(Date) } },
+      ]);
+    });
+
+    it('deve lançar BadRequestException com horário do conflito se veículo já tiver viagem sobreposta', async () => {
+      // Arrange — primeiro findFirst sem conflito motorista, segundo retorna conflito veículo
+      prisma.viagem.findFirst
+        .mockResolvedValueOnce(null) // motorista OK
+        .mockResolvedValueOnce({
+          id: 'uuid-conflito-veiculo',
+          horaInicioPrevista: new Date(Date.UTC(1970, 0, 1, 10, 0)),
+          horaFimPrevista: new Date(Date.UTC(1970, 0, 1, 14, 0)),
+        });
+
+      // Act & Assert
+      await expect(service.criar(mockCriarDto(), 'uuid-operador')).rejects.toThrow(
+        /Veículo já possui viagem das 10:00 às 14:00/,
+      );
     });
 
     it('deve lançar NotFoundException se veículo não estiver ativo', async () => {
@@ -175,6 +214,83 @@ describe('ViagensService', () => {
 
       // Act & Assert
       await expect(service.criar(mockCriarDto(), 'uuid-operador')).rejects.toThrow(NotFoundException);
+    });
+
+    it('deve lançar BadRequestException se motorista não tiver CNH cadastrada', async () => {
+      // Arrange
+      prisma.usuario.findFirst.mockResolvedValue({ ...mockMotoristaPrisma, cnh: null });
+
+      // Act & Assert
+      await expect(service.criar(mockCriarDto(), 'uuid-operador')).rejects.toThrow(
+        /CNH cadastrada/,
+      );
+    });
+
+    it('deve usar cache do endereco_sede em criações subsequentes', async () => {
+      // Arrange
+      prisma.viagem.findFirst.mockResolvedValue(null);
+
+      // Act — duas chamadas seguidas
+      await service.criar(mockCriarDto(), 'uuid-operador');
+      await service.criar(mockCriarDto(), 'uuid-operador');
+
+      // Assert — Configuracao.findFirst só foi chamado UMA vez (cache hit na segunda)
+      expect(prisma.configuracao.findFirst).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('listar', () => {
+    it('deve aplicar filtro de motoristaId quando usuário é motorista (forçado)', async () => {
+      // Arrange
+      prisma.viagem.count.mockResolvedValue(0);
+      prisma.viagem.findMany.mockResolvedValue([]);
+
+      // Act
+      await service.listar({}, mockUsuarioMotorista);
+
+      // Assert — where inclui motoristaId = sub do motorista logado
+      const argsCount = prisma.viagem.count.mock.calls[0][0];
+      expect(argsCount.where.motoristaId).toBe('uuid-motorista');
+    });
+
+    it('deve retornar paginação correta', async () => {
+      // Arrange
+      prisma.viagem.count.mockResolvedValue(42);
+      prisma.viagem.findMany.mockResolvedValue([mockViagem]);
+
+      // Act
+      const resultado = await service.listar({ pagina: 2, tamanhoPagina: 10 }, mockUsuarioOperador);
+
+      // Assert
+      expect(resultado.total).toBe(42);
+      expect(resultado.pagina).toBe(2);
+      expect(resultado.tamanhoPagina).toBe(10);
+      expect(resultado.totalPaginas).toBe(5);
+    });
+  });
+
+  describe('buscarPorId', () => {
+    it('deve lançar NotFoundException se viagem não existir', async () => {
+      // Arrange
+      prisma.viagem.findFirst.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.buscarPorId('uuid-inexistente', mockUsuarioOperador)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('deve lançar ForbiddenException se motorista tentar acessar viagem de outro', async () => {
+      // Arrange
+      prisma.viagem.findFirst.mockResolvedValue({
+        ...mockViagem,
+        motoristaId: 'uuid-outro-motorista',
+      });
+
+      // Act & Assert
+      await expect(service.buscarPorId('uuid-viagem', mockUsuarioMotorista)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 

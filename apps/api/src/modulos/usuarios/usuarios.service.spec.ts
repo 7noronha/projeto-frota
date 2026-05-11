@@ -141,7 +141,7 @@ describe('UsuariosService', () => {
   });
 
   describe('inativar', () => {
-    it('deve registrar data_exclusao sem deletar o registro', async () => {
+    it('deve marcar ativo=false sem definir data_exclusao (inativar é diferente de excluir)', async () => {
       // Arrange
       prisma.usuario.findFirst.mockResolvedValue(mockUsuarioPrisma);
       prisma.usuario.update.mockResolvedValue({});
@@ -149,16 +149,11 @@ describe('UsuariosService', () => {
       // Act
       await service.inativar('uuid-123');
 
-      // Assert
-      expect(prisma.usuario.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: 'uuid-123' },
-          data: expect.objectContaining({
-            ativo: false,
-            dataExclusao: expect.any(Date),
-          }),
-        }),
-      );
+      // Assert — apenas ativo: false, sem dataExclusao
+      expect(prisma.usuario.update).toHaveBeenCalledWith({
+        where: { id: 'uuid-123' },
+        data: { ativo: false },
+      });
     });
 
     it('deve lançar NotFoundException ao inativar usuário inexistente', async () => {
