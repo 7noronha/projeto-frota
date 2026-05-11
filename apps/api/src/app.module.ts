@@ -6,6 +6,7 @@ import { AuthModule } from './modulos/auth/auth.module';
 import { UsuariosModule } from './modulos/usuarios/usuarios.module';
 import { VeiculosModule } from './modulos/veiculos/veiculos.module';
 import { ViagensModule } from './modulos/viagens/viagens.module';
+import { ConfiguracoesModule } from './modulos/configuracoes/configuracoes.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ViagensModule } from './modulos/viagens/viagens.module';
     UsuariosModule,
     VeiculosModule,
     ViagensModule,
+    ConfiguracoesModule,
   ],
   controllers: [],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
