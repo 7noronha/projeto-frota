@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Button, HStack, VStack, Heading, Text } from '@lojascem/components-react';
 import { TabelaMotoristas } from '@/components/motoristas/TabelaMotoristas';
@@ -6,6 +7,7 @@ import { buscarMotoristas } from './actions';
 import { Paginacao } from '@/components/Paginacao';
 
 export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Motoristas — FleetOps' };
 
 interface PaginaMotoristasProps {
   searchParams: Promise<{ pagina?: string; nome?: string; ativo?: string }>;

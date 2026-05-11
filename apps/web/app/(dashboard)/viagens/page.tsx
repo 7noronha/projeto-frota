@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { TabelaViagens } from '@/components/viagens/TabelaViagens';
 import { FiltrosViagens } from '@/components/viagens/FiltrosViagens';
@@ -6,6 +7,7 @@ import { Button, HStack, VStack, Heading, Text } from '@lojascem/components-reac
 import { Paginacao } from '@/components/Paginacao';
 
 export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Viagens — FleetOps' };
 
 interface PaginaViagensProps {
   searchParams: Promise<{ pagina?: string; status?: string; dataInicio?: string; dataFim?: string }>;

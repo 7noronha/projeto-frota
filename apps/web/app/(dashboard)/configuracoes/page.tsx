@@ -1,8 +1,10 @@
+import type { Metadata } from 'next';
 import { VStack, Heading, Text } from '@lojascem/components-react';
 import { FormConfiguracao } from '@/components/configuracoes/FormConfiguracao';
 import { acaoAtualizarConfiguracao, buscarConfiguracoes } from './actions';
 
 export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Configurações — FleetOps' };
 
 const ROTULOS: Record<string, { rotulo: string; descricao: string }> = {
   endereco_sede: {
