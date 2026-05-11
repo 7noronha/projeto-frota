@@ -15,7 +15,7 @@ import {
   SelectField,
   ListBox,
 } from '@lojascem/components-react';
-import type { UsuarioResposta, VeiculoResposta } from '@fleetops/types';
+import type { UsuarioResposta, VeiculoResposta, ViagemDetalhada } from '@fleetops/types';
 
 type AcaoFormulario = (
   estadoAnterior: { erro?: string } | null,
@@ -26,6 +26,8 @@ interface FormViagemProps {
   acao: AcaoFormulario;
   motoristas: UsuarioResposta[];
   veiculos: VeiculoResposta[];
+  viagemInicial?: ViagemDetalhada;
+  modoEdicao?: boolean;
 }
 
 interface ErrosCampos {
@@ -49,22 +51,30 @@ function hojeEmBrasilia(): string {
     .split('T')[0];
 }
 
-export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
+export function FormViagem({
+  acao,
+  motoristas,
+  veiculos,
+  viagemInicial,
+  modoEdicao = false,
+}: FormViagemProps) {
   const hoje = hojeEmBrasilia();
   const [erro, setErro] = useState<string | null>(null);
   const [pendente, setPendente] = useState(false);
   const [erros, setErros] = useState<ErrosCampos>({});
   const [tocados, setTocados] = useState<Record<string, boolean>>({});
 
-  const [destino, setDestino] = useState('');
-  const [dataViagem, setDataViagem] = useState('');
-  const [horaInicioPrevista, setHoraInicioPrevista] = useState('');
-  const [horaFimPrevista, setHoraFimPrevista] = useState('');
-  const [motoristaId, setMotoristaId] = useState('');
-  const [veiculoId, setVeiculoId] = useState('');
-  const [solicitadoPor, setSolicitadoPor] = useState('');
-  const [autorizadoPor, setAutorizadoPor] = useState('');
-  const [observacoes, setObservacoes] = useState('');
+  const [destino, setDestino] = useState(viagemInicial?.destino ?? '');
+  const [dataViagem, setDataViagem] = useState(viagemInicial?.dataViagem ?? '');
+  const [horaInicioPrevista, setHoraInicioPrevista] = useState(
+    viagemInicial?.horaInicioPrevista ?? '',
+  );
+  const [horaFimPrevista, setHoraFimPrevista] = useState(viagemInicial?.horaFimPrevista ?? '');
+  const [motoristaId, setMotoristaId] = useState(viagemInicial?.motoristaId ?? '');
+  const [veiculoId, setVeiculoId] = useState(viagemInicial?.veiculoId ?? '');
+  const [solicitadoPor, setSolicitadoPor] = useState(viagemInicial?.solicitadoPor ?? '');
+  const [autorizadoPor, setAutorizadoPor] = useState(viagemInicial?.autorizadoPor ?? '');
+  const [observacoes, setObservacoes] = useState(viagemInicial?.observacoes ?? '');
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -110,9 +120,13 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
     <div className="mx-auto max-w-2xl">
       <HStack alignItems="center" justifyContent="between" className="mb-6">
         <Heading size="xl" weight="bold" style={{ color: 'var(--fo-navy)' }}>
-          Nova viagem
+          {modoEdicao ? 'Editar viagem' : 'Nova viagem'}
         </Heading>
-        <Link href="/viagens" className="text-sm text-[var(--fo-text-secondary)]" style={{ textDecoration: 'none' }}>
+        <Link
+          href={modoEdicao && viagemInicial ? `/viagens/${viagemInicial.id}` : '/viagens'}
+          className="text-sm text-[var(--fo-text-secondary)]"
+          style={{ textDecoration: 'none' }}
+        >
           ← Voltar
         </Link>
       </HStack>
@@ -271,7 +285,10 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
             )}
 
             <HStack justifyContent="end" className="gap-3 pt-4" style={{ borderTop: '1px solid #f1f5f9' }}>
-              <Link href="/viagens" style={{ textDecoration: 'none' }}>
+              <Link
+                href={modoEdicao && viagemInicial ? `/viagens/${viagemInicial.id}` : '/viagens'}
+                style={{ textDecoration: 'none' }}
+              >
                 <Button variant="outline" color="default" type="button">Cancelar</Button>
               </Link>
               <Button
@@ -280,7 +297,9 @@ export function FormViagem({ acao, motoristas, veiculos }: FormViagemProps) {
                 isLoading={pendente}
                 leftIcon="PiCheckBold"
               >
-                {pendente ? 'Criando...' : 'Criar viagem'}
+                {pendente
+                  ? modoEdicao ? 'Salvando...' : 'Criando...'
+                  : modoEdicao ? 'Salvar alterações' : 'Criar viagem'}
               </Button>
             </HStack>
           </form>

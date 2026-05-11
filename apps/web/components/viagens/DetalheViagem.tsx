@@ -56,6 +56,13 @@ export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheVia
         </VStack>
         <HStack alignItems="center" className="gap-3">
           <Badge color={rotulo.color} variant="light" size="lg">{rotulo.texto}</Badge>
+          {viagem.status === 'CRIADA' && (
+            <Link href={`/viagens/${viagem.id}/editar`} style={{ textDecoration: 'none' }}>
+              <Button variant="outline" color="primary" size="sm" leftIcon="PiPencilBold">
+                Editar
+              </Button>
+            </Link>
+          )}
           <Link href="/viagens" style={{ textDecoration: 'none' }}>
             <Button variant="outline" color="default" size="sm" leftIcon="PiArrowLeftBold">
               Voltar

@@ -9,6 +9,7 @@ import { agoraBrasilia, formatarDataHoraBrasilia } from '@fleetops/utils/datetim
 import { StatusViagem, UsuarioJwt, RespostaPaginada } from '@fleetops/types';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CriarViagemDto } from './dto/criar-viagem.dto';
+import { AtualizarViagemDto } from './dto/atualizar-viagem.dto';
 import { IniciarViagemDto } from './dto/iniciar-viagem.dto';
 import { FinalizarViagemDto } from './dto/finalizar-viagem.dto';
 import { ViagemRespostaDto } from './dto/viagem-resposta.dto';
@@ -257,6 +258,112 @@ export class ViagensService {
     });
 
     return this.mapearResposta(viagem);
+  }
+
+  async atualizar(
+    id: string,
+    dto: AtualizarViagemDto,
+  ): Promise<ViagemRespostaDto> {
+    const viagem = await this.prisma.viagem.findFirst({
+      where: { id, dataExclusao: null },
+    });
+    if (!viagem) throw new NotFoundException('Viagem não encontrada');
+
+    if (viagem.status !== 'CRIADA') {
+      throw new BadRequestException(
+        `Não é possível editar viagem com status "${viagem.status}". ` +
+          'Apenas viagens com status CRIADA podem ser editadas.',
+      );
+    }
+
+    // Resolve campos finais (dto sobrescreve, mantém os atuais quando não informado)
+    const dataViagem = dto.dataViagem ? new Date(dto.dataViagem) : viagem.dataViagem;
+    const horaInicio = dto.horaInicioPrevista
+      ? horaParaDate(dto.horaInicioPrevista)
+      : viagem.horaInicioPrevista;
+    const horaFim = dto.horaFimPrevista
+      ? horaParaDate(dto.horaFimPrevista)
+      : viagem.horaFimPrevista;
+    const motoristaId = dto.motoristaId ?? viagem.motoristaId;
+    const veiculoId = dto.veiculoId ?? viagem.veiculoId;
+
+    // Valida hora fim > hora início
+    if (horaFim <= horaInicio) {
+      throw new BadRequestException('Hora de fim deve ser posterior à hora de início');
+    }
+
+    // Se mudou motorista, valida ativo + CNH
+    if (dto.motoristaId && dto.motoristaId !== viagem.motoristaId) {
+      const motorista = await this.prisma.usuario.findFirst({
+        where: { id: motoristaId, perfil: 'motorista', ativo: true, dataExclusao: null },
+      });
+      if (!motorista) throw new NotFoundException('Motorista não encontrado ou inativo');
+      if (!motorista.cnh || !motorista.cnhValidade) {
+        throw new BadRequestException('Motorista não possui CNH cadastrada');
+      }
+      const hoje = agoraBrasilia();
+      if (motorista.cnhValidade < hoje) {
+        throw new BadRequestException(
+          `CNH do motorista vencida em ${motorista.cnhValidade.toISOString().split('T')[0]}`,
+        );
+      }
+    }
+
+    // Se mudou veículo, valida ativo
+    if (dto.veiculoId && dto.veiculoId !== viagem.veiculoId) {
+      const veiculo = await this.prisma.veiculo.findFirst({
+        where: { id: veiculoId, situacao: 'ativo', dataExclusao: null },
+      });
+      if (!veiculo) throw new NotFoundException('Veículo não encontrado ou não está ativo');
+    }
+
+    // Revalida conflito de período (excluindo a própria viagem)
+    const conflitoMotorista = await this.buscarConflitoDePeriodo({
+      campoFiltro: 'motoristaId',
+      idAlvo: motoristaId,
+      dataViagem,
+      horaInicio,
+      horaFim,
+      idExcluir: id,
+    });
+    if (conflitoMotorista) {
+      throw new BadRequestException(
+        `Motorista já possui viagem ${this.descreverConflito(conflitoMotorista)} ` +
+          'nesta data com horário sobreposto.',
+      );
+    }
+    const conflitoVeiculo = await this.buscarConflitoDePeriodo({
+      campoFiltro: 'veiculoId',
+      idAlvo: veiculoId,
+      dataViagem,
+      horaInicio,
+      horaFim,
+      idExcluir: id,
+    });
+    if (conflitoVeiculo) {
+      throw new BadRequestException(
+        `Veículo já possui viagem ${this.descreverConflito(conflitoVeiculo)} ` +
+          'nesta data com horário sobreposto.',
+      );
+    }
+
+    const atualizada = await this.prisma.viagem.update({
+      where: { id },
+      data: {
+        ...(dto.destino !== undefined && { destino: dto.destino }),
+        ...(dto.dataViagem !== undefined && { dataViagem }),
+        ...(dto.horaInicioPrevista !== undefined && { horaInicioPrevista: horaInicio }),
+        ...(dto.horaFimPrevista !== undefined && { horaFimPrevista: horaFim }),
+        ...(dto.motoristaId !== undefined && { motoristaId }),
+        ...(dto.veiculoId !== undefined && { veiculoId }),
+        ...(dto.solicitadoPor !== undefined && { solicitadoPor: dto.solicitadoPor }),
+        ...(dto.autorizadoPor !== undefined && { autorizadoPor: dto.autorizadoPor }),
+        ...(dto.observacoes !== undefined && { observacoes: dto.observacoes ?? null }),
+      },
+      include: INCLUDE_RELACOES,
+    });
+
+    return this.mapearResposta(atualizada);
   }
 
   async iniciar(
