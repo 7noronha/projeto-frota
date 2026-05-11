@@ -20,7 +20,7 @@ import {
   FormControlError,
   FormControlErrorText,
 } from '@gluestack-ui/themed';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchApi, ErroApi } from '@/lib/api';
 import type { ViagemDetalhada, StatusViagem } from '@fleetops/types';
