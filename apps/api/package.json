@@ -13,6 +13,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
     "prisma:seed": "ts-node prisma/seed.ts",
+    "prisma:seed:teste": "ts-node prisma/seed-teste-viagens.ts",
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
@@ -36,7 +37,7 @@
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
+    "@eslint/js": "^9.17.0",
     "@fleetops/config": "*",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
@@ -45,13 +46,13 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^22.0.0",
     "@types/passport-jwt": "^4.0.1",
-    "eslint": "^10.3.0",
-    "globals": "^17.6.0",
+    "eslint": "^9.17.0",
+    "globals": "^15.14.0",
     "jest": "^29.7.0",
     "prisma": "^6.0.0",
     "ts-jest": "^29.2.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.59.2"
+    "typescript-eslint": "^8.19.0"
   }
 }
