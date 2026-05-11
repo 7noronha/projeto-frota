@@ -37,12 +37,26 @@ export class UsuariosService {
   async listar(filtros: FiltrosListarUsuariosDto): Promise<RespostaPaginada<UsuarioRespostaDto>> {
     const { pagina, tamanhoPagina, skip } = calcularPaginacao(filtros);
 
+    // Limite para "CNH vencendo": hoje + N dias (data limite inclusiva)
+    const limiteCnh =
+      filtros.cnhVencendoAteDias !== undefined
+        ? (() => {
+            const d = new Date();
+            d.setHours(0, 0, 0, 0);
+            d.setDate(d.getDate() + filtros.cnhVencendoAteDias);
+            return d;
+          })()
+        : undefined;
+
     const where = {
       dataExclusao: null as null,
       ...(filtros.perfil && { perfil: filtros.perfil }),
       ...(filtros.matricula && { matricula: { contains: filtros.matricula } }),
       ...(filtros.nome && { nome: { contains: filtros.nome, mode: 'insensitive' as const } }),
       ...(filtros.ativo !== undefined && { ativo: filtros.ativo }),
+      ...(limiteCnh && {
+        cnhValidade: { not: null, lte: limiteCnh },
+      }),
     };
 
     const [total, usuarios] = await Promise.all([

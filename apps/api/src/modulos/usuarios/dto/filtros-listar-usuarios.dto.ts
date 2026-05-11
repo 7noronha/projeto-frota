@@ -25,6 +25,17 @@ export class FiltrosListarUsuariosDto {
   @IsBoolean()
   ativo?: boolean;
 
+  @ApiPropertyOptional({
+    example: 30,
+    description: 'Filtra motoristas com CNH que vence em até N dias (inclusive vencidas)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(365)
+  cnhVencendoAteDias?: number;
+
   @ApiPropertyOptional({ default: 1, minimum: 1 })
   @IsOptional()
   @Type(() => Number)
