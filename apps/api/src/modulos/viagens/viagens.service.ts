@@ -62,6 +62,44 @@ export class ViagensService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Verifica sobreposição de período para um motorista ou veículo numa data.
+   * Regra de overlap entre [a,b] e [c,d]: a < d AND c < b
+   * Status considerados: CRIADA e EM_ANDAMENTO (FINALIZADA não bloqueia)
+   * idExcluir: opcional, usado em "atualizar" para ignorar a própria viagem
+   */
+  private async buscarConflitoDePeriodo(params: {
+    campoFiltro: 'motoristaId' | 'veiculoId';
+    idAlvo: string;
+    dataViagem: Date;
+    horaInicio: Date;
+    horaFim: Date;
+    idExcluir?: string;
+  }): Promise<{ id: string; horaInicioPrevista: Date; horaFimPrevista: Date } | null> {
+    const { campoFiltro, idAlvo, dataViagem, horaInicio, horaFim, idExcluir } = params;
+    return this.prisma.viagem.findFirst({
+      where: {
+        [campoFiltro]: idAlvo,
+        dataViagem,
+        status: { in: ['CRIADA', 'EM_ANDAMENTO'] },
+        dataExclusao: null,
+        ...(idExcluir && { NOT: { id: idExcluir } }),
+        AND: [
+          { horaInicioPrevista: { lt: horaFim } },
+          { horaFimPrevista: { gt: horaInicio } },
+        ],
+      },
+      select: { id: true, horaInicioPrevista: true, horaFimPrevista: true },
+    });
+  }
+
+  private descreverConflito(conflito: {
+    horaInicioPrevista: Date;
+    horaFimPrevista: Date;
+  }): string {
+    return `das ${dateParaHora(conflito.horaInicioPrevista)} às ${dateParaHora(conflito.horaFimPrevista)}`;
+  }
+
   private async obterEnderecoSede(): Promise<string> {
     const agora = Date.now();
     if (this.cacheSede && this.cacheSede.expiradoEm > agora) {
@@ -166,34 +204,37 @@ export class ViagensService {
     if (!veiculo) throw new NotFoundException('Veículo não encontrado ou não está ativo');
 
     const dataViagem = new Date(dto.dataViagem);
+    const horaInicioNova = horaParaDate(dto.horaInicioPrevista);
+    const horaFimNova = horaParaDate(dto.horaFimPrevista);
 
-    // 6. Conflito de motorista (mesmo dia, viagem ativa)
-    const conflitoMotorista = await this.prisma.viagem.findFirst({
-      where: {
-        motoristaId: dto.motoristaId,
-        dataViagem,
-        status: { in: ['CRIADA', 'EM_ANDAMENTO'] },
-        dataExclusao: null,
-      },
+    // 6. Conflito de período do motorista
+    // (mesma data + sobreposição de horario com viagem CRIADA ou EM_ANDAMENTO)
+    const conflitoMotorista = await this.buscarConflitoDePeriodo({
+      campoFiltro: 'motoristaId',
+      idAlvo: dto.motoristaId,
+      dataViagem,
+      horaInicio: horaInicioNova,
+      horaFim: horaFimNova,
     });
     if (conflitoMotorista) {
       throw new BadRequestException(
-        'Motorista já possui viagem ativa nesta data. Verifique o agendamento.',
+        `Motorista já possui viagem ${this.descreverConflito(conflitoMotorista)} ` +
+          'nesta data com horário sobreposto. Ajuste o horário ou escolha outro motorista.',
       );
     }
 
-    // 7. Conflito de veículo (mesmo dia, viagem ativa)
-    const conflitoVeiculo = await this.prisma.viagem.findFirst({
-      where: {
-        veiculoId: dto.veiculoId,
-        dataViagem,
-        status: { in: ['CRIADA', 'EM_ANDAMENTO'] },
-        dataExclusao: null,
-      },
+    // 7. Conflito de período do veículo
+    const conflitoVeiculo = await this.buscarConflitoDePeriodo({
+      campoFiltro: 'veiculoId',
+      idAlvo: dto.veiculoId,
+      dataViagem,
+      horaInicio: horaInicioNova,
+      horaFim: horaFimNova,
     });
     if (conflitoVeiculo) {
       throw new BadRequestException(
-        'Veículo já possui viagem ativa nesta data. Verifique o agendamento.',
+        `Veículo já possui viagem ${this.descreverConflito(conflitoVeiculo)} ` +
+          'nesta data com horário sobreposto. Ajuste o horário ou escolha outro veículo.',
       );
     }
 
