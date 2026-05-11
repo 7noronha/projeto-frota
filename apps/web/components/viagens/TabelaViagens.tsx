@@ -78,12 +78,12 @@ export function TabelaViagens({ viagens, temFiltrosAtivos = false }: TabelaViage
       className="w-full"
       style={{ borderRadius: 12, overflow: 'hidden' }}
     >
-      <Column field="dataViagem" header="Data" body={corpoData} />
-      <Column field="destino" header="Destino" style={{ maxWidth: 200 }} />
-      <Column field="motorista" header="Motorista" body={corpoMotorista} />
-      <Column field="veiculo" header="Veículo" body={corpoVeiculo} />
+      <Column field="dataViagem" header="Data" body={corpoData} sortable />
+      <Column field="destino" header="Destino" style={{ maxWidth: 200 }} sortable />
+      <Column field="motorista.nome" header="Motorista" body={corpoMotorista} sortable />
+      <Column field="veiculo.placa" header="Veículo" body={corpoVeiculo} sortable />
       <Column header="Horário previsto" body={corpoHorario} />
-      <Column field="status" header="Status" body={corpoStatus} />
+      <Column field="status" header="Status" body={corpoStatus} sortable />
       <Column header="Ações" body={corpoAcoes} style={{ width: 120 }} />
     </DataTable>
   );
