@@ -12,6 +12,7 @@ import {
 } from '@/app/(dashboard)/usuarios/actions';
 import { EstadoVazio } from '@/components/EstadoVazio';
 import { DialogConfirmacao } from '@/components/DialogConfirmacao';
+import { notificar } from '@/lib/notificar';
 import type { UsuarioResposta } from '@fleetops/types';
 
 interface TabelaUsuariosProps {
@@ -43,22 +44,34 @@ export function TabelaUsuarios({ usuarios }: TabelaUsuariosProps) {
 
   function confirmarAcao() {
     if (!dialog) return;
+    const { id, nome, tipo } = dialog;
     startTransition(async () => {
-      const acao =
-        dialog.tipo === 'inativar'
-          ? acaoInativarUsuario(dialog.id)
-          : acaoExcluirUsuario(dialog.id);
+      const acao = tipo === 'inativar' ? acaoInativarUsuario(id) : acaoExcluirUsuario(id);
       const resultado = await acao;
-      if (resultado?.erro) setErro(resultado.erro);
+      if (resultado?.erro) {
+        setErro(resultado.erro);
+        notificar.erro(resultado.erro);
+      } else {
+        notificar.sucesso(
+          tipo === 'inativar'
+            ? `${nome} foi inativado(a).`
+            : `${nome} foi excluído(a) do sistema.`,
+        );
+      }
       setDialog(null);
     });
   }
 
-  function reativar(id: string) {
+  function reativar(id: string, nome: string) {
     setErro(null);
     startTransition(async () => {
       const resultado = await acaoReativarUsuario(id);
-      if (resultado?.erro) setErro(resultado.erro ?? null);
+      if (resultado?.erro) {
+        setErro(resultado.erro ?? null);
+        notificar.erro(resultado.erro);
+      } else {
+        notificar.sucesso(`${nome} foi reativado(a).`);
+      }
     });
   }
 
@@ -113,7 +126,7 @@ export function TabelaUsuarios({ usuarios }: TabelaUsuariosProps) {
             size="sm"
             leftIcon="PiCheckCircleBold"
             aria-label={`Reativar usuário ${row.nome}`}
-            onPress={() => reativar(row.id)}
+            onPress={() => reativar(row.id, row.nome)}
           >
             Reativar
           </Button>
