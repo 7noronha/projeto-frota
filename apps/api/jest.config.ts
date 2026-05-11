@@ -14,9 +14,9 @@ const config: Config = {
   },
   testEnvironment: 'node',
   moduleNameMapper: {
-    '^@fleetops/utils/datetime$': '<rootDir>/../../packages/utils/src/datetime.ts',
-    '^@fleetops/utils$': '<rootDir>/../../packages/utils/src/index.ts',
-    '^@fleetops/types$': '<rootDir>/../../packages/types/src/index.ts',
+    '^@fleetops/utils/datetime$': '<rootDir>/../../../packages/utils/src/datetime.ts',
+    '^@fleetops/utils$': '<rootDir>/../../../packages/utils/src/index.ts',
+    '^@fleetops/types$': '<rootDir>/../../../packages/types/src/index.ts',
   },
 };
 
