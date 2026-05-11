@@ -173,17 +173,18 @@ export function TabelaUsuarios({ usuarios }: TabelaUsuariosProps) {
         className="w-full"
         style={{ borderRadius: 12, overflow: 'hidden' }}
       >
-        <Column header="Matrícula" body={corpoMatricula} />
-        <Column header="Nome" body={corpoNome} />
-        <Column header="Perfil" body={corpoPerfil} />
+        <Column field="matricula" header="Matrícula" body={corpoMatricula} sortable />
+        <Column field="nome" header="Nome" body={corpoNome} sortable />
+        <Column field="perfil" header="Perfil" body={corpoPerfil} sortable />
         <Column
           field="telefone"
           header="Telefone"
           body={(row: UsuarioResposta) =>
             row.telefone ?? <span className="text-gray-400 text-xs">—</span>
           }
+          sortable
         />
-        <Column header="Status" body={corpoStatus} />
+        <Column field="ativo" header="Status" body={corpoStatus} sortable />
         <Column header="Ações" body={corpoAcoes} style={{ width: 260 }} />
       </DataTable>
 

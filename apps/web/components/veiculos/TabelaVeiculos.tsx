@@ -117,13 +117,13 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
         className="w-full"
         style={{ borderRadius: 12, overflow: 'hidden' }}
       >
-        <Column field="placa" header="Placa" body={corpoPlaca} />
-        <Column header="Marca / Modelo" body={corpoMarcaModelo} />
-        <Column field="anoFabricacao" header="Ano Fab." />
-        <Column field="anoModelo" header="Ano Mod." />
-        <Column field="cor" header="Cor" />
-        <Column header="Odômetro" body={corpoOdometro} />
-        <Column field="situacao" header="Situação" body={corpoSituacao} />
+        <Column field="placa" header="Placa" body={corpoPlaca} sortable />
+        <Column field="marca" header="Marca / Modelo" body={corpoMarcaModelo} sortable />
+        <Column field="anoFabricacao" header="Ano Fab." sortable />
+        <Column field="anoModelo" header="Ano Mod." sortable />
+        <Column field="cor" header="Cor" sortable />
+        <Column field="odometroAtual" header="Odômetro" body={corpoOdometro} sortable />
+        <Column field="situacao" header="Situação" body={corpoSituacao} sortable />
         <Column header="Ações" body={corpoAcoes} style={{ width: 180 }} />
       </DataTable>
 

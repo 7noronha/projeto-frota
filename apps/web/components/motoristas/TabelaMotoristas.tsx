@@ -162,11 +162,11 @@ export function TabelaMotoristas({ motoristas }: TabelaMotoristasProps) {
         className="w-full"
         style={{ borderRadius: 12, overflow: 'hidden' }}
       >
-        <Column header="Matrícula" body={corpoMatricula} />
-        <Column header="Nome" body={corpoNome} />
-        <Column field="telefone" header="Telefone" body={(row: UsuarioResposta) => row.telefone ?? <span className="text-gray-400 text-xs">—</span>} />
-        <Column header="CNH" body={corpoCnh} />
-        <Column header="Status" body={corpoStatus} />
+        <Column field="matricula" header="Matrícula" body={corpoMatricula} sortable />
+        <Column field="nome" header="Nome" body={corpoNome} sortable />
+        <Column field="telefone" header="Telefone" body={(row: UsuarioResposta) => row.telefone ?? <span className="text-gray-400 text-xs">—</span>} sortable />
+        <Column field="cnhValidade" header="CNH" body={corpoCnh} sortable />
+        <Column field="ativo" header="Status" body={corpoStatus} sortable />
         <Column header="Ações" body={corpoAcoes} style={{ width: 200 }} />
       </DataTable>
 
