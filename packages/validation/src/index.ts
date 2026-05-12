@@ -79,28 +79,39 @@ export type EntradaCriarVeiculo = z.infer<typeof schemaCriarVeiculo>;
 
 // ─── Viagens ──────────────────────────────────────────────────────────────────
 
-export const schemaCriarViagem = z
-  .object({
-    destino: z.string().min(5, 'Destino deve ter no mínimo 5 caracteres').max(500),
-    dataViagem: z.string().date('Data da viagem inválida'),
-    horaInicioPrevista: z
-      .string()
-      .regex(/^\d{2}:\d{2}$/, 'Hora de início deve estar no formato HH:MM'),
-    horaFimPrevista: z
-      .string()
-      .regex(/^\d{2}:\d{2}$/, 'Hora de fim deve estar no formato HH:MM'),
-    motoristaId: schemaUuid,
-    veiculoId: schemaUuid,
-    solicitadoPor: z.string().min(3).max(200),
-    autorizadoPor: z.string().min(3).max(200),
-    observacoes: z.string().optional(),
-  })
-  .refine((dados) => dados.horaFimPrevista > dados.horaInicioPrevista, {
+// Regex de hora estrito: 00:00 a 23:59 (rejeita "25:99")
+const REGEX_HORA_HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+// Schema "base" (object puro) — sem o refine de overlap de horas.
+// Usado para .partial() em "atualizar viagem".
+export const schemaCamposViagem = z.object({
+  destino: z.string().min(1, 'Informe o destino').max(500),
+  dataViagem: z.string().date('Data da viagem inválida'),
+  horaInicioPrevista: z
+    .string()
+    .regex(REGEX_HORA_HHMM, 'Hora de início inválida (use HH:MM, ex.: 08:00)'),
+  horaFimPrevista: z
+    .string()
+    .regex(REGEX_HORA_HHMM, 'Hora de fim inválida (use HH:MM, ex.: 12:00)'),
+  motoristaId: schemaUuid,
+  veiculoId: schemaUuid,
+  solicitadoPor: z.string().min(3, 'Solicitado por deve ter no mínimo 3 caracteres').max(200),
+  autorizadoPor: z.string().min(3, 'Autorizado por deve ter no mínimo 3 caracteres').max(200),
+  observacoes: z.string().optional(),
+});
+
+export const schemaCriarViagem = schemaCamposViagem.refine(
+  (dados) => dados.horaFimPrevista > dados.horaInicioPrevista,
+  {
     message: 'Hora de fim deve ser posterior à hora de início',
     path: ['horaFimPrevista'],
-  });
+  },
+);
 
 export type EntradaCriarViagem = z.infer<typeof schemaCriarViagem>;
+
+export const schemaAtualizarViagem = schemaCamposViagem.partial();
+export type EntradaAtualizarViagem = z.infer<typeof schemaAtualizarViagem>;
 
 export const schemaIniciarViagem = z.object({
   odometroInicial: z.number().int().min(0, 'Odômetro inicial não pode ser negativo'),

@@ -15,6 +15,8 @@ import {
   SelectField,
   ListBox,
 } from '@lojascem/components-react';
+import { schemaCriarViagem } from '@fleetops/validation';
+import { validar } from '@/lib/validar';
 import type { UsuarioResposta, VeiculoResposta, ViagemDetalhada } from '@fleetops/types';
 
 type AcaoFormulario = (
@@ -79,6 +81,35 @@ export function FormViagem({
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setErro(null);
+
+    // Validação Zod do payload inteiro antes de enviar — bloqueia
+    // ida ao servidor se algum campo for inválido
+    const resultadoValidacao = validar(schemaCriarViagem, {
+      destino,
+      dataViagem,
+      horaInicioPrevista,
+      horaFimPrevista,
+      motoristaId,
+      veiculoId,
+      solicitadoPor,
+      autorizadoPor,
+      observacoes: observacoes || undefined,
+    });
+
+    if (!resultadoValidacao.sucesso) {
+      const novosErros: ErrosCampos = {};
+      const novosTocados: Record<string, boolean> = {};
+      for (const [campo, msg] of Object.entries(resultadoValidacao.erros)) {
+        if (campo in ({} as ErrosCampos) || ['destino', 'dataViagem', 'motoristaId', 'veiculoId', 'solicitadoPor', 'autorizadoPor'].includes(campo)) {
+          (novosErros as Record<string, string>)[campo] = msg;
+          novosTocados[campo] = true;
+        }
+      }
+      setErros(novosErros);
+      setTocados(novosTocados);
+      setErro(resultadoValidacao.erros._form ?? Object.values(resultadoValidacao.erros)[0] ?? null);
+      return;
+    }
 
     if (dataViagem && dataViagem < hoje) {
       setErros((p) => ({ ...p, dataViagem: 'A data da viagem não pode estar no passado' }));
