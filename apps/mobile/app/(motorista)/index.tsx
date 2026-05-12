@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { fetchApi } from '@/lib/api';
 import { ListaViagensSkeleton } from '@/components/ListaViagensSkeleton';
+import { BannerCnhVencendo } from '@/components/BannerCnhVencendo';
 import type { RespostaPaginada, ViagemDetalhada, StatusViagem } from '@fleetops/types';
 
 const CONFIG_STATUS: Record<StatusViagem, { rotulo: string; cor: string; fundo: string }> = {
@@ -139,6 +140,9 @@ export default function TelaViagens() {
           </HStack>
         </ScrollView>
       </Box>
+
+      {/* Banner de CNH vencendo (se aplicável) */}
+      <BannerCnhVencendo />
 
       {/* Lista */}
       {isLoading ? (
