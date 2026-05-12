@@ -58,6 +58,11 @@ web-build/
 # Cobertura de testes
 coverage/
 
+# Playwright E2E
+playwright-report/
+test-results/
+playwright/.cache/
+
 # Claude Code (settings locais)
 .claude/settings.local.json
 
