@@ -53,9 +53,55 @@ model Veiculo {
   dataExclusao    DateTime? @map("data_exclusao") @db.Timestamp(6)
 
   viagens         Viagem[]
+  despesas        DespesaVeiculo[]
 
   @@index([placa], map: "idx_veiculos_placa")
   @@map("veiculos")
+}
+
+// ─── Despesas de Veículo ──────────────────────────────────────────────────────
+
+model DespesaVeiculo {
+  id              String   @id @default(uuid())
+  veiculoId       String   @map("veiculo_id")
+
+  // 'multa' | 'abastecimento' | 'manutencao'
+  tipo            String   @db.VarChar(20)
+  data            DateTime @db.Date
+  valor           Decimal  @db.Decimal(10, 2)
+  descricao       String   @db.VarChar(500)
+  observacoes     String?  @db.Text
+
+  // Odômetro do veículo no momento da despesa (útil em abastecimentos/manutenção)
+  odometro        Int?
+
+  // ─── Específicos de abastecimento ───────────────────────────────────────────
+  litros          Decimal? @db.Decimal(8, 3)
+  precoLitro      Decimal? @map("preco_litro") @db.Decimal(8, 3)
+  // 'gasolina' | 'etanol' | 'diesel' | 'gnv' | 'flex'
+  tipoCombustivel String?  @map("tipo_combustivel") @db.VarChar(20)
+
+  // ─── Específicos de manutenção ──────────────────────────────────────────────
+  // 'preventiva' | 'corretiva'
+  tipoManutencao  String?  @map("tipo_manutencao") @db.VarChar(20)
+  oficina         String?  @db.VarChar(200)
+
+  // ─── Específicos de multa ───────────────────────────────────────────────────
+  numeroAuto      String?  @map("numero_auto") @db.VarChar(50)
+  // 'leve' | 'media' | 'grave' | 'gravissima'
+  gravidade       String?  @db.VarChar(20)
+  pontosCnh       Int?     @map("pontos_cnh")
+  dataVencimento  DateTime? @map("data_vencimento") @db.Date
+
+  dataCriacao     DateTime  @default(now()) @map("data_criacao") @db.Timestamp(6)
+  dataAtualizacao DateTime  @updatedAt @map("data_atualizacao") @db.Timestamp(6)
+  dataExclusao    DateTime? @map("data_exclusao") @db.Timestamp(6)
+
+  veiculo         Veiculo  @relation(fields: [veiculoId], references: [id])
+
+  @@index([veiculoId, tipo], map: "idx_despesas_veiculo_tipo")
+  @@index([data], map: "idx_despesas_data")
+  @@map("despesas_veiculos")
 }
 
 // ─── Viagens ──────────────────────────────────────────────────────────────────
