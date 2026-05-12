@@ -24,6 +24,7 @@ import { RefreshControl } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchApi, ErroApi } from '@/lib/api';
+import { useNotificar } from '@/lib/notificar';
 import { DetalheViagemSkeleton } from '@/components/DetalheViagemSkeleton';
 import type { ViagemDetalhada, StatusViagem } from '@fleetops/types';
 
@@ -67,6 +68,7 @@ function FormIniciar({ id, odometroAtual }: { id: string; odometroAtual: number 
   const [odometro, setOdometro] = useState(String(odometroAtual));
   const [erro, setErro] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const notificar = useNotificar();
 
   const mutacao = useMutation({
     mutationFn: (odometroInicial: number) =>
@@ -77,9 +79,15 @@ function FormIniciar({ id, odometroAtual }: { id: string; odometroAtual: number 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['viagem', id] });
       queryClient.invalidateQueries({ queryKey: ['viagens'] });
+      notificar.sucesso({
+        titulo: 'Viagem iniciada',
+        descricao: 'Boa viagem! Lembre-se de finalizar ao chegar.',
+      });
     },
     onError: (e) => {
-      setErro(e instanceof ErroApi ? e.message : 'Erro ao iniciar viagem');
+      const msg = e instanceof ErroApi ? e.message : 'Erro ao iniciar viagem';
+      setErro(msg);
+      notificar.erro({ titulo: 'Não foi possível iniciar', descricao: msg });
     },
   });
 
@@ -149,6 +157,7 @@ function FormFinalizar({ id, odometroInicial }: { id: string; odometroInicial: n
   const [odometro, setOdometro] = useState('');
   const [erro, setErro] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const notificar = useNotificar();
 
   const mutacao = useMutation({
     mutationFn: (odometroFinal: number) =>
@@ -159,9 +168,15 @@ function FormFinalizar({ id, odometroInicial }: { id: string; odometroInicial: n
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['viagem', id] });
       queryClient.invalidateQueries({ queryKey: ['viagens'] });
+      notificar.sucesso({
+        titulo: 'Viagem finalizada',
+        descricao: 'Obrigado! Os dados foram registrados.',
+      });
     },
     onError: (e) => {
-      setErro(e instanceof ErroApi ? e.message : 'Erro ao finalizar viagem');
+      const msg = e instanceof ErroApi ? e.message : 'Erro ao finalizar viagem';
+      setErro(msg);
+      notificar.erro({ titulo: 'Não foi possível finalizar', descricao: msg });
     },
   });
 
