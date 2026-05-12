@@ -3,16 +3,28 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 
 export type SeveridadeAlerta = 'alto' | 'medio' | 'baixo';
 
+export type TipoAlerta =
+  | 'cnh_vencida'
+  | 'cnh_vencendo'
+  | 'viagem_atrasada'
+  | 'viagem_sem_inicio'
+  | 'multa_vencida'
+  | 'multa_vencendo'
+  | 'manutencao_devida';
+
 export interface Alerta {
   id: string;
-  tipo: 'cnh_vencida' | 'cnh_vencendo' | 'viagem_atrasada' | 'viagem_sem_inicio';
+  tipo: TipoAlerta;
   severidade: SeveridadeAlerta;
   titulo: string;
   descricao: string;
   alvoId: string;
-  alvoTipo: 'motorista' | 'viagem';
+  alvoTipo: 'motorista' | 'viagem' | 'veiculo' | 'despesa';
   href?: string;
 }
+
+// Intervalo padrão entre manutenções preventivas (km)
+const INTERVALO_MANUTENCAO_KM = 10_000;
 
 @Injectable()
 export class AlertasService {
@@ -127,6 +139,89 @@ export class AlertasService {
         alvoId: v.id,
         alvoTipo: 'viagem',
         href: `/viagens/${v.id}`,
+      });
+    }
+
+    // 4. Multas com dataVencimento ≤ hoje + 7 dias (vencendo) ou < hoje (vencidas)
+    const limite7Multas = new Date(hoje);
+    limite7Multas.setDate(limite7Multas.getDate() + 7);
+
+    const multas = await this.prisma.despesaVeiculo.findMany({
+      where: {
+        tipo: 'multa',
+        dataExclusao: null,
+        dataVencimento: { not: null, lte: limite7Multas },
+      },
+      include: {
+        veiculo: { select: { placa: true, marca: true, modelo: true } },
+      },
+      orderBy: { dataVencimento: 'asc' },
+    });
+
+    for (const m of multas) {
+      if (!m.dataVencimento) continue;
+      const dataVenc = new Date(m.dataVencimento);
+      dataVenc.setHours(0, 0, 0, 0);
+      const dias = Math.ceil((dataVenc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+      const vencida = dias < 0;
+      const valorFormatado = Number(m.valor).toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+      });
+
+      alertas.push({
+        id: `multa:${m.id}`,
+        tipo: vencida ? 'multa_vencida' : 'multa_vencendo',
+        severidade: vencida ? 'alto' : dias <= 2 ? 'medio' : 'baixo',
+        titulo: vencida
+          ? `Multa vencida há ${Math.abs(dias)} ${Math.abs(dias) === 1 ? 'dia' : 'dias'}`
+          : dias === 0
+            ? 'Multa vence hoje'
+            : `Multa vence em ${dias} ${dias === 1 ? 'dia' : 'dias'}`,
+        descricao: `${m.veiculo.placa} · ${m.descricao} · ${valorFormatado}${
+          m.numeroAuto ? ` · Auto ${m.numeroAuto}` : ''
+        }`,
+        alvoId: m.id,
+        alvoTipo: 'despesa',
+        href: `/veiculos/${m.veiculoId}/despesas/${m.id}/editar`,
+      });
+    }
+
+    // 5. Veículos com manutenção devida (km desde a última preventiva > intervalo padrão)
+    const veiculos = await this.prisma.veiculo.findMany({
+      where: { situacao: 'ativo', dataExclusao: null },
+      select: { id: true, placa: true, marca: true, modelo: true, odometroAtual: true },
+    });
+
+    for (const v of veiculos) {
+      const ultimaPreventiva = await this.prisma.despesaVeiculo.findFirst({
+        where: {
+          veiculoId: v.id,
+          tipo: 'manutencao',
+          tipoManutencao: 'preventiva',
+          dataExclusao: null,
+          odometro: { not: null },
+        },
+        orderBy: { data: 'desc' },
+      });
+
+      // Sem histórico de preventiva: considera o odometroAtual como referência
+      // (sem alerta — operador é quem decide cadastrar a primeira)
+      if (!ultimaPreventiva?.odometro) continue;
+
+      const kmDesdeUltima = v.odometroAtual - ultimaPreventiva.odometro;
+      if (kmDesdeUltima < INTERVALO_MANUTENCAO_KM) continue;
+
+      const excedente = kmDesdeUltima - INTERVALO_MANUTENCAO_KM;
+      alertas.push({
+        id: `manutencao:${v.id}`,
+        tipo: 'manutencao_devida',
+        severidade: excedente > 5_000 ? 'alto' : excedente > 1_000 ? 'medio' : 'baixo',
+        titulo: `Manutenção preventiva devida há ${kmDesdeUltima.toLocaleString('pt-BR')} km`,
+        descricao: `${v.placa} · ${v.marca} ${v.modelo} · última preventiva em ${ultimaPreventiva.odometro.toLocaleString('pt-BR')} km, atual ${v.odometroAtual.toLocaleString('pt-BR')} km`,
+        alvoId: v.id,
+        alvoTipo: 'veiculo',
+        href: `/veiculos/${v.id}/despesas/nova`,
       });
     }
 
