@@ -72,6 +72,11 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
   function corpoAcoes(rowData: VeiculoResposta) {
     return (
       <HStack alignItems="center" gap={2}>
+        <Link href={`/veiculos/${rowData.id}/despesas`} style={{ textDecoration: 'none' }}>
+          <Button variant="light" color="default" size="sm" leftIcon="PiReceiptBold">
+            Despesas
+          </Button>
+        </Link>
         <Link href={`/veiculos/${rowData.id}/editar`} style={{ textDecoration: 'none' }}>
           <Button variant="light" color="primary" size="sm" leftIcon="PiPencilBold">
             Editar
@@ -124,7 +129,7 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
         <Column field="cor" header="Cor" sortable />
         <Column field="odometroAtual" header="Odômetro" body={corpoOdometro} sortable />
         <Column field="situacao" header="Situação" body={corpoSituacao} sortable />
-        <Column header="Ações" body={corpoAcoes} style={{ width: 180 }} />
+        <Column header="Ações" body={corpoAcoes} style={{ width: 280 }} />
       </DataTable>
 
       <DialogConfirmacao
