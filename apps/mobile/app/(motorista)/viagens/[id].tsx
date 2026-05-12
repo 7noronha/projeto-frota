@@ -20,6 +20,7 @@ import {
   FormControlError,
   FormControlErrorText,
 } from '@gluestack-ui/themed';
+import { RefreshControl } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchApi, ErroApi } from '@/lib/api';
@@ -228,7 +229,7 @@ function FormFinalizar({ id, odometroInicial }: { id: string; odometroInicial: n
 export default function TelaDetalheViagem() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const { data: viagem, isLoading, isError, refetch } = useQuery({
+  const { data: viagem, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['viagem', id],
     queryFn: () => fetchApi<ViagemDetalhada>(`/viagens/${id}`),
     enabled: !!id,
@@ -259,7 +260,13 @@ export default function TelaDetalheViagem() {
   const dataViagem = new Date(viagem.dataViagem + 'T00:00:00').toLocaleDateString('pt-BR');
 
   return (
-    <ScrollView flex={1} backgroundColor="#F8FAFC">
+    <ScrollView
+      flex={1}
+      backgroundColor="#F8FAFC"
+      refreshControl={
+        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#0066FF" />
+      }
+    >
       <VStack space="md" px="$4" py="$4">
         {/* Status */}
         <HStack justifyContent="flex-end">
