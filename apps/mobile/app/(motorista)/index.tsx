@@ -163,10 +163,54 @@ export default function TelaViagens() {
           }
         >
           {data?.dados.length === 0 ? (
-            <Box alignItems="center" justifyContent="center" py="$16">
-              <Text color="$textLight400" textAlign="center">
-                Nenhuma viagem encontrada.
+            <Box alignItems="center" justifyContent="center" py="$16" px="$6">
+              {/* Decoração visual: círculo com sub-círculo dentro (sem lib de ícones) */}
+              <Box
+                width={72}
+                height={72}
+                borderRadius={36}
+                backgroundColor="#E0F2FE"
+                alignItems="center"
+                justifyContent="center"
+                mb="$4"
+              >
+                <Box width={32} height={32} borderRadius={16} backgroundColor="#0EA5E9" />
+              </Box>
+              <Text color="$textDark900" fontWeight="$semibold" size="md" textAlign="center" mb="$1">
+                {filtroStatus
+                  ? `Nenhuma viagem ${
+                      filtroStatus === 'CRIADA'
+                        ? 'agendada'
+                        : filtroStatus === 'EM_ANDAMENTO'
+                          ? 'em andamento'
+                          : 'finalizada'
+                    }`
+                  : 'Você ainda não tem viagens'}
               </Text>
+              <Text color="$textLight500" textAlign="center" size="sm">
+                {filtroStatus
+                  ? 'Troque o filtro para ver outras viagens.'
+                  : 'Quando um operador agendar uma viagem para você, ela aparecerá aqui.'}
+              </Text>
+              {filtroStatus && (
+                <Pressable
+                  onPress={() => setFiltroStatus(undefined)}
+                  mt="$5"
+                  sx={{
+                    backgroundColor: '#0066FF',
+                    borderRadius: '$lg',
+                    px: '$5',
+                    py: '$3',
+                    ':active': { opacity: 0.85 },
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Mostrar todas as viagens"
+                >
+                  <Text color="$white" fontWeight="$semibold" size="sm">
+                    Mostrar todas
+                  </Text>
+                </Pressable>
+              )}
             </Box>
           ) : (
             <VStack pb="$8">
