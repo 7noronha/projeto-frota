@@ -24,6 +24,7 @@ import { RefreshControl } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchApi, ErroApi } from '@/lib/api';
+import { DetalheViagemSkeleton } from '@/components/DetalheViagemSkeleton';
 import type { ViagemDetalhada, StatusViagem } from '@fleetops/types';
 
 const CONFIG_STATUS: Record<StatusViagem, { rotulo: string; cor: string; fundo: string }> = {
@@ -237,9 +238,9 @@ export default function TelaDetalheViagem() {
 
   if (isLoading) {
     return (
-      <Box flex={1} alignItems="center" justifyContent="center" backgroundColor="#F8FAFC">
-        <Text color="$textLight400">Carregando...</Text>
-      </Box>
+      <ScrollView flex={1} backgroundColor="#F8FAFC">
+        <DetalheViagemSkeleton />
+      </ScrollView>
     );
   }
 

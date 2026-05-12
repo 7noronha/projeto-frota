@@ -5,7 +5,6 @@ import {
   HStack,
   Text,
   Pressable,
-  Spinner,
   Badge,
   BadgeText,
   ScrollView,
@@ -14,6 +13,7 @@ import { RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { fetchApi } from '@/lib/api';
+import { ListaViagensSkeleton } from '@/components/ListaViagensSkeleton';
 import type { RespostaPaginada, ViagemDetalhada, StatusViagem } from '@fleetops/types';
 
 const CONFIG_STATUS: Record<StatusViagem, { rotulo: string; cor: string; fundo: string }> = {
@@ -142,9 +142,7 @@ export default function TelaViagens() {
 
       {/* Lista */}
       {isLoading ? (
-        <Box flex={1} alignItems="center" justifyContent="center">
-          <Spinner size="large" color="#0066FF" />
-        </Box>
+        <ListaViagensSkeleton quantidade={5} />
       ) : isError ? (
         <Box flex={1} alignItems="center" justifyContent="center" px="$6">
           <Text color="$error600" textAlign="center" mb="$4">
