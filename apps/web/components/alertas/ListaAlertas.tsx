@@ -40,11 +40,21 @@ const CONFIG_SEVERIDADE: Record<
   },
 };
 
-const CONFIG_TIPO: Record<Alerta['tipo'], { icone: 'PiIdentificationCardBold' | 'PiClockCountdownBold' | 'PiWarningCircleBold' }> = {
+type IconeAlerta =
+  | 'PiIdentificationCardBold'
+  | 'PiClockCountdownBold'
+  | 'PiWarningCircleBold'
+  | 'PiWarningOctagonBold'
+  | 'PiWrenchBold';
+
+const CONFIG_TIPO: Record<Alerta['tipo'], { icone: IconeAlerta }> = {
   cnh_vencida: { icone: 'PiIdentificationCardBold' },
   cnh_vencendo: { icone: 'PiIdentificationCardBold' },
   viagem_atrasada: { icone: 'PiClockCountdownBold' },
   viagem_sem_inicio: { icone: 'PiWarningCircleBold' },
+  multa_vencida: { icone: 'PiWarningOctagonBold' },
+  multa_vencendo: { icone: 'PiWarningOctagonBold' },
+  manutencao_devida: { icone: 'PiWrenchBold' },
 };
 
 export function ListaAlertas({ alertas }: ListaAlertasProps): React.ReactElement {
