@@ -9,6 +9,7 @@ import { ViagensModule } from './modulos/viagens/viagens.module';
 import { ConfiguracoesModule } from './modulos/configuracoes/configuracoes.module';
 import { RelatoriosModule } from './modulos/relatorios/relatorios.module';
 import { AlertasModule } from './modulos/alertas/alertas.module';
+import { DespesasModule } from './modulos/despesas/despesas.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AlertasModule } from './modulos/alertas/alertas.module';
     ConfiguracoesModule,
     RelatoriosModule,
     AlertasModule,
+    DespesasModule,
   ],
   controllers: [],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
