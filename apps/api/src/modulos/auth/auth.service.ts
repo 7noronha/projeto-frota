@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { Perfil, UsuarioJwt } from '@fleetops/types';
+import { Perfil, UsuarioJwt, UsuarioResposta } from '@fleetops/types';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RespostaLoginDto } from './dto/resposta-login.dto';
@@ -64,5 +64,35 @@ export class AuthService {
     }
 
     return usuarioJwt;
+  }
+
+  /**
+   * Retorna dados completos do usuário autenticado, incluindo CNH e
+   * validade. Usado pelo mobile para mostrar avisos contextuais
+   * (ex: banner de CNH vencendo).
+   */
+  async meusDados(usuarioJwt: UsuarioJwt): Promise<UsuarioResposta> {
+    const usuario = await this.prisma.usuario.findFirst({
+      where: { id: usuarioJwt.sub, dataExclusao: null },
+    });
+
+    if (!usuario || !usuario.ativo) {
+      throw new UnauthorizedException('Usuário não encontrado ou inativo');
+    }
+
+    return {
+      id: usuario.id,
+      matricula: usuario.matricula,
+      nome: usuario.nome,
+      perfil: usuario.perfil as Perfil,
+      email: usuario.email,
+      telefone: usuario.telefone,
+      cnh: usuario.cnh,
+      cnhValidade: usuario.cnhValidade
+        ? usuario.cnhValidade.toISOString().split('T')[0]
+        : null,
+      ativo: usuario.ativo,
+      dataCriacao: usuario.dataCriacao.toISOString(),
+    };
   }
 }

@@ -8,7 +8,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { UsuarioJwt } from '@fleetops/types';
+import { UsuarioJwt, UsuarioResposta } from '@fleetops/types';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RespostaLoginDto } from './dto/resposta-login.dto';
@@ -35,10 +35,20 @@ export class AuthController {
   @Get('perfil')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT')
-  @ApiOperation({ summary: 'Retorna os dados do usuário autenticado' })
+  @ApiOperation({ summary: 'Retorna os dados do JWT do usuário autenticado' })
   @ApiOkResponse({ description: 'Dados do perfil autenticado' })
   @ApiUnauthorizedResponse({ description: 'Token inválido ou expirado' })
   async perfil(@UsuarioAutenticado() usuario: UsuarioJwt): Promise<UsuarioJwt> {
     return this.authService.perfil(usuario);
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({ summary: 'Retorna dados completos do usuário autenticado (com CNH, telefone, etc)' })
+  @ApiOkResponse({ description: 'UsuarioResposta completo' })
+  @ApiUnauthorizedResponse({ description: 'Token inválido ou expirado' })
+  async meusDados(@UsuarioAutenticado() usuario: UsuarioJwt): Promise<UsuarioResposta> {
+    return this.authService.meusDados(usuario);
   }
 }
