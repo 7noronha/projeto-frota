@@ -6,6 +6,7 @@ import { Icon, HStack, VStack, Text, Button } from '@lojascem/components-react';
 
 const itensMenu = [
   { href: '/dashboard', rotulo: 'Painel', icone: 'PiSquaresFourBold' as const },
+  { href: '/alertas', rotulo: 'Alertas', icone: 'PiBellBold' as const },
   { href: '/veiculos', rotulo: 'Veículos', icone: 'PiCarBold' as const },
   { href: '/motoristas', rotulo: 'Motoristas', icone: 'PiUsersBold' as const },
   { href: '/viagens', rotulo: 'Viagens', icone: 'PiMapTrifoldBold' as const },
