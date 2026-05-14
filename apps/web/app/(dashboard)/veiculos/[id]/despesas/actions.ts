@@ -5,10 +5,24 @@ import { redirect } from 'next/navigation';
 import { fetchServidor, ErroApi } from '@/lib/api-servidor';
 import type { RespostaPaginada } from '@fleetops/types';
 
-export type TipoDespesa = 'multa' | 'abastecimento' | 'manutencao';
+export type TipoDespesa =
+  | 'multa'
+  | 'abastecimento'
+  | 'manutencao'
+  | 'imposto'
+  | 'seguro'
+  | 'documentacao';
 export type TipoCombustivel = 'gasolina' | 'etanol' | 'diesel' | 'gnv' | 'flex';
 export type TipoManutencao = 'preventiva' | 'corretiva';
 export type GravidadeMulta = 'leve' | 'media' | 'grave' | 'gravissima';
+export type TipoImposto = 'ipva' | 'licenciamento' | 'dpvat' | 'outro';
+export type CoberturaSeguro = 'total' | 'terceiros' | 'compreensiva';
+export type TipoDocumento =
+  | 'crlv'
+  | 'transferencia'
+  | 'vistoria'
+  | 'emplacamento'
+  | 'outro';
 
 export interface Despesa {
   id: string;
@@ -28,6 +42,16 @@ export interface Despesa {
   gravidade: GravidadeMulta | null;
   pontosCnh: number | null;
   dataVencimento: string | null;
+  tipoImposto: TipoImposto | null;
+  anoExercicio: number | null;
+  numeroParcela: number | null;
+  totalParcelas: number | null;
+  seguradora: string | null;
+  numeroApolice: string | null;
+  vigenciaInicio: string | null;
+  vigenciaFim: string | null;
+  coberturaTipo: CoberturaSeguro | null;
+  tipoDocumento: TipoDocumento | null;
   dataCriacao: string;
 }
 
@@ -92,6 +116,32 @@ function montarCorpo(veiculoId: string, formData: FormData): Record<string, unkn
     if (numeroAuto && String(numeroAuto).trim()) corpo.numeroAuto = numeroAuto;
     const pontosCnh = formData.get('pontosCnh');
     if (pontosCnh) corpo.pontosCnh = Number(pontosCnh);
+    const dataVencimento = formData.get('dataVencimento');
+    if (dataVencimento && String(dataVencimento).trim()) corpo.dataVencimento = dataVencimento;
+  }
+
+  if (tipo === 'imposto') {
+    corpo.tipoImposto = formData.get('tipoImposto');
+    corpo.anoExercicio = Number(formData.get('anoExercicio'));
+    const numeroParcela = formData.get('numeroParcela');
+    if (numeroParcela) corpo.numeroParcela = Number(numeroParcela);
+    const totalParcelas = formData.get('totalParcelas');
+    if (totalParcelas) corpo.totalParcelas = Number(totalParcelas);
+    const dataVencimento = formData.get('dataVencimento');
+    if (dataVencimento && String(dataVencimento).trim()) corpo.dataVencimento = dataVencimento;
+  }
+
+  if (tipo === 'seguro') {
+    corpo.seguradora = formData.get('seguradora');
+    corpo.vigenciaInicio = formData.get('vigenciaInicio');
+    corpo.vigenciaFim = formData.get('vigenciaFim');
+    corpo.coberturaTipo = formData.get('coberturaTipo');
+    const numeroApolice = formData.get('numeroApolice');
+    if (numeroApolice && String(numeroApolice).trim()) corpo.numeroApolice = numeroApolice;
+  }
+
+  if (tipo === 'documentacao') {
+    corpo.tipoDocumento = formData.get('tipoDocumento');
     const dataVencimento = formData.get('dataVencimento');
     if (dataVencimento && String(dataVencimento).trim()) corpo.dataVencimento = dataVencimento;
   }

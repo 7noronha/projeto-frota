@@ -11,7 +11,9 @@ export type TipoAlerta =
   | 'viagem_sem_inicio'
   | 'multa_vencida'
   | 'multa_vencendo'
-  | 'manutencao_devida';
+  | 'manutencao_devida'
+  | 'seguro_vencido'
+  | 'seguro_vencendo';
 
 export interface Alerta {
   id: string;

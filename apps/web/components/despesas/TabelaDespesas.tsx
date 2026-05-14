@@ -17,11 +17,29 @@ interface TabelaDespesasProps {
 
 const CONFIG_TIPO: Record<
   TipoDespesa,
-  { rotulo: string; color: 'info' | 'warning' | 'error' }
+  { rotulo: string; color: 'info' | 'warning' | 'error' | 'success' | 'default' }
 > = {
   abastecimento: { rotulo: 'Abastecimento', color: 'info' },
   manutencao: { rotulo: 'Manutenção', color: 'warning' },
   multa: { rotulo: 'Multa', color: 'error' },
+  imposto: { rotulo: 'Imposto', color: 'default' },
+  seguro: { rotulo: 'Seguro', color: 'info' },
+  documentacao: { rotulo: 'Documentação', color: 'success' },
+};
+
+const ROTULO_IMPOSTO: Record<string, string> = {
+  ipva: 'IPVA',
+  licenciamento: 'Licenciamento',
+  dpvat: 'DPVAT',
+  outro: 'Outro',
+};
+
+const ROTULO_DOCUMENTO: Record<string, string> = {
+  crlv: 'CRLV',
+  transferencia: 'Transferência',
+  vistoria: 'Vistoria',
+  emplacamento: 'Emplacamento',
+  outro: 'Outro',
 };
 
 function formatarMoeda(v: number): string {
@@ -89,6 +107,24 @@ export function TabelaDespesas({ veiculoId, despesas }: TabelaDespesasProps) {
     }
     if (row.tipo === 'multa' && row.gravidade) {
       detalhes.push(`${row.gravidade}${row.pontosCnh ? ` · ${row.pontosCnh} pts` : ''}`);
+    }
+    if (row.tipo === 'imposto' && row.tipoImposto) {
+      detalhes.push(ROTULO_IMPOSTO[row.tipoImposto] ?? row.tipoImposto);
+      if (row.anoExercicio) detalhes.push(`${row.anoExercicio}`);
+      if (row.numeroParcela && row.totalParcelas) {
+        detalhes.push(`parc. ${row.numeroParcela}/${row.totalParcelas}`);
+      }
+    }
+    if (row.tipo === 'seguro' && row.seguradora) {
+      detalhes.push(row.seguradora);
+      if (row.vigenciaFim) {
+        detalhes.push(
+          `até ${new Date(row.vigenciaFim + 'T00:00:00').toLocaleDateString('pt-BR')}`,
+        );
+      }
+    }
+    if (row.tipo === 'documentacao' && row.tipoDocumento) {
+      detalhes.push(ROTULO_DOCUMENTO[row.tipoDocumento] ?? row.tipoDocumento);
     }
     return (
       <div className="flex flex-col leading-tight">
