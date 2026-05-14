@@ -58,7 +58,7 @@ export function FormularioLogin() {
   const erroSenha = tocados.senha ? erros.senha : '';
 
   return (
-    <form action={acao} onSubmit={aoSubmeter} className="flex flex-col gap-6">
+    <form action={acao} onSubmit={aoSubmeter} className="flex flex-col gap-4">
 
       {/* Matrícula */}
       <TextField
@@ -68,6 +68,7 @@ export function FormularioLogin() {
         placeholder="Digite sua matrícula"
         maxLength={10}
         autoComplete="username"
+        isBlock
         isRequired
         isInvalid={Boolean(erroMatricula)}
         errorMessage={erroMatricula}
@@ -87,6 +88,7 @@ export function FormularioLogin() {
         placeholder="Digite sua senha"
         type="password"
         autoComplete="current-password"
+        isBlock
         isRequired
         isInvalid={Boolean(erroSenha)}
         errorMessage={erroSenha}
@@ -109,13 +111,13 @@ export function FormularioLogin() {
         color="primary"
         isBlock
         isLoading={pendente}
-        className="btn-pill h-12 text-[0.95rem] mt-1"
+        className="btn-pill h-11 text-[0.95rem]"
       >
         {pendente ? 'Entrando…' : 'Entrar'}
       </Button>
 
       {/* Esqueceu a senha */}
-      <Text size="sm" className="text-center" style={{ color: '#94a3b8', marginTop: -8 }}>
+      <Text size="sm" className="text-center" style={{ color: '#94a3b8' }}>
         Esqueceu o acesso?{' '}
         <a
           href="#"
