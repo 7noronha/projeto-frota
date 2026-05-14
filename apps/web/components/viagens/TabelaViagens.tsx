@@ -75,15 +75,15 @@ export function TabelaViagens({ viagens, temFiltrosAtivos = false }: TabelaViage
       value={viagens}
       emptyMessage={emptyMessage}
       stripedRows
-      className="w-full"
+      className="w-full tabela-compacta"
       style={{ borderRadius: 12, overflow: 'hidden' }}
     >
-      <Column field="dataViagem" header="Data" body={corpoData} sortable />
-      <Column field="destino" header="Destino" style={{ maxWidth: 200 }} sortable />
+      <Column field="dataViagem" header="Data" body={corpoData} sortable style={{ width: 100 }} />
+      <Column field="destino" header="Destino" sortable />
       <Column field="motorista.nome" header="Motorista" body={corpoMotorista} sortable />
-      <Column field="veiculo.placa" header="Veículo" body={corpoVeiculo} sortable />
-      <Column header="Horário previsto" body={corpoHorario} />
-      <Column field="status" header="Status" body={corpoStatus} sortable />
+      <Column field="veiculo.placa" header="Veículo" body={corpoVeiculo} sortable style={{ width: 110 }} />
+      <Column header="Horário previsto" body={corpoHorario} style={{ width: 140 }} />
+      <Column field="status" header="Status" body={corpoStatus} sortable style={{ width: 130 }} />
       <Column header="Ações" body={corpoAcoes} style={{ width: 120 }} />
     </DataTable>
   );
