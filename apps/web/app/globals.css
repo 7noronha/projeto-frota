@@ -161,6 +161,18 @@ body {
   background: #f8fafc;
 }
 
+/* ─── Labels de form fields nunca quebram em duas linhas ─────────────────── */
+/* Componentes da lib lojascem (TextField, SelectField, ComboBox, etc.)
+   renderizam <label> nativos. Em grids estreitos (ex: grid-cols-3) labels
+   longos como "Vencimento do pagamento" estavam quebrando em 2 linhas e
+   desalinhando o formulário. */
+form label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
 /* ─── DataTable compacta ──────────────────────────────────────────────────── */
 /* Aplicar via className="tabela-compacta" no DataTable. Reduz fonte/padding
    das celulas e do header para tabelas com muitas linhas. */
