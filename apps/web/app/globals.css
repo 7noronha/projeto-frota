@@ -188,10 +188,12 @@ form label {
   line-height: 1.35;
 }
 
-/* Badges e botoes dentro de celulas compactas nunca quebram em 2 linhas */
-.tabela-compacta .p-datatable-tbody > tr > td .badge,
-.tabela-compacta .p-datatable-tbody > tr > td [class*='badge'],
-.tabela-compacta .p-datatable-tbody > tr > td button {
+/* Badges e botoes dentro de celulas compactas nunca quebram em 2 linhas.
+   A lib lojascem usa CSS-in-JS com classes geradas (hash) então seletor
+   por classe nao pega — usamos elemento HTML + atributo data ou role. */
+.tabela-compacta .p-datatable-tbody > tr > td > span,
+.tabela-compacta .p-datatable-tbody > tr > td button,
+.tabela-compacta .p-datatable-tbody > tr > td [role="status"] {
   white-space: nowrap;
 }
 
