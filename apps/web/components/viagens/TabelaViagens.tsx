@@ -83,8 +83,8 @@ export function TabelaViagens({ viagens, temFiltrosAtivos = false }: TabelaViage
       <Column field="motorista.nome" header="Motorista" body={corpoMotorista} sortable />
       <Column field="veiculo.placa" header="Veículo" body={corpoVeiculo} sortable style={{ width: 110 }} />
       <Column header="Horário previsto" body={corpoHorario} style={{ width: 140 }} />
-      <Column field="status" header="Status" body={corpoStatus} sortable style={{ width: 130 }} />
-      <Column header="Ações" body={corpoAcoes} style={{ width: 120 }} />
+      <Column field="status" header="Status" body={corpoStatus} sortable style={{ width: 150 }} />
+      <Column header="Ações" body={corpoAcoes} style={{ width: 130 }} />
     </DataTable>
   );
 }
