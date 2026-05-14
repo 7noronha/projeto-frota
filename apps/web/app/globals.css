@@ -161,6 +161,33 @@ body {
   background: #f8fafc;
 }
 
+/* ─── DataTable compacta ──────────────────────────────────────────────────── */
+/* Aplicar via className="tabela-compacta" no DataTable. Reduz fonte/padding
+   das celulas e do header para tabelas com muitas linhas. */
+.tabela-compacta .p-datatable-thead > tr > th {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.6875rem; /* 11px */
+}
+
+.tabela-compacta .p-datatable-tbody > tr > td {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem; /* 13px */
+  line-height: 1.35;
+}
+
+/* Badges dentro de celulas compactas tambem ficam menores */
+.tabela-compacta .p-datatable-tbody > tr > td .badge,
+.tabela-compacta .p-datatable-tbody > tr > td [class*='badge'] {
+  font-size: 0.6875rem;
+  padding: 0.125rem 0.5rem;
+}
+
+/* Botoes de acao na coluna Acoes — altura reduzida */
+.tabela-compacta .p-datatable-tbody > tr > td button {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
 /* ─── Dialog nativo — backdrop ────────────────────────────────────────────── */
 dialog::backdrop {
   background: rgba(0, 0, 0, 0.45);
