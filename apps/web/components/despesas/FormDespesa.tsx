@@ -273,6 +273,7 @@ export function FormDespesa({ acao, veiculoId, despesaInicial, titulo }: FormDes
               placeholder="POSTO IPIRANGA — TANQUE COMPLETO"
               value={descricao}
               onChange={setDescricao}
+              isBlock
               isRequired
               aria-required="true"
             />
@@ -620,6 +621,7 @@ export function FormDespesa({ acao, veiculoId, despesaInicial, titulo }: FormDes
               placeholder="Informações adicionais..."
               value={observacoes}
               onChange={setObservacoes}
+              isBlock
               className="min-h-[80px]"
             />
 
