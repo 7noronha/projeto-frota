@@ -31,6 +31,16 @@ type DespesaPrisma = {
   gravidade: string | null;
   pontosCnh: number | null;
   dataVencimento: Date | null;
+  tipoImposto: string | null;
+  anoExercicio: number | null;
+  numeroParcela: number | null;
+  totalParcelas: number | null;
+  seguradora: string | null;
+  numeroApolice: string | null;
+  vigenciaInicio: Date | null;
+  vigenciaFim: Date | null;
+  coberturaTipo: string | null;
+  tipoDocumento: string | null;
   dataCriacao: Date;
 };
 
@@ -104,6 +114,16 @@ export class DespesasService {
         gravidade: dto.gravidade ?? null,
         pontosCnh: dto.pontosCnh ?? null,
         dataVencimento: dto.dataVencimento ? new Date(dto.dataVencimento) : null,
+        tipoImposto: dto.tipoImposto ?? null,
+        anoExercicio: dto.anoExercicio ?? null,
+        numeroParcela: dto.numeroParcela ?? null,
+        totalParcelas: dto.totalParcelas ?? null,
+        seguradora: dto.seguradora ?? null,
+        numeroApolice: dto.numeroApolice ?? null,
+        vigenciaInicio: dto.vigenciaInicio ? new Date(dto.vigenciaInicio) : null,
+        vigenciaFim: dto.vigenciaFim ? new Date(dto.vigenciaFim) : null,
+        coberturaTipo: dto.coberturaTipo ?? null,
+        tipoDocumento: dto.tipoDocumento ?? null,
       },
     });
 
@@ -145,6 +165,20 @@ export class DespesasService {
         ...(dto.dataVencimento !== undefined && {
           dataVencimento: dto.dataVencimento ? new Date(dto.dataVencimento) : null,
         }),
+        ...(dto.tipoImposto !== undefined && { tipoImposto: dto.tipoImposto ?? null }),
+        ...(dto.anoExercicio !== undefined && { anoExercicio: dto.anoExercicio ?? null }),
+        ...(dto.numeroParcela !== undefined && { numeroParcela: dto.numeroParcela ?? null }),
+        ...(dto.totalParcelas !== undefined && { totalParcelas: dto.totalParcelas ?? null }),
+        ...(dto.seguradora !== undefined && { seguradora: dto.seguradora ?? null }),
+        ...(dto.numeroApolice !== undefined && { numeroApolice: dto.numeroApolice ?? null }),
+        ...(dto.vigenciaInicio !== undefined && {
+          vigenciaInicio: dto.vigenciaInicio ? new Date(dto.vigenciaInicio) : null,
+        }),
+        ...(dto.vigenciaFim !== undefined && {
+          vigenciaFim: dto.vigenciaFim ? new Date(dto.vigenciaFim) : null,
+        }),
+        ...(dto.coberturaTipo !== undefined && { coberturaTipo: dto.coberturaTipo ?? null }),
+        ...(dto.tipoDocumento !== undefined && { tipoDocumento: dto.tipoDocumento ?? null }),
       },
     });
 
@@ -186,6 +220,39 @@ export class DespesasService {
     if (dto.tipo === TipoDespesaEnum.MULTA && !dto.gravidade) {
       throw new BadRequestException('Multa exige gravidade');
     }
+    if (dto.tipo === TipoDespesaEnum.IMPOSTO) {
+      if (!dto.tipoImposto || dto.anoExercicio == null) {
+        throw new BadRequestException('Imposto exige tipo (IPVA/Licenciamento/DPVAT) e ano de exercício');
+      }
+      if (
+        (dto.numeroParcela != null || dto.totalParcelas != null) &&
+        (dto.numeroParcela == null ||
+          dto.totalParcelas == null ||
+          dto.numeroParcela > dto.totalParcelas)
+      ) {
+        throw new BadRequestException(
+          'Quando parcelado, número da parcela e total de parcelas devem ser informados e número ≤ total',
+        );
+      }
+    }
+    if (dto.tipo === TipoDespesaEnum.SEGURO) {
+      if (
+        !dto.seguradora ||
+        !dto.vigenciaInicio ||
+        !dto.vigenciaFim ||
+        !dto.coberturaTipo
+      ) {
+        throw new BadRequestException(
+          'Seguro exige seguradora, vigência (início e fim) e tipo de cobertura',
+        );
+      }
+      if (new Date(dto.vigenciaFim) <= new Date(dto.vigenciaInicio)) {
+        throw new BadRequestException('Vigência final deve ser posterior à inicial');
+      }
+    }
+    if (dto.tipo === TipoDespesaEnum.DOCUMENTACAO && !dto.tipoDocumento) {
+      throw new BadRequestException('Documentação exige tipo (CRLV, transferência, vistoria, etc.)');
+    }
   }
 
   private mapear(d: DespesaPrisma): DespesaRespostaDto {
@@ -207,6 +274,16 @@ export class DespesasService {
       gravidade: d.gravidade,
       pontosCnh: d.pontosCnh,
       dataVencimento: d.dataVencimento ? d.dataVencimento.toISOString().split('T')[0] : null,
+      tipoImposto: d.tipoImposto,
+      anoExercicio: d.anoExercicio,
+      numeroParcela: d.numeroParcela,
+      totalParcelas: d.totalParcelas,
+      seguradora: d.seguradora,
+      numeroApolice: d.numeroApolice,
+      vigenciaInicio: d.vigenciaInicio ? d.vigenciaInicio.toISOString().split('T')[0] : null,
+      vigenciaFim: d.vigenciaFim ? d.vigenciaFim.toISOString().split('T')[0] : null,
+      coberturaTipo: d.coberturaTipo,
+      tipoDocumento: d.tipoDocumento,
       dataCriacao: d.dataCriacao.toISOString(),
     };
   }

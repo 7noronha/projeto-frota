@@ -10,7 +10,9 @@ export type TipoAlerta =
   | 'viagem_sem_inicio'
   | 'multa_vencida'
   | 'multa_vencendo'
-  | 'manutencao_devida';
+  | 'manutencao_devida'
+  | 'seguro_vencido'
+  | 'seguro_vencendo';
 
 export interface Alerta {
   id: string;
@@ -187,7 +189,58 @@ export class AlertasService {
       });
     }
 
-    // 5. Veículos com manutenção devida (km desde a última preventiva > intervalo padrão)
+    // 5. Seguros com vigenciaFim ≤ hoje + 30 dias (vencendo) ou < hoje (vencidos)
+    const limite30Seguros = new Date(hoje);
+    limite30Seguros.setDate(limite30Seguros.getDate() + 30);
+
+    const seguros = await this.prisma.despesaVeiculo.findMany({
+      where: {
+        tipo: 'seguro',
+        dataExclusao: null,
+        vigenciaFim: { not: null, lte: limite30Seguros },
+      },
+      include: {
+        veiculo: { select: { placa: true, marca: true, modelo: true } },
+      },
+      orderBy: { vigenciaFim: 'asc' },
+    });
+
+    // Mantém apenas o seguro mais recente por veículo (evita ruído quando há
+    // várias apólices antigas registradas)
+    const seguroMaisRecentePorVeiculo = new Map<string, (typeof seguros)[number]>();
+    for (const s of seguros) {
+      const existente = seguroMaisRecentePorVeiculo.get(s.veiculoId);
+      if (!existente || (s.vigenciaFim && existente.vigenciaFim && s.vigenciaFim > existente.vigenciaFim)) {
+        seguroMaisRecentePorVeiculo.set(s.veiculoId, s);
+      }
+    }
+
+    for (const s of seguroMaisRecentePorVeiculo.values()) {
+      if (!s.vigenciaFim) continue;
+      const fim = new Date(s.vigenciaFim);
+      fim.setHours(0, 0, 0, 0);
+      const dias = Math.ceil((fim.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+      const vencido = dias < 0;
+
+      alertas.push({
+        id: `seguro:${s.id}`,
+        tipo: vencido ? 'seguro_vencido' : 'seguro_vencendo',
+        severidade: vencido ? 'alto' : dias <= 7 ? 'medio' : 'baixo',
+        titulo: vencido
+          ? `Seguro vencido há ${Math.abs(dias)} ${Math.abs(dias) === 1 ? 'dia' : 'dias'}`
+          : dias === 0
+            ? 'Seguro vence hoje'
+            : `Seguro vence em ${dias} ${dias === 1 ? 'dia' : 'dias'}`,
+        descricao: `${s.veiculo.placa} · ${s.veiculo.marca} ${s.veiculo.modelo}${
+          s.seguradora ? ` · ${s.seguradora}` : ''
+        }${s.numeroApolice ? ` · Apólice ${s.numeroApolice}` : ''}`,
+        alvoId: s.id,
+        alvoTipo: 'despesa',
+        href: `/veiculos/${s.veiculoId}/despesas/${s.id}/editar`,
+      });
+    }
+
+    // 6. Veículos com manutenção devida (km desde a última preventiva > intervalo padrão)
     const veiculos = await this.prisma.veiculo.findMany({
       where: { situacao: 'ativo', dataExclusao: null },
       select: { id: true, placa: true, marca: true, modelo: true, odometroAtual: true },

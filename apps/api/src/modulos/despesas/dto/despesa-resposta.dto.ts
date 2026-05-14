@@ -52,6 +52,36 @@ export class DespesaRespostaDto {
   @ApiPropertyOptional()
   dataVencimento: string | null;
 
+  @ApiPropertyOptional()
+  tipoImposto: string | null;
+
+  @ApiPropertyOptional()
+  anoExercicio: number | null;
+
+  @ApiPropertyOptional()
+  numeroParcela: number | null;
+
+  @ApiPropertyOptional()
+  totalParcelas: number | null;
+
+  @ApiPropertyOptional()
+  seguradora: string | null;
+
+  @ApiPropertyOptional()
+  numeroApolice: string | null;
+
+  @ApiPropertyOptional()
+  vigenciaInicio: string | null;
+
+  @ApiPropertyOptional()
+  vigenciaFim: string | null;
+
+  @ApiPropertyOptional()
+  coberturaTipo: string | null;
+
+  @ApiPropertyOptional()
+  tipoDocumento: string | null;
+
   @ApiProperty()
   dataCriacao: string;
 }

@@ -32,6 +32,9 @@ const TIPOS = [
   { valor: 'abastecimento', rotulo: 'Abastecimento' },
   { valor: 'manutencao', rotulo: 'Manutenção' },
   { valor: 'multa', rotulo: 'Multa' },
+  { valor: 'imposto', rotulo: 'Imposto' },
+  { valor: 'seguro', rotulo: 'Seguro' },
+  { valor: 'documentacao', rotulo: 'Documentação' },
 ] as const;
 
 const COMBUSTIVEIS = [
@@ -53,6 +56,29 @@ const GRAVIDADES = [
   { valor: 'grave', rotulo: 'Grave (5 pontos)' },
   { valor: 'gravissima', rotulo: 'Gravíssima (7 pontos)' },
 ];
+
+const TIPOS_IMPOSTO = [
+  { valor: 'ipva', rotulo: 'IPVA' },
+  { valor: 'licenciamento', rotulo: 'Licenciamento' },
+  { valor: 'dpvat', rotulo: 'DPVAT' },
+  { valor: 'outro', rotulo: 'Outro' },
+];
+
+const COBERTURAS = [
+  { valor: 'total', rotulo: 'Total (compreensiva + roubo/furto)' },
+  { valor: 'terceiros', rotulo: 'Somente terceiros (RCF-V)' },
+  { valor: 'compreensiva', rotulo: 'Compreensiva (colisão + incêndio)' },
+];
+
+const TIPOS_DOCUMENTO = [
+  { valor: 'crlv', rotulo: 'CRLV' },
+  { valor: 'transferencia', rotulo: 'Transferência' },
+  { valor: 'vistoria', rotulo: 'Vistoria' },
+  { valor: 'emplacamento', rotulo: 'Emplacamento' },
+  { valor: 'outro', rotulo: 'Outro' },
+];
+
+const ANO_ATUAL = new Date().getFullYear();
 
 function hojeBrasilia(): string {
   return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
@@ -90,6 +116,32 @@ export function FormDespesa({ acao, veiculoId, despesaInicial, titulo }: FormDes
   const [pontosCnh, setPontosCnh] = useState<number | undefined>(despesaInicial?.pontosCnh ?? undefined);
   const [dataVencimento, setDataVencimento] = useState(despesaInicial?.dataVencimento ?? '');
 
+  // Imposto
+  const [tipoImposto, setTipoImposto] = useState<string>(despesaInicial?.tipoImposto ?? 'ipva');
+  const [anoExercicio, setAnoExercicio] = useState<number | undefined>(
+    despesaInicial?.anoExercicio ?? ANO_ATUAL,
+  );
+  const [numeroParcela, setNumeroParcela] = useState<number | undefined>(
+    despesaInicial?.numeroParcela ?? undefined,
+  );
+  const [totalParcelas, setTotalParcelas] = useState<number | undefined>(
+    despesaInicial?.totalParcelas ?? undefined,
+  );
+
+  // Seguro
+  const [seguradora, setSeguradora] = useState(despesaInicial?.seguradora ?? '');
+  const [numeroApolice, setNumeroApolice] = useState(despesaInicial?.numeroApolice ?? '');
+  const [vigenciaInicio, setVigenciaInicio] = useState(despesaInicial?.vigenciaInicio ?? '');
+  const [vigenciaFim, setVigenciaFim] = useState(despesaInicial?.vigenciaFim ?? '');
+  const [coberturaTipo, setCoberturaTipo] = useState<string>(
+    despesaInicial?.coberturaTipo ?? 'total',
+  );
+
+  // Documentação
+  const [tipoDocumento, setTipoDocumento] = useState<string>(
+    despesaInicial?.tipoDocumento ?? 'crlv',
+  );
+
   // Total estimado de abastecimento
   const totalAbastecimento =
     tipo === 'abastecimento' && litros && precoLitro ? litros * precoLitro : null;
@@ -123,6 +175,21 @@ export function FormDespesa({ acao, veiculoId, despesaInicial, titulo }: FormDes
       formData.set('gravidade', gravidade);
       if (numeroAuto.trim()) formData.set('numeroAuto', numeroAuto);
       if (pontosCnh != null) formData.set('pontosCnh', String(pontosCnh));
+      if (dataVencimento.trim()) formData.set('dataVencimento', dataVencimento);
+    } else if (tipo === 'imposto') {
+      formData.set('tipoImposto', tipoImposto);
+      formData.set('anoExercicio', String(anoExercicio ?? ANO_ATUAL));
+      if (numeroParcela != null) formData.set('numeroParcela', String(numeroParcela));
+      if (totalParcelas != null) formData.set('totalParcelas', String(totalParcelas));
+      if (dataVencimento.trim()) formData.set('dataVencimento', dataVencimento);
+    } else if (tipo === 'seguro') {
+      formData.set('seguradora', seguradora);
+      formData.set('vigenciaInicio', vigenciaInicio);
+      formData.set('vigenciaFim', vigenciaFim);
+      formData.set('coberturaTipo', coberturaTipo);
+      if (numeroApolice.trim()) formData.set('numeroApolice', numeroApolice);
+    } else if (tipo === 'documentacao') {
+      formData.set('tipoDocumento', tipoDocumento);
       if (dataVencimento.trim()) formData.set('dataVencimento', dataVencimento);
     }
 
@@ -370,6 +437,175 @@ export function FormDespesa({ acao, veiculoId, despesaInicial, titulo }: FormDes
                   <TextField
                     id="dataVencimento"
                     label="Vencimento do pagamento"
+                    type="date"
+                    value={dataVencimento}
+                    onChange={setDataVencimento}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* ─── Campos específicos: IMPOSTO ────────────────────────────────── */}
+            {tipo === 'imposto' && (
+              <>
+                <div
+                  className="rounded-md px-4 py-2 text-sm font-medium"
+                  style={{
+                    background: '#F3E8FF',
+                    color: '#6B21A8',
+                    borderLeft: '3px solid #9333EA',
+                  }}
+                >
+                  Dados do imposto
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <SelectField
+                    label="Tipo de imposto"
+                    isBlock
+                    isRequired
+                    value={tipoImposto}
+                    onChange={(v) => {
+                      if (typeof v === 'string') setTipoImposto(v);
+                    }}
+                  >
+                    {TIPOS_IMPOSTO.map((t) => (
+                      <ListBox.Item key={t.valor}>{t.rotulo}</ListBox.Item>
+                    ))}
+                  </SelectField>
+                  <NumberField
+                    id="anoExercicio"
+                    label="Ano de exercício"
+                    value={anoExercicio}
+                    onChange={(v) => setAnoExercicio(v ?? undefined)}
+                    minValue={2000}
+                    maxValue={ANO_ATUAL + 1}
+                    step={1}
+                    formatOptions={{ useGrouping: false }}
+                    isRequired
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <NumberField
+                    id="numeroParcela"
+                    label="Parcela atual"
+                    value={numeroParcela}
+                    onChange={(v) => setNumeroParcela(v ?? undefined)}
+                    minValue={1}
+                    step={1}
+                  />
+                  <NumberField
+                    id="totalParcelas"
+                    label="Total de parcelas"
+                    value={totalParcelas}
+                    onChange={(v) => setTotalParcelas(v ?? undefined)}
+                    minValue={1}
+                    step={1}
+                  />
+                  <TextField
+                    id="dataVencimento"
+                    label="Vencimento"
+                    type="date"
+                    value={dataVencimento}
+                    onChange={setDataVencimento}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* ─── Campos específicos: SEGURO ─────────────────────────────────── */}
+            {tipo === 'seguro' && (
+              <>
+                <div
+                  className="rounded-md px-4 py-2 text-sm font-medium"
+                  style={{
+                    background: '#DBEAFE',
+                    color: '#1E40AF',
+                    borderLeft: '3px solid #2563EB',
+                  }}
+                >
+                  Dados do seguro
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <TextField
+                    id="seguradora"
+                    label="Seguradora"
+                    placeholder="PORTO SEGURO"
+                    value={seguradora}
+                    onChange={setSeguradora}
+                    isRequired
+                  />
+                  <TextField
+                    id="numeroApolice"
+                    label="Nº da apólice"
+                    placeholder="12345678-9"
+                    value={numeroApolice}
+                    onChange={setNumeroApolice}
+                  />
+                </div>
+                <SelectField
+                  label="Tipo de cobertura"
+                  isBlock
+                  isRequired
+                  value={coberturaTipo}
+                  onChange={(v) => {
+                    if (typeof v === 'string') setCoberturaTipo(v);
+                  }}
+                >
+                  {COBERTURAS.map((c) => (
+                    <ListBox.Item key={c.valor}>{c.rotulo}</ListBox.Item>
+                  ))}
+                </SelectField>
+                <div className="grid grid-cols-2 gap-4">
+                  <TextField
+                    id="vigenciaInicio"
+                    label="Vigência — início"
+                    type="date"
+                    value={vigenciaInicio}
+                    onChange={setVigenciaInicio}
+                    isRequired
+                  />
+                  <TextField
+                    id="vigenciaFim"
+                    label="Vigência — fim"
+                    type="date"
+                    value={vigenciaFim}
+                    onChange={setVigenciaFim}
+                    isRequired
+                  />
+                </div>
+              </>
+            )}
+
+            {/* ─── Campos específicos: DOCUMENTAÇÃO ───────────────────────────── */}
+            {tipo === 'documentacao' && (
+              <>
+                <div
+                  className="rounded-md px-4 py-2 text-sm font-medium"
+                  style={{
+                    background: '#ECFDF5',
+                    color: '#065F46',
+                    borderLeft: '3px solid #10B981',
+                  }}
+                >
+                  Dados da documentação
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <SelectField
+                    label="Tipo de documento"
+                    isBlock
+                    isRequired
+                    value={tipoDocumento}
+                    onChange={(v) => {
+                      if (typeof v === 'string') setTipoDocumento(v);
+                    }}
+                  >
+                    {TIPOS_DOCUMENTO.map((t) => (
+                      <ListBox.Item key={t.valor}>{t.rotulo}</ListBox.Item>
+                    ))}
+                  </SelectField>
+                  <TextField
+                    id="dataVencimento"
+                    label="Vencimento / Validade"
                     type="date"
                     value={dataVencimento}
                     onChange={setDataVencimento}

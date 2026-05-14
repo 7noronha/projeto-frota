@@ -19,6 +19,9 @@ export enum TipoDespesaEnum {
   MULTA = 'multa',
   ABASTECIMENTO = 'abastecimento',
   MANUTENCAO = 'manutencao',
+  IMPOSTO = 'imposto',
+  SEGURO = 'seguro',
+  DOCUMENTACAO = 'documentacao',
 }
 
 export enum TipoCombustivelEnum {
@@ -39,6 +42,27 @@ export enum GravidadeMultaEnum {
   MEDIA = 'media',
   GRAVE = 'grave',
   GRAVISSIMA = 'gravissima',
+}
+
+export enum TipoImpostoEnum {
+  IPVA = 'ipva',
+  LICENCIAMENTO = 'licenciamento',
+  DPVAT = 'dpvat',
+  OUTRO = 'outro',
+}
+
+export enum CoberturaSeguroEnum {
+  TOTAL = 'total',
+  TERCEIROS = 'terceiros',
+  COMPREENSIVA = 'compreensiva',
+}
+
+export enum TipoDocumentoEnum {
+  CRLV = 'crlv',
+  TRANSFERENCIA = 'transferencia',
+  VISTORIA = 'vistoria',
+  EMPLACAMENTO = 'emplacamento',
+  OUTRO = 'outro',
 }
 
 export class CriarDespesaDto {
@@ -137,4 +161,68 @@ export class CriarDespesaDto {
   @IsOptional()
   @IsDateString({}, { message: 'Data de vencimento inválida' })
   dataVencimento?: string;
+
+  // ─── Específicos de IMPOSTO ───────────────────────────────────────────────
+  @ApiPropertyOptional({ enum: TipoImpostoEnum })
+  @ValidateIf((o: CriarDespesaDto) => o.tipo === TipoDespesaEnum.IMPOSTO)
+  @IsEnum(TipoImpostoEnum, { message: 'Tipo de imposto inválido' })
+  tipoImposto?: TipoImpostoEnum;
+
+  @ApiPropertyOptional({ example: 2026 })
+  @ValidateIf((o: CriarDespesaDto) => o.tipo === TipoDespesaEnum.IMPOSTO)
+  @Type(() => Number)
+  @IsInt()
+  @Min(2000, { message: 'Ano de exercício mínimo: 2000' })
+  anoExercicio?: number;
+
+  @ApiPropertyOptional({ example: 1, description: 'Número da parcela atual' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  numeroParcela?: number;
+
+  @ApiPropertyOptional({ example: 3, description: 'Total de parcelas' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  totalParcelas?: number;
+
+  // ─── Específicos de SEGURO ────────────────────────────────────────────────
+  @ApiPropertyOptional({ example: 'PORTO SEGURO' })
+  @ValidateIf((o: CriarDespesaDto) => o.tipo === TipoDespesaEnum.SEGURO)
+  @Maiusculas()
+  @IsString()
+  @MinLength(1, { message: 'Seguradora é obrigatória' })
+  @MaxLength(200)
+  seguradora?: string;
+
+  @ApiPropertyOptional({ example: '12345678-9' })
+  @IsOptional()
+  @Maiusculas()
+  @IsString()
+  @MaxLength(100)
+  numeroApolice?: string;
+
+  @ApiPropertyOptional({ example: '2026-01-01' })
+  @ValidateIf((o: CriarDespesaDto) => o.tipo === TipoDespesaEnum.SEGURO)
+  @IsDateString({}, { message: 'Data de início da vigência inválida' })
+  vigenciaInicio?: string;
+
+  @ApiPropertyOptional({ example: '2027-01-01' })
+  @ValidateIf((o: CriarDespesaDto) => o.tipo === TipoDespesaEnum.SEGURO)
+  @IsDateString({}, { message: 'Data de fim da vigência inválida' })
+  vigenciaFim?: string;
+
+  @ApiPropertyOptional({ enum: CoberturaSeguroEnum })
+  @ValidateIf((o: CriarDespesaDto) => o.tipo === TipoDespesaEnum.SEGURO)
+  @IsEnum(CoberturaSeguroEnum, { message: 'Tipo de cobertura inválido' })
+  coberturaTipo?: CoberturaSeguroEnum;
+
+  // ─── Específicos de DOCUMENTAÇÃO ──────────────────────────────────────────
+  @ApiPropertyOptional({ enum: TipoDocumentoEnum })
+  @ValidateIf((o: CriarDespesaDto) => o.tipo === TipoDespesaEnum.DOCUMENTACAO)
+  @IsEnum(TipoDocumentoEnum, { message: 'Tipo de documento inválido' })
+  tipoDocumento?: TipoDocumentoEnum;
 }

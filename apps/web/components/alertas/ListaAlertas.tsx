@@ -45,7 +45,8 @@ type IconeAlerta =
   | 'PiClockCountdownBold'
   | 'PiWarningCircleBold'
   | 'PiWarningOctagonBold'
-  | 'PiWrenchBold';
+  | 'PiWrenchBold'
+  | 'PiShieldCheckBold';
 
 const CONFIG_TIPO: Record<Alerta['tipo'], { icone: IconeAlerta }> = {
   cnh_vencida: { icone: 'PiIdentificationCardBold' },
@@ -55,6 +56,8 @@ const CONFIG_TIPO: Record<Alerta['tipo'], { icone: IconeAlerta }> = {
   multa_vencida: { icone: 'PiWarningOctagonBold' },
   multa_vencendo: { icone: 'PiWarningOctagonBold' },
   manutencao_devida: { icone: 'PiWrenchBold' },
+  seguro_vencido: { icone: 'PiShieldCheckBold' },
+  seguro_vencendo: { icone: 'PiShieldCheckBold' },
 };
 
 export function ListaAlertas({ alertas }: ListaAlertasProps): React.ReactElement {

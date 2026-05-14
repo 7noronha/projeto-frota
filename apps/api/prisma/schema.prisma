@@ -91,7 +91,27 @@ model DespesaVeiculo {
   // 'leve' | 'media' | 'grave' | 'gravissima'
   gravidade       String?  @db.VarChar(20)
   pontosCnh       Int?     @map("pontos_cnh")
+  // Também usada por imposto, documentação (qualquer despesa com prazo)
   dataVencimento  DateTime? @map("data_vencimento") @db.Date
+
+  // ─── Específicos de imposto ─────────────────────────────────────────────────
+  // 'ipva' | 'licenciamento' | 'dpvat' | 'outro'
+  tipoImposto     String?  @map("tipo_imposto") @db.VarChar(30)
+  anoExercicio    Int?     @map("ano_exercicio")
+  numeroParcela   Int?     @map("numero_parcela")
+  totalParcelas   Int?     @map("total_parcelas")
+
+  // ─── Específicos de seguro ──────────────────────────────────────────────────
+  seguradora      String?  @db.VarChar(200)
+  numeroApolice   String?  @map("numero_apolice") @db.VarChar(100)
+  vigenciaInicio  DateTime? @map("vigencia_inicio") @db.Date
+  vigenciaFim     DateTime? @map("vigencia_fim") @db.Date
+  // 'total' | 'terceiros' | 'compreensiva'
+  coberturaTipo   String?  @map("cobertura_tipo") @db.VarChar(30)
+
+  // ─── Específicos de documentação ────────────────────────────────────────────
+  // 'crlv' | 'transferencia' | 'vistoria' | 'emplacamento' | 'outro'
+  tipoDocumento   String?  @map("tipo_documento") @db.VarChar(30)
 
   dataCriacao     DateTime  @default(now()) @map("data_criacao") @db.Timestamp(6)
   dataAtualizacao DateTime  @updatedAt @map("data_atualizacao") @db.Timestamp(6)
@@ -101,6 +121,8 @@ model DespesaVeiculo {
 
   @@index([veiculoId, tipo], map: "idx_despesas_veiculo_tipo")
   @@index([data], map: "idx_despesas_data")
+  @@index([vigenciaFim], map: "idx_despesas_vigencia_fim")
+  @@index([dataVencimento], map: "idx_despesas_data_vencimento")
   @@map("despesas_veiculos")
 }
 
