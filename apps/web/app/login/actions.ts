@@ -52,5 +52,5 @@ export async function acaoLogin(
     path: '/',
   });
 
-  redirect('/veiculos');
+  redirect('/dashboard');
 }
