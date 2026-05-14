@@ -44,7 +44,11 @@ export function TabelaViagens({ viagens, temFiltrosAtivos = false }: TabelaViage
 
   function corpoStatus(rowData: ViagemDetalhada) {
     const cfg = statusConfig[rowData.status] ?? { color: 'default' as BadgeColor, rotulo: rowData.status };
-    return <Badge color={cfg.color} variant="light">{cfg.rotulo}</Badge>;
+    return (
+      <span className="inline-block whitespace-nowrap">
+        <Badge color={cfg.color} variant="light">{cfg.rotulo}</Badge>
+      </span>
+    );
   }
 
   function corpoAcoes(rowData: ViagemDetalhada) {
@@ -83,7 +87,7 @@ export function TabelaViagens({ viagens, temFiltrosAtivos = false }: TabelaViage
       <Column field="motorista.nome" header="Motorista" body={corpoMotorista} sortable />
       <Column field="veiculo.placa" header="Veículo" body={corpoVeiculo} sortable style={{ width: 110 }} />
       <Column header="Horário previsto" body={corpoHorario} style={{ width: 140 }} />
-      <Column field="status" header="Status" body={corpoStatus} sortable style={{ width: 150 }} />
+      <Column field="status" header="Status" body={corpoStatus} sortable style={{ width: 170 }} />
       <Column header="Ações" body={corpoAcoes} style={{ width: 130 }} />
     </DataTable>
   );
