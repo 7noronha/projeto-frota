@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -12,6 +12,7 @@ import { UsuarioJwt, UsuarioResposta } from '@fleetops/types';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RespostaLoginDto } from './dto/resposta-login.dto';
+import { AtualizarPerfilDto } from './dto/atualizar-perfil.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { UsuarioAutenticado } from '../../common/decorators/usuario-autenticado.decorator';
 
@@ -50,5 +51,22 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: 'Token inválido ou expirado' })
   async meusDados(@UsuarioAutenticado() usuario: UsuarioJwt): Promise<UsuarioResposta> {
     return this.authService.meusDados(usuario);
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT')
+  @ApiOperation({
+    summary: 'Atualiza dados do próprio usuário (email, telefone, senha)',
+    description:
+      'Não permite alterar matrícula, nome, perfil ou status — esses são privilégio do admin.',
+  })
+  @ApiOkResponse({ description: 'Perfil atualizado', type: undefined })
+  @ApiUnauthorizedResponse({ description: 'Token inválido ou expirado' })
+  async atualizarMeuPerfil(
+    @UsuarioAutenticado() usuario: UsuarioJwt,
+    @Body() dto: AtualizarPerfilDto,
+  ): Promise<UsuarioResposta> {
+    return this.authService.atualizarMeuPerfil(usuario, dto);
   }
 }

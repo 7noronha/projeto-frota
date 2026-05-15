@@ -71,8 +71,22 @@ export function NavegacaoPrincipal() {
         </VStack>
       </nav>
 
-      {/* Sair */}
-      <div className="p-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+      {/* Perfil + Sair */}
+      <div
+        className="p-3 flex flex-col gap-2"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}
+      >
+        <Link
+          href="/perfil"
+          aria-current={pathname.startsWith('/perfil') ? 'page' : undefined}
+          className="nav-sidebar-item"
+          data-active={pathname.startsWith('/perfil') ? 'true' : undefined}
+        >
+          <Icon name="PiUserCircleBold" size="md" color="light" />
+          <Text as="span" size="sm" className="font-medium text-white">
+            Meu perfil
+          </Text>
+        </Link>
         <Button
           color="error"
           isBlock
