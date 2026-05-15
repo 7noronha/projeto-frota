@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  Box,
   VStack,
   Text,
   Input,
@@ -16,6 +15,7 @@ import {
   Heading,
 } from '@gluestack-ui/themed';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchApi } from '@/lib/api';
 import { salvarToken } from '@/lib/auth';
 import type { RespostaLogin } from '@fleetops/types';
@@ -52,7 +52,15 @@ export default function TelaLogin() {
   }
 
   return (
-    <Box flex={1} backgroundColor="#0A2540" justifyContent="center" px="$6">
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: '#0A2540',
+        justifyContent: 'center',
+        paddingHorizontal: 24,
+      }}
+      edges={['top', 'bottom', 'left', 'right']}
+    >
       <VStack space="xl">
         {/* Logo */}
         <VStack space="xs" mb="$6">
@@ -136,6 +144,6 @@ export default function TelaLogin() {
           </Button>
         </VStack>
       </VStack>
-    </Box>
+    </SafeAreaView>
   );
 }

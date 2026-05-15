@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Spinner, Box } from '@gluestack-ui/themed';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { buscarToken } from '@/lib/auth';
 
 export default function TelaInicial() {
@@ -17,8 +18,13 @@ export default function TelaInicial() {
   }, [router]);
 
   return (
-    <Box flex={1} alignItems="center" justifyContent="center" backgroundColor="#0A2540">
-      <Spinner size="large" color="#00C2FF" />
-    </Box>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: '#0A2540' }}
+      edges={['top', 'bottom', 'left', 'right']}
+    >
+      <Box flex={1} alignItems="center" justifyContent="center">
+        <Spinner size="large" color="#00C2FF" />
+      </Box>
+    </SafeAreaView>
   );
 }

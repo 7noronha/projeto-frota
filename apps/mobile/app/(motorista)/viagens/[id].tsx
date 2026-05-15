@@ -22,6 +22,7 @@ import {
 } from '@gluestack-ui/themed';
 import { RefreshControl } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchApi, ErroApi } from '@/lib/api';
 import { useNotificar } from '@/lib/notificar';
@@ -244,6 +245,7 @@ function FormFinalizar({ id, odometroInicial }: { id: string; odometroInicial: n
 
 export default function TelaDetalheViagem() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const insets = useSafeAreaInsets();
 
   const { data: viagem, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['viagem', id],
@@ -253,7 +255,11 @@ export default function TelaDetalheViagem() {
 
   if (isLoading) {
     return (
-      <ScrollView flex={1} backgroundColor="#F8FAFC">
+      <ScrollView
+        flex={1}
+        backgroundColor="#F8FAFC"
+        contentContainerStyle={{ paddingBottom: insets.bottom }}
+      >
         <DetalheViagemSkeleton />
       </ScrollView>
     );
@@ -261,7 +267,14 @@ export default function TelaDetalheViagem() {
 
   if (isError || !viagem) {
     return (
-      <Box flex={1} alignItems="center" justifyContent="center" px="$6" backgroundColor="#F8FAFC">
+      <Box
+        flex={1}
+        alignItems="center"
+        justifyContent="center"
+        px="$6"
+        backgroundColor="#F8FAFC"
+        style={{ paddingBottom: insets.bottom }}
+      >
         <Text color="$error600" textAlign="center" mb="$4">
           Não foi possível carregar a viagem.
         </Text>
@@ -279,6 +292,7 @@ export default function TelaDetalheViagem() {
     <ScrollView
       flex={1}
       backgroundColor="#F8FAFC"
+      contentContainerStyle={{ paddingBottom: insets.bottom }}
       refreshControl={
         <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#0066FF" />
       }
