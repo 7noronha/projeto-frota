@@ -92,21 +92,41 @@ body {
   box-shadow: 8px 0 32px rgba(0, 0, 0, 0.22);
 }
 
-/* Itens nunca quebram linha enquanto o rótulo aparece/some */
+/* Itens nunca quebram linha; no estado estreito o ícone fica centralizado */
 .sidebar-rail .nav-sidebar-item {
   white-space: nowrap;
+  justify-content: center;
 }
 
-/* Rótulos textuais — invisíveis no estado estreito, surgem ao expandir */
+.sidebar-rail:hover .nav-sidebar-item,
+.sidebar-rail:focus-within .nav-sidebar-item {
+  justify-content: flex-start;
+}
+
+/* Ícone nunca encolhe — garante que apareça mesmo com o rótulo recolhido */
+.sidebar-rail .nav-sidebar-item > svg,
+.sidebar-rail .nav-sidebar-item > i,
+.sidebar-rail .nav-sidebar-item [data-icon],
+.sidebar-rail .nav-sidebar-item [class*='icon'] {
+  flex-shrink: 0;
+}
+
+/* Rótulos textuais — sem largura no estado estreito (não empurram o ícone),
+   surgem com fade ao expandir */
 .sidebar-rail .sidebar-rotulo {
   opacity: 0;
+  max-width: 0;
+  overflow: hidden;
   white-space: nowrap;
-  transition: opacity 180ms ease;
+  transition:
+    opacity 180ms ease,
+    max-width 220ms ease;
 }
 
 .sidebar-rail:hover .sidebar-rotulo,
 .sidebar-rail:focus-within .sidebar-rotulo {
   opacity: 1;
+  max-width: 160px;
 }
 
 /* Quem prefere menos movimento: sem animação de largura/opacidade */

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Icon, HStack, VStack, Text, Button } from '@lojascem/components-react';
+import { Icon, HStack, VStack, Text } from '@lojascem/components-react';
 
 const itensMenu = [
   { href: '/dashboard', rotulo: 'Painel', icone: 'PiSquaresFourBold' as const },
@@ -100,16 +100,18 @@ export function NavegacaoPrincipal() {
               Meu perfil
             </Text>
           </Link>
-          <Button
-            color="error"
-            isBlock
-            leftIcon="PiSignOutBold"
-            onPress={handleSair}
+          <button
+            type="button"
+            onClick={handleSair}
             aria-label="Sair do sistema"
-            className="btn-sair"
+            className="nav-sidebar-item btn-sair"
+            style={{ width: '100%', border: 'none', cursor: 'pointer' }}
           >
-            Sair
-          </Button>
+            <Icon name="PiSignOutBold" size="md" color="light" />
+            <Text as="span" size="sm" className="sidebar-rotulo font-medium text-white">
+              Sair
+            </Text>
+          </button>
         </div>
       </aside>
     </>
