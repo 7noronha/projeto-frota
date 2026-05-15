@@ -25,79 +25,93 @@ export function NavegacaoPrincipal() {
   }
 
   return (
-    <aside
-      aria-label="Navegação principal"
-      className="flex h-screen w-64 flex-col"
-      style={{
-        background: '#0A2540',
-        borderRight: '1px solid rgba(255,255,255,0.08)',
-        flexShrink: 0,
-      }}
-    >
-      {/* Logo */}
-      <HStack
-        alignItems="center"
-        gap={4}
-        className="h-16 px-5"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}
-      >
-        <div
-          className="flex items-center justify-center rounded-lg"
-          style={{ background: '#0066FF', width: 32, height: 32 }}
-        >
-          <Icon name="PiTruckBold" size="sm" color="light" />
-        </div>
-        <Text as="span" size="xl" className="font-bold text-white">FleetOps</Text>
-      </HStack>
+    <>
+      {/* Espaçador — mantém os 72px no fluxo flex para o conteúdo não deslocar
+          quando a sidebar expande sobre ele (overlay). */}
+      <div aria-hidden="true" style={{ width: 72, flexShrink: 0 }} />
 
-      {/* Menu */}
-      <nav aria-label="Menu" className="flex-1 px-3 py-4">
-        <VStack gap={2}>
-          {itensMenu.map((item) => {
-            const ativo = pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={ativo ? 'page' : undefined}
-                className="nav-sidebar-item"
-                data-active={ativo ? 'true' : undefined}
-              >
-                <Icon name={item.icone} size="md" color="light" />
-                <Text as="span" size="sm" className="font-medium text-white">{item.rotulo}</Text>
-              </Link>
-            );
-          })}
-        </VStack>
-      </nav>
-
-      {/* Perfil + Sair */}
-      <div
-        className="p-3 flex flex-col gap-2"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}
+      <aside
+        aria-label="Navegação principal"
+        className="sidebar-rail flex h-screen flex-col"
+        style={{
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          zIndex: 40,
+          background: '#0A2540',
+          borderRight: '1px solid rgba(255,255,255,0.08)',
+        }}
       >
-        <Link
-          href="/perfil"
-          aria-current={pathname.startsWith('/perfil') ? 'page' : undefined}
-          className="nav-sidebar-item"
-          data-active={pathname.startsWith('/perfil') ? 'true' : undefined}
+        {/* Logo */}
+        <HStack
+          alignItems="center"
+          gap={4}
+          className="h-16 px-5"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}
         >
-          <Icon name="PiUserCircleBold" size="md" color="light" />
-          <Text as="span" size="sm" className="font-medium text-white">
-            Meu perfil
+          <div
+            className="flex items-center justify-center rounded-lg"
+            style={{ background: '#0066FF', width: 32, height: 32, flexShrink: 0 }}
+          >
+            <Icon name="PiTruckBold" size="sm" color="light" />
+          </div>
+          <Text as="span" size="xl" className="sidebar-rotulo font-bold text-white">
+            FleetOps
           </Text>
-        </Link>
-        <Button
-          color="error"
-          isBlock
-          leftIcon="PiSignOutBold"
-          onPress={handleSair}
-          aria-label="Sair do sistema"
-          className="btn-sair"
+        </HStack>
+
+        {/* Menu */}
+        <nav aria-label="Menu" className="flex-1 px-3 py-4">
+          <VStack gap={2}>
+            {itensMenu.map((item) => {
+              const ativo = pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={ativo ? 'page' : undefined}
+                  className="nav-sidebar-item"
+                  data-active={ativo ? 'true' : undefined}
+                >
+                  <Icon name={item.icone} size="md" color="light" />
+                  <Text as="span" size="sm" className="sidebar-rotulo font-medium text-white">
+                    {item.rotulo}
+                  </Text>
+                </Link>
+              );
+            })}
+          </VStack>
+        </nav>
+
+        {/* Perfil + Sair */}
+        <div
+          className="p-3 flex flex-col gap-2"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}
         >
-          Sair
-        </Button>
-      </div>
-    </aside>
+          <Link
+            href="/perfil"
+            aria-current={pathname.startsWith('/perfil') ? 'page' : undefined}
+            className="nav-sidebar-item"
+            data-active={pathname.startsWith('/perfil') ? 'true' : undefined}
+          >
+            <Icon name="PiUserCircleBold" size="md" color="light" />
+            <Text as="span" size="sm" className="sidebar-rotulo font-medium text-white">
+              Meu perfil
+            </Text>
+          </Link>
+          <Button
+            color="error"
+            isBlock
+            leftIcon="PiSignOutBold"
+            onPress={handleSair}
+            aria-label="Sair do sistema"
+            className="btn-sair"
+          >
+            Sair
+          </Button>
+        </div>
+      </aside>
+    </>
   );
 }

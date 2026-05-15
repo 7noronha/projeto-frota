@@ -78,6 +78,45 @@ body {
   outline-color: rgba(255, 255, 255, 0.5);
 }
 
+/* ─── Sidebar — rail dinâmico (estreito → expande no hover, sobrepondo) ───── */
+.sidebar-rail {
+  width: 72px;
+  overflow: hidden;
+  transition: width 220ms ease;
+}
+
+/* Expande ao passar o mouse OU ao focar um item via teclado (acessibilidade) */
+.sidebar-rail:hover,
+.sidebar-rail:focus-within {
+  width: 236px;
+  box-shadow: 8px 0 32px rgba(0, 0, 0, 0.22);
+}
+
+/* Itens nunca quebram linha enquanto o rótulo aparece/some */
+.sidebar-rail .nav-sidebar-item {
+  white-space: nowrap;
+}
+
+/* Rótulos textuais — invisíveis no estado estreito, surgem ao expandir */
+.sidebar-rail .sidebar-rotulo {
+  opacity: 0;
+  white-space: nowrap;
+  transition: opacity 180ms ease;
+}
+
+.sidebar-rail:hover .sidebar-rotulo,
+.sidebar-rail:focus-within .sidebar-rotulo {
+  opacity: 1;
+}
+
+/* Quem prefere menos movimento: sem animação de largura/opacidade */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-rail,
+  .sidebar-rail .sidebar-rotulo {
+    transition: none;
+  }
+}
+
 /* ─── Login — campos estilo underline ────────────────────────────────────── */
 .login-field .p-inputtext,
 .login-field input {
