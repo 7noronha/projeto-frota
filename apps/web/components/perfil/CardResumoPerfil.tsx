@@ -1,3 +1,5 @@
+'use client';
+
 import { Card, HStack, VStack, Text, Badge, Heading } from '@lojascem/components-react';
 import type { UsuarioResposta } from '@fleetops/types';
 
