@@ -86,9 +86,15 @@ export function TabelaMotoristas({ motoristas }: TabelaMotoristasProps) {
   }
 
   function corpoStatus(row: UsuarioResposta) {
-    return row.ativo
-      ? <Badge color="success" variant="light">Ativo</Badge>
-      : <Badge color="default" variant="light">Inativo</Badge>;
+    return (
+      <span className="inline-block whitespace-nowrap">
+        {row.ativo ? (
+          <Badge color="success" variant="light">Ativo</Badge>
+        ) : (
+          <Badge color="default" variant="light">Inativo</Badge>
+        )}
+      </span>
+    );
   }
 
   function corpoAcoes(row: UsuarioResposta) {
@@ -159,7 +165,7 @@ export function TabelaMotoristas({ motoristas }: TabelaMotoristasProps) {
           />
         }
         stripedRows
-        className="w-full"
+        className="w-full tabela-compacta"
         style={{ borderRadius: 12, overflow: 'hidden' }}
       >
         <Column field="matricula" header="Matrícula" body={corpoMatricula} sortable />

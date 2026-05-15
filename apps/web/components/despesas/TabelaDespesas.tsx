@@ -82,9 +82,11 @@ export function TabelaDespesas({ veiculoId, despesas }: TabelaDespesasProps) {
   function corpoTipo(row: Despesa) {
     const cfg = CONFIG_TIPO[row.tipo];
     return (
-      <Badge color={cfg.color} variant="light">
-        {cfg.rotulo}
-      </Badge>
+      <span className="inline-block whitespace-nowrap">
+        <Badge color={cfg.color} variant="light">
+          {cfg.rotulo}
+        </Badge>
+      </span>
     );
   }
 
@@ -197,7 +199,7 @@ export function TabelaDespesas({ veiculoId, despesas }: TabelaDespesasProps) {
           />
         }
         stripedRows
-        className="w-full"
+        className="w-full tabela-compacta"
         style={{ borderRadius: 12, overflow: 'hidden' }}
       >
         <Column field="data" header="Data" body={corpoData} sortable />

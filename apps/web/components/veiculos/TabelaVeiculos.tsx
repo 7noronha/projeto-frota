@@ -66,7 +66,11 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
 
   function corpoSituacao(rowData: VeiculoResposta) {
     const cfg = situacaoConfig[rowData.situacao] ?? { color: 'default' as BadgeColor, rotulo: rowData.situacao };
-    return <Badge color={cfg.color} variant="light">{cfg.rotulo}</Badge>;
+    return (
+      <span className="inline-block whitespace-nowrap">
+        <Badge color={cfg.color} variant="light">{cfg.rotulo}</Badge>
+      </span>
+    );
   }
 
   function corpoAcoes(rowData: VeiculoResposta) {
@@ -119,7 +123,7 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
           />
         }
         stripedRows
-        className="w-full"
+        className="w-full tabela-compacta"
         style={{ borderRadius: 12, overflow: 'hidden' }}
       >
         <Column field="placa" header="Placa" body={corpoPlaca} sortable />

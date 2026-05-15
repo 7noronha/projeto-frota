@@ -86,17 +86,23 @@ export function TabelaUsuarios({ usuarios }: TabelaUsuariosProps) {
   function corpoPerfil(row: UsuarioResposta) {
     const meta = ROTULOS_PERFIL[row.perfil] ?? { texto: row.perfil, color: 'default' as const };
     return (
-      <Badge color={meta.color} variant="light">
-        {meta.texto}
-      </Badge>
+      <span className="inline-block whitespace-nowrap">
+        <Badge color={meta.color} variant="light">
+          {meta.texto}
+        </Badge>
+      </span>
     );
   }
 
   function corpoStatus(row: UsuarioResposta) {
-    return row.ativo ? (
-      <Badge color="success" variant="light">Ativo</Badge>
-    ) : (
-      <Badge color="default" variant="light">Inativo</Badge>
+    return (
+      <span className="inline-block whitespace-nowrap">
+        {row.ativo ? (
+          <Badge color="success" variant="light">Ativo</Badge>
+        ) : (
+          <Badge color="default" variant="light">Inativo</Badge>
+        )}
+      </span>
     );
   }
 
@@ -170,7 +176,7 @@ export function TabelaUsuarios({ usuarios }: TabelaUsuariosProps) {
           />
         }
         stripedRows
-        className="w-full"
+        className="w-full tabela-compacta"
         style={{ borderRadius: 12, overflow: 'hidden' }}
       >
         <Column field="matricula" header="Matrícula" body={corpoMatricula} sortable />
