@@ -92,15 +92,26 @@ body {
   box-shadow: 8px 0 32px rgba(0, 0, 0, 0.22);
 }
 
-/* Itens nunca quebram linha; no estado estreito o ícone fica centralizado */
+/* Estado estreito: ícone perfeitamente centralizado — sem gap nem padding
+   horizontal para o rótulo (largura 0) não deslocar o ícone */
 .sidebar-rail .nav-sidebar-item {
   white-space: nowrap;
   justify-content: center;
+  gap: 0;
+  padding-left: 0;
+  padding-right: 0;
+  transition:
+    background 150ms ease-out,
+    color 150ms ease-out,
+    padding 220ms ease;
 }
 
 .sidebar-rail:hover .nav-sidebar-item,
 .sidebar-rail:focus-within .nav-sidebar-item {
   justify-content: flex-start;
+  gap: 0.75rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
 }
 
 /* Ícone nunca encolhe — garante que apareça mesmo com o rótulo recolhido */
