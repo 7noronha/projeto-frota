@@ -4,6 +4,7 @@ import { config } from '@gluestack-ui/config';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErroApi, registrarHandlerNaoAutenticado } from '@/lib/api';
 
 const queryClient = new QueryClient({
@@ -32,15 +33,17 @@ export default function RootLayout() {
   }, [router]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <GluestackUIProvider config={config}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="login" />
-          <Stack.Screen name="(motorista)" />
-        </Stack>
-        <StatusBar style="light" />
-      </GluestackUIProvider>
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <GluestackUIProvider config={config}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="login" />
+            <Stack.Screen name="(motorista)" />
+          </Stack>
+          <StatusBar style="light" />
+        </GluestackUIProvider>
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }

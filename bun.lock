@@ -72,6 +72,7 @@
         "expo-status-bar": "~2.0.0",
         "react": "^19.0.0",
         "react-native": "0.77.0",
+        "react-native-safe-area-context": "~5.7.0",
       },
       "devDependencies": {
         "@babel/core": "^7.25.0",

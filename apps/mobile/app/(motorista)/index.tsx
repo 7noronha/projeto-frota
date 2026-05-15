@@ -11,6 +11,7 @@ import {
 } from '@gluestack-ui/themed';
 import { RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { fetchApi } from '@/lib/api';
 import { ListaViagensSkeleton } from '@/components/ListaViagensSkeleton';
@@ -106,7 +107,10 @@ export default function TelaViagens() {
   });
 
   return (
-    <Box flex={1} backgroundColor="#F8FAFC">
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: '#F8FAFC' }}
+      edges={['bottom', 'left', 'right']}
+    >
       {/* Filtros de status */}
       <Box backgroundColor="$white" borderBottomWidth={1} borderBottomColor="$borderLight200">
         <ScrollView horizontal showsHorizontalScrollIndicator={false} px="$4" py="$3">
@@ -223,6 +227,6 @@ export default function TelaViagens() {
           )}
         </ScrollView>
       )}
-    </Box>
+    </SafeAreaView>
   );
 }
