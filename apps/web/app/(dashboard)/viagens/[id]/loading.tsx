@@ -1,5 +1,1 @@
-import { DetalheViagemSkeleton } from '@/components/viagens/DetalheViagemSkeleton';
-
-export default function Loading() {
-  return <DetalheViagemSkeleton />;
-}
+export { BarraCarregamento as default } from '@/components/BarraCarregamento';
