@@ -10,7 +10,7 @@
 
 1. **API (Backend)** — NestJS 11 + Fastify 5 + Prisma 6 + PostgreSQL 17
 2. **Web (Operador)** — Next.js 15 (App Router) + shadcn/ui + Tailwind 4
-3. **Mobile (Motorista)** — React Native + Expo 55 + Gluestack UI v2
+3. **Mobile (Motorista)** — React Native + Expo 54 + Gluestack UI v2
 
 **Escopo atual:** MVP — fluxo de viagens (criar → iniciar → finalizar).
 
@@ -103,9 +103,9 @@ Versões mínimas do projeto (Maio/2026):
 - Node.js **24 LTS**
 - NestJS **11.x**
 - Next.js **15.x**
-- React **19.2.x**
-- React Native **0.83.x** (alinhado ao Expo SDK 55.0.x via `expo install`)
-- Expo SDK **55.x**
+- React **19.1.x**
+- React Native **0.81.x** (alinhado ao Expo SDK 54.0.x via `expo install`)
+- Expo SDK **54.x** (SDK suportado pelo Expo Go público — não subir sem validar Expo Go/dev build)
 - Prisma **6.x**
 - Tailwind **4.x**
 - PostgreSQL **17**
@@ -227,7 +227,7 @@ export default async function PaginaViagem(props: { params: Params }) {
 - **Componentes shadcn/ui** em `components/ui/`; componentes de domínio em `components/<dominio>/`.
 - **Tailwind 4** — use as CSS variables da paleta (seção 9.2 do PRD), não hex hardcoded.
 
-### Mobile (Expo 55 + Gluestack UI v2)
+### Mobile (Expo 54 + Gluestack UI v2)
 
 - **Expo Router** para navegação (file-based).
 - **Gluestack UI** para todos os componentes — não misturar com outras libs de UI.
@@ -443,7 +443,7 @@ Antes de começar a codar, o Claude Code deve:
 - **Next.js 15:** https://nextjs.org/docs/app
 - **shadcn/ui:** https://ui.shadcn.com/
 - **Gluestack UI v2:** https://gluestack.io/
-- **Expo 55:** https://docs.expo.dev/
+- **Expo 54:** https://docs.expo.dev/
 - **Turborepo:** https://turbo.build/repo/docs
 - **Tailwind 4:** https://tailwindcss.com/docs
 
