@@ -230,7 +230,10 @@ export default async function PaginaViagem(props: { params: Params }) {
 ### Mobile (Expo 54 + Gluestack UI v2)
 
 - **Expo Router** para navegação (file-based).
-- **Gluestack UI** para todos os componentes — não misturar com outras libs de UI.
+- **Gluestack UI v2 (NativeWind)** para todos os componentes — não misturar com outras libs de UI. Componentes são **vendorizados** em `apps/mobile/components/ui/` (gerados via `npx gluestack-ui add`); para adicionar um novo componente use o CLI do Gluestack, não escreva à mão.
+- v1 (`@gluestack-ui/themed`) foi removido — é incompatível com a New Architecture do Expo SDK 54. Não reintroduzir.
+- `components/ui/**` é código vendorizado: fica fora do `include` do tsconfig e o app usa `declaration: false` (corrige `TS2742` do Gluestack v2).
+- Cores de marca (#0A2540, #0066FF, #00C2FF) aplicadas via `style` inline; `className` (NativeWind) para layout e estados `active:`.
 - **JWT** armazenado em `expo-secure-store` (nunca `AsyncStorage`).
 - **TanStack Query** para data fetching, com `staleTime` adequado.
 - **Telas pequenas e focadas** — motorista usa em condições adversas (sol, pressa, pouco tempo).
