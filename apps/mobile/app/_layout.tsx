@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { LogBox } from 'react-native';
 import { GluestackUIProvider } from '@gluestack-ui/themed';
 import { config } from '@gluestack-ui/config';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -6,6 +7,12 @@ import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErroApi, registrarHandlerNaoAutenticado } from '@/lib/api';
+
+// Aviso emitido pelo Gluestack UI v1 (componente SafeAreaView interno usa o
+// SafeAreaView depreciado do react-native). Nosso codigo usa
+// react-native-safe-area-context corretamente; o ruido some na futura
+// migracao para o Gluestack v2.
+LogBox.ignoreLogs(['SafeAreaView has been deprecated']);
 
 const queryClient = new QueryClient({
   defaultOptions: {
