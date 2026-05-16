@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@fleetops/types": "*",
+    "@fleetops/utils": "*",
     "@fleetops/validation": "*",
     "@gluestack-ui/config": "^1.1.13",
     "@gluestack-ui/themed": "^1.1.30",

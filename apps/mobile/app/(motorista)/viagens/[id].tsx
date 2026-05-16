@@ -23,6 +23,7 @@ import {
 import { RefreshControl } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { formatarDataIso, formatarDataHoraIso } from '@fleetops/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchApi, ErroApi } from '@/lib/api';
 import { useNotificar } from '@/lib/notificar';
@@ -286,7 +287,7 @@ export default function TelaDetalheViagem() {
   }
 
   const cfg = CONFIG_STATUS[viagem.status];
-  const dataViagem = new Date(viagem.dataViagem + 'T00:00:00').toLocaleDateString('pt-BR');
+  const dataViagem = formatarDataIso(viagem.dataViagem);
 
   return (
     <ScrollView
@@ -367,7 +368,7 @@ export default function TelaDetalheViagem() {
                     rotulo="Início real"
                     valor={
                       viagem.dataHoraInicioReal
-                        ? new Date(viagem.dataHoraInicioReal).toLocaleString('pt-BR')
+                        ? formatarDataHoraIso(viagem.dataHoraInicioReal)
                         : undefined
                     }
                   />
@@ -377,7 +378,7 @@ export default function TelaDetalheViagem() {
                     rotulo="Fim real"
                     valor={
                       viagem.dataHoraFimReal
-                        ? new Date(viagem.dataHoraFimReal).toLocaleString('pt-BR')
+                        ? formatarDataHoraIso(viagem.dataHoraFimReal)
                         : undefined
                     }
                   />

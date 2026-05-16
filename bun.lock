@@ -61,6 +61,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@fleetops/types": "*",
+        "@fleetops/utils": "*",
         "@fleetops/validation": "*",
         "@gluestack-style/react": "^1.0.57",
         "@gluestack-ui/config": "^1.1.13",
