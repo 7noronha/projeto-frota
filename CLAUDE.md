@@ -382,6 +382,8 @@ O Claude Code **NUNCA deve**:
 - Bun (para dev)
 - Git
 
+> **bun + Expo (crítico):** o repo usa `bunfig.toml` com `[install] linker = "hoisted"`. O linker isolado padrão do bun cria cópias físicas duplicadas de pacotes nativos (`expo`, `react-native`, `expo-modules-core`), o que quebra a New Architecture do mobile com erro nativo `java.lang.String cannot be cast to java.lang.Boolean`. **Não remova esse `bunfig.toml`.** Após apagar `node_modules`, rode `cd apps/api && bunx prisma generate` antes de typecheck/testes.
+
 ### Comandos úteis (documentar à medida que forem criados)
 
 ```bash

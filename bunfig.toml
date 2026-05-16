@@ -1,0 +1,8 @@
+# Expo / React Native exigem cópia única e "hoisted" dos pacotes nativos
+# (expo, react-native, expo-modules-core). O linker isolado padrão do bun
+# cria múltiplas cópias físicas por contexto de peer-deps, causando
+# divergência de codegen JS/nativo na New Architecture (erro nativo
+# "java.lang.String cannot be cast to java.lang.Boolean").
+# node_modules flat (estilo npm/yarn) resolve a duplicação.
+[install]
+linker = "hoisted"
