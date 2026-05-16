@@ -84,8 +84,8 @@ Todas as tecnologias devem usar a última versão LTS disponível no momento do 
 | **NestJS** | **11.x** | — |
 | **Next.js** | **15.x** | App Router com async params |
 | **React** | **19.x** | — |
-| **React Native** | **0.83.x** | governado pelo Expo SDK 55 (`expo install`) |
-| **Expo SDK** | **55.x** | — |
+| **React Native** | **0.81.x** | governado pelo Expo SDK 54 (`expo install`) |
+| **Expo SDK** | **54.x** | suportado pelo Expo Go público |
 | **Prisma** | **6.x** | — |
 | **Tailwind CSS** | **4.x** | — |
 | **shadcn/ui** | Última | — |
@@ -102,7 +102,7 @@ fleetops/
 ├── apps/
 │   ├── api/          → Backend NestJS + Fastify
 │   ├── web/          → Next.js 15 (App Router)
-│   └── mobile/       → React Native + Expo 55
+│   └── mobile/       → React Native + Expo 54
 ├── packages/
 │   ├── types/        → Tipos/DTOs compartilhados
 │   ├── validation/   → Schemas Zod compartilhados
@@ -147,7 +147,7 @@ fleetops/
 
 | Camada | Tecnologia |
 |---|---|
-| Framework | React Native 0.83 + Expo SDK 55 |
+| Framework | React Native 0.81 + Expo SDK 54 |
 | Linguagem | TypeScript 5.7+ |
 | UI | **Gluestack UI v2** |
 | Navegação | Expo Router |
@@ -818,7 +818,7 @@ MODO ESCURO
 - [Next.js 15 App Router](https://nextjs.org/docs/app)
 - [shadcn/ui](https://ui.shadcn.com/)
 - [Gluestack UI v2](https://gluestack.io/)
-- [Expo SDK 55](https://docs.expo.dev/)
+- [Expo SDK 54](https://docs.expo.dev/)
 - [Turborepo](https://turbo.build/repo/docs)
 - [date-fns-tz](https://github.com/marnusw/date-fns-tz)
 - [PostgreSQL 17](https://www.postgresql.org/docs/17/)
