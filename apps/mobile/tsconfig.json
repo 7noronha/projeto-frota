@@ -3,11 +3,22 @@
   "extends": "@fleetops/config/tsconfig/react-native.json",
   "compilerOptions": {
     "paths": {
-      "@/*": ["./*"],
-      "@fleetops/types": ["../../packages/types/src/index.ts"],
-      "@fleetops/validation": ["../../packages/validation/src/index.ts"]
+      "@/*": [
+        "./*"
+      ],
+      "@fleetops/types": [
+        "../../packages/types/src/index.ts"
+      ],
+      "@fleetops/validation": [
+        "../../packages/validation/src/index.ts"
+      ]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
