@@ -13,6 +13,7 @@ import { RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
+import { formatarDataIso } from '@fleetops/utils';
 import { fetchApi } from '@/lib/api';
 import { ListaViagensSkeleton } from '@/components/ListaViagensSkeleton';
 import { BannerCnhVencendo } from '@/components/BannerCnhVencendo';
@@ -42,7 +43,7 @@ function BadgeStatus({ status }: { status: StatusViagem }) {
 
 function CartaoViagem({ viagem }: { viagem: ViagemDetalhada }) {
   const router = useRouter();
-  const data = new Date(viagem.dataViagem + 'T00:00:00').toLocaleDateString('pt-BR');
+  const data = formatarDataIso(viagem.dataViagem);
 
   return (
     <Pressable

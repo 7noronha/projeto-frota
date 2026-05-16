@@ -1,4 +1,5 @@
 import { toZonedTime, format, fromZonedTime } from 'date-fns-tz';
+import { parseISO, format as formatarData } from 'date-fns';
 
 const FUSO_BRASILIA = 'America/Sao_Paulo';
 
@@ -43,4 +44,20 @@ export function formatarDataHoraBrasilia(data: Date): string {
   return format(toZonedTime(data, FUSO_BRASILIA), "yyyy-MM-dd'T'HH:mm:ss", {
     timeZone: FUSO_BRASILIA,
   });
+}
+
+/**
+ * Formata uma data-calendário ISO (`yyyy-MM-dd`) para exibição `dd/MM/yyyy`.
+ * Para uso em UI — evita `new Date()` direto no código de produção.
+ */
+export function formatarDataIso(dataIso: string): string {
+  return formatarData(parseISO(dataIso), 'dd/MM/yyyy');
+}
+
+/**
+ * Formata um timestamp ISO para exibição `dd/MM/yyyy HH:mm`.
+ * Para uso em UI — evita `new Date()` direto no código de produção.
+ */
+export function formatarDataHoraIso(dataHoraIso: string): string {
+  return formatarData(parseISO(dataHoraIso), 'dd/MM/yyyy HH:mm');
 }
