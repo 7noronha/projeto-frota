@@ -98,17 +98,20 @@ Containers (`api`, `postgres`) devem ter `TZ=America/Sao_Paulo`.
 
 Ao instalar qualquer dependência nova, use a **última versão estável/LTS** disponível. Não fixe em versões antigas sem justificativa.
 
-Versões mínimas do projeto (Abril/2026):
+Versões mínimas do projeto (Maio/2026):
 
 - Node.js **24 LTS**
 - NestJS **11.x**
 - Next.js **15.x**
-- React **19.x**
+- React **19.2.x**
+- React Native **0.83.x** (alinhado ao Expo SDK 55.0.x via `expo install`)
 - Expo SDK **55.x**
 - Prisma **6.x**
 - Tailwind **4.x**
 - PostgreSQL **17**
 - TypeScript **5.7+**
+
+> As versões nativas do mobile (React Native, expo-*, react-native-safe-area-context, react) são governadas pelo Expo SDK. Ao adicionar libs nativas use sempre `expo install` e mantenha tudo com `expo install --check` verde — não fixe manualmente versões divergentes do SDK.
 
 ### 6. TypeScript — Strict Mode
 
@@ -456,5 +459,5 @@ Antes de começar a codar, o Claude Code deve:
 
 ---
 
-**Última atualização:** Abril/2026
+**Última atualização:** Maio/2026
 **Versão deste documento:** 1.0

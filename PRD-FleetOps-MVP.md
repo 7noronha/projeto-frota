@@ -84,7 +84,7 @@ Todas as tecnologias devem usar a última versão LTS disponível no momento do 
 | **NestJS** | **11.x** | — |
 | **Next.js** | **15.x** | App Router com async params |
 | **React** | **19.x** | — |
-| **React Native** | **0.77+** | (via Expo SDK 55) |
+| **React Native** | **0.83.x** | governado pelo Expo SDK 55 (`expo install`) |
 | **Expo SDK** | **55.x** | — |
 | **Prisma** | **6.x** | — |
 | **Tailwind CSS** | **4.x** | — |
@@ -147,7 +147,7 @@ fleetops/
 
 | Camada | Tecnologia |
 |---|---|
-| Framework | React Native 0.77 + Expo SDK 55 |
+| Framework | React Native 0.83 + Expo SDK 55 |
 | Linguagem | TypeScript 5.7+ |
 | UI | **Gluestack UI v2** |
 | Navegação | Expo Router |
