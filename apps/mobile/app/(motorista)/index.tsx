@@ -1,19 +1,15 @@
 import { useState } from 'react';
-import {
-  Box,
-  VStack,
-  HStack,
-  Text,
-  Pressable,
-  Badge,
-  BadgeText,
-  ScrollView,
-} from '@gluestack-ui/themed';
-import { RefreshControl } from 'react-native';
+import { RefreshControl, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { formatarDataIso } from '@fleetops/utils';
+import { Box } from '@/components/ui/box';
+import { VStack } from '@/components/ui/vstack';
+import { HStack } from '@/components/ui/hstack';
+import { Text } from '@/components/ui/text';
+import { Pressable } from '@/components/ui/pressable';
+import { Badge, BadgeText } from '@/components/ui/badge';
 import { fetchApi } from '@/lib/api';
 import { ListaViagensSkeleton } from '@/components/ListaViagensSkeleton';
 import { BannerCnhVencendo } from '@/components/BannerCnhVencendo';
@@ -29,12 +25,14 @@ function BadgeStatus({ status }: { status: StatusViagem }) {
   const cfg = CONFIG_STATUS[status];
   return (
     <Badge
-      sx={{ backgroundColor: cfg.fundo }}
-      borderRadius="$full"
-      px="$3"
-      py="$1"
+      style={{
+        backgroundColor: cfg.fundo,
+        borderRadius: 9999,
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+      }}
     >
-      <BadgeText sx={{ color: cfg.cor }} size="xs" fontWeight="$semibold">
+      <BadgeText size="sm" style={{ color: cfg.cor, fontWeight: '600', fontSize: 11 }}>
         {cfg.rotulo}
       </BadgeText>
     </Badge>
@@ -47,39 +45,47 @@ function CartaoViagem({ viagem }: { viagem: ViagemDetalhada }) {
 
   return (
     <Pressable
+      className="active:opacity-70"
       onPress={() => router.push(`/(motorista)/viagens/${viagem.id}`)}
-      sx={{ ':active': { opacity: 0.7 } }}
     >
       <Box
-        backgroundColor="$white"
-        borderRadius="$xl"
-        p="$4"
-        mb="$3"
-        borderWidth={1}
-        borderColor="$borderLight200"
-        shadowColor="$black"
-        shadowOffset={{ width: 0, height: 1 }}
-        shadowOpacity={0.05}
-        shadowRadius={2}
+        style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: 12,
+          padding: 16,
+          marginBottom: 12,
+          borderWidth: 1,
+          borderColor: '#E2E8F0',
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.05,
+          shadowRadius: 2,
+          elevation: 1,
+        }}
       >
-        <HStack justifyContent="space-between" alignItems="flex-start" mb="$2">
-          <Text fontWeight="$semibold" color="$textDark900" flex={1} mr="$2" numberOfLines={1}>
+        <HStack
+          style={{ justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}
+        >
+          <Text
+            numberOfLines={1}
+            style={{ fontWeight: '600', color: '#0F172A', flex: 1, marginRight: 8 }}
+          >
             {viagem.destino}
           </Text>
           <BadgeStatus status={viagem.status} />
         </HStack>
 
-        <HStack space="md" mt="$1">
-          <Text size="sm" color="$textLight500">
+        <HStack style={{ gap: 12, marginTop: 4 }}>
+          <Text size="sm" style={{ color: '#64748B' }}>
             {data}
           </Text>
-          <Text size="sm" color="$textLight500">
+          <Text size="sm" style={{ color: '#64748B' }}>
             {viagem.horaInicioPrevista} – {viagem.horaFimPrevista}
           </Text>
         </HStack>
 
         {viagem.distanciaPercorrida != null && (
-          <Text size="sm" color="$textLight500" mt="$1">
+          <Text size="sm" style={{ color: '#64748B', marginTop: 4 }}>
             {viagem.distanciaPercorrida.toLocaleString('pt-BR')} km percorridos
           </Text>
         )}
@@ -96,7 +102,6 @@ const FILTROS_STATUS = [
 ];
 
 export default function TelaViagens() {
-  // router não é usado mais aqui (handleSair foi para o header)
   const [filtroStatus, setFiltroStatus] = useState<StatusViagem | undefined>();
 
   const params = new URLSearchParams({ tamanhoPagina: '50' });
@@ -113,36 +118,43 @@ export default function TelaViagens() {
       edges={['bottom', 'left', 'right']}
     >
       {/* Filtros de status */}
-      <Box backgroundColor="$white" borderBottomWidth={1} borderBottomColor="$borderLight200">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} px="$4" py="$3">
-          <HStack space="sm">
-            {FILTROS_STATUS.map((f) => {
-              const ativo = filtroStatus === f.valor;
-              return (
-                <Pressable
-                  key={f.rotulo}
-                  onPress={() => setFiltroStatus(f.valor)}
-                  sx={{
-                    backgroundColor: ativo ? '#0066FF' : '$white',
-                    borderWidth: 1,
-                    borderColor: ativo ? '#0066FF' : '$borderLight200',
-                    borderRadius: '$full',
-                    px: '$4',
-                    py: '$2',
-                    ':active': { opacity: 0.8 },
-                  }}
+      <Box
+        style={{
+          backgroundColor: '#FFFFFF',
+          borderBottomWidth: 1,
+          borderBottomColor: '#E2E8F0',
+        }}
+      >
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12, gap: 8 }}
+        >
+          {FILTROS_STATUS.map((f) => {
+            const ativo = filtroStatus === f.valor;
+            return (
+              <Pressable
+                key={f.rotulo}
+                className="active:opacity-80"
+                onPress={() => setFiltroStatus(f.valor)}
+                style={{
+                  backgroundColor: ativo ? '#0066FF' : '#FFFFFF',
+                  borderWidth: 1,
+                  borderColor: ativo ? '#0066FF' : '#E2E8F0',
+                  borderRadius: 9999,
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                }}
+              >
+                <Text
+                  size="sm"
+                  style={{ fontWeight: '500', color: ativo ? '#FFFFFF' : '#334155' }}
                 >
-                  <Text
-                    size="sm"
-                    fontWeight="$medium"
-                    color={ativo ? '$white' : '$textLight700'}
-                  >
-                    {f.rotulo}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </HStack>
+                  {f.rotulo}
+                </Text>
+              </Pressable>
+            );
+          })}
         </ScrollView>
       </Box>
 
@@ -153,39 +165,62 @@ export default function TelaViagens() {
       {isLoading ? (
         <ListaViagensSkeleton quantidade={5} />
       ) : isError ? (
-        <Box flex={1} alignItems="center" justifyContent="center" px="$6">
-          <Text color="$error600" textAlign="center" mb="$4">
+        <Box
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 24,
+          }}
+        >
+          <Text style={{ color: '#DC2626', textAlign: 'center', marginBottom: 16 }}>
             Não foi possível carregar as viagens.
           </Text>
-          <Pressable onPress={() => refetch()}>
-            <Text color="#0066FF" fontWeight="$semibold">
-              Tentar novamente
-            </Text>
+          <Pressable className="active:opacity-70" onPress={() => refetch()}>
+            <Text style={{ color: '#0066FF', fontWeight: '600' }}>Tentar novamente</Text>
           </Pressable>
         </Box>
       ) : (
         <ScrollView
-          px="$4"
-          pt="$4"
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16 }}
           refreshControl={
             <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#0066FF" />
           }
         >
           {data?.dados.length === 0 ? (
-            <Box alignItems="center" justifyContent="center" py="$16" px="$6">
+            <Box
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingVertical: 64,
+                paddingHorizontal: 24,
+              }}
+            >
               {/* Decoração visual: círculo com sub-círculo dentro (sem lib de ícones) */}
               <Box
-                width={72}
-                height={72}
-                borderRadius={36}
-                backgroundColor="#E0F2FE"
-                alignItems="center"
-                justifyContent="center"
-                mb="$4"
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: 36,
+                  backgroundColor: '#E0F2FE',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 16,
+                }}
               >
-                <Box width={32} height={32} borderRadius={16} backgroundColor="#0EA5E9" />
+                <Box
+                  style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#0EA5E9' }}
+                />
               </Box>
-              <Text color="$textDark900" fontWeight="$semibold" size="md" textAlign="center" mb="$1">
+              <Text
+                size="md"
+                style={{
+                  color: '#0F172A',
+                  fontWeight: '600',
+                  textAlign: 'center',
+                  marginBottom: 4,
+                }}
+              >
                 {filtroStatus
                   ? `Nenhuma viagem ${
                       filtroStatus === 'CRIADA'
@@ -196,33 +231,33 @@ export default function TelaViagens() {
                     }`
                   : 'Você ainda não tem viagens'}
               </Text>
-              <Text color="$textLight500" textAlign="center" size="sm">
+              <Text size="sm" style={{ color: '#64748B', textAlign: 'center' }}>
                 {filtroStatus
                   ? 'Troque o filtro para ver outras viagens.'
                   : 'Quando um operador agendar uma viagem para você, ela aparecerá aqui.'}
               </Text>
               {filtroStatus && (
                 <Pressable
+                  className="active:opacity-80"
                   onPress={() => setFiltroStatus(undefined)}
-                  mt="$5"
-                  sx={{
-                    backgroundColor: '#0066FF',
-                    borderRadius: '$lg',
-                    px: '$5',
-                    py: '$3',
-                    ':active': { opacity: 0.85 },
-                  }}
                   accessibilityRole="button"
                   accessibilityLabel="Mostrar todas as viagens"
+                  style={{
+                    marginTop: 20,
+                    backgroundColor: '#0066FF',
+                    borderRadius: 8,
+                    paddingHorizontal: 20,
+                    paddingVertical: 12,
+                  }}
                 >
-                  <Text color="$white" fontWeight="$semibold" size="sm">
+                  <Text size="sm" style={{ color: '#FFFFFF', fontWeight: '600' }}>
                     Mostrar todas
                   </Text>
                 </Pressable>
               )}
             </Box>
           ) : (
-            <VStack pb="$8">
+            <VStack style={{ paddingBottom: 32 }}>
               {data?.dados.map((v) => <CartaoViagem key={v.id} viagem={v} />)}
             </VStack>
           )}

@@ -1,21 +1,18 @@
 import { useState } from 'react';
+import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { VStack } from '@/components/ui/vstack';
+import { Text } from '@/components/ui/text';
+import { Heading } from '@/components/ui/heading';
+import { Input, InputField } from '@/components/ui/input';
+import { Button, ButtonText, ButtonSpinner } from '@/components/ui/button';
 import {
-  VStack,
-  Text,
-  Input,
-  InputField,
-  Button,
-  ButtonText,
-  ButtonSpinner,
   FormControl,
   FormControlLabel,
   FormControlLabelText,
   FormControlError,
   FormControlErrorText,
-  Heading,
-} from '@gluestack-ui/themed';
-import { useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from '@/components/ui/form-control';
 import { fetchApi } from '@/lib/api';
 import { salvarToken } from '@/lib/auth';
 import type { RespostaLogin } from '@fleetops/types';
@@ -61,32 +58,34 @@ export default function TelaLogin() {
       }}
       edges={['top', 'bottom', 'left', 'right']}
     >
-      <VStack space="xl">
+      <VStack style={{ gap: 24 }}>
         {/* Logo */}
-        <VStack space="xs" mb="$6">
-          <Heading size="3xl" color="$white" fontWeight="$bold">
+        <VStack style={{ gap: 4, marginBottom: 24 }}>
+          <Heading size="3xl" style={{ color: '#FFFFFF', fontWeight: '700' }}>
             FleetOps
           </Heading>
-          <Text color="#00C2FF" size="md">
+          <Text size="md" style={{ color: '#00C2FF' }}>
             Gestão de Frota Corporativa
           </Text>
         </VStack>
 
         {/* Formulário */}
-        <VStack space="lg" backgroundColor="rgba(255,255,255,0.05)" p="$6" borderRadius="$xl">
+        <VStack
+          style={{
+            gap: 16,
+            backgroundColor: 'rgba(255,255,255,0.05)',
+            padding: 24,
+            borderRadius: 12,
+          }}
+        >
           <FormControl isInvalid={!!erro}>
             <FormControlLabel>
-              <FormControlLabelText color="$white" size="sm">
+              <FormControlLabelText size="sm" style={{ color: '#FFFFFF' }}>
                 Matrícula
               </FormControlLabelText>
             </FormControlLabel>
-            <Input
-              variant="outline"
-              borderColor="rgba(255,255,255,0.2)"
-              sx={{ ':focus': { borderColor: '#0066FF' } }}
-            >
+            <Input variant="outline" style={{ borderColor: 'rgba(255,255,255,0.2)' }}>
               <InputField
-                color="$white"
                 placeholderTextColor="rgba(255,255,255,0.4)"
                 placeholder="0000000000"
                 keyboardType="numeric"
@@ -95,33 +94,32 @@ export default function TelaLogin() {
                 onChangeText={setMatricula}
                 autoCapitalize="none"
                 autoCorrect={false}
+                style={{ color: '#FFFFFF' }}
               />
             </Input>
           </FormControl>
 
           <FormControl isInvalid={!!erro}>
             <FormControlLabel>
-              <FormControlLabelText color="$white" size="sm">
+              <FormControlLabelText size="sm" style={{ color: '#FFFFFF' }}>
                 Senha
               </FormControlLabelText>
             </FormControlLabel>
-            <Input
-              variant="outline"
-              borderColor="rgba(255,255,255,0.2)"
-              sx={{ ':focus': { borderColor: '#0066FF' } }}
-            >
+            <Input variant="outline" style={{ borderColor: 'rgba(255,255,255,0.2)' }}>
               <InputField
-                color="$white"
                 placeholderTextColor="rgba(255,255,255,0.4)"
                 placeholder="••••••••"
                 secureTextEntry
                 value={senha}
                 onChangeText={setSenha}
+                style={{ color: '#FFFFFF' }}
               />
             </Input>
             {erro && (
               <FormControlError>
-                <FormControlErrorText color="#F87171">{erro}</FormControlErrorText>
+                <FormControlErrorText style={{ color: '#F87171' }}>
+                  {erro}
+                </FormControlErrorText>
               </FormControlError>
             )}
           </FormControl>
@@ -129,17 +127,12 @@ export default function TelaLogin() {
           <Button
             onPress={handleLogin}
             isDisabled={carregando}
-            backgroundColor="#0066FF"
-            sx={{ ':active': { backgroundColor: '#0047B3' } }}
-            borderRadius="$lg"
-            mt="$2"
+            style={{ backgroundColor: '#0066FF', borderRadius: 8, marginTop: 8 }}
           >
             {carregando ? (
-              <ButtonSpinner color="$white" />
+              <ButtonSpinner color="#FFFFFF" />
             ) : (
-              <ButtonText color="$white" fontWeight="$semibold">
-                Entrar
-              </ButtonText>
+              <ButtonText style={{ color: '#FFFFFF', fontWeight: '600' }}>Entrar</ButtonText>
             )}
           </Button>
         </VStack>

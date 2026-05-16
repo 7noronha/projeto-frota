@@ -1,4 +1,7 @@
-import { Box, HStack, VStack, Text } from '@gluestack-ui/themed';
+import { Box } from '@/components/ui/box';
+import { HStack } from '@/components/ui/hstack';
+import { VStack } from '@/components/ui/vstack';
+import { Text } from '@/components/ui/text';
 import { useQuery } from '@tanstack/react-query';
 import { fetchApi } from '@/lib/api';
 import type { UsuarioResposta } from '@fleetops/types';
@@ -73,31 +76,35 @@ export function BannerCnhVencendo(): React.ReactElement | null {
 
   return (
     <Box
-      backgroundColor={cfg.fundo}
-      borderColor={cfg.borda}
-      borderWidth={1}
-      borderLeftWidth={4}
-      borderLeftColor={cfg.acento}
-      borderRadius="$lg"
-      p="$3"
-      mx="$4"
-      mt="$3"
+      style={{
+        backgroundColor: cfg.fundo,
+        borderColor: cfg.borda,
+        borderWidth: 1,
+        borderLeftWidth: 4,
+        borderLeftColor: cfg.acento,
+        borderRadius: 8,
+        padding: 12,
+        marginHorizontal: 16,
+        marginTop: 12,
+      }}
     >
-      <HStack space="sm" alignItems="flex-start">
+      <HStack style={{ gap: 8, alignItems: 'flex-start' }}>
         {/* Decoração: pequeno círculo colorido como ícone */}
         <Box
-          width={20}
-          height={20}
-          borderRadius={10}
-          backgroundColor={cfg.acento}
-          mt={2}
-          flexShrink={0}
+          style={{
+            width: 20,
+            height: 20,
+            borderRadius: 10,
+            backgroundColor: cfg.acento,
+            marginTop: 2,
+            flexShrink: 0,
+          }}
         />
-        <VStack flex={1}>
-          <Text fontWeight="$semibold" size="sm" sx={{ color: cfg.textoTitulo }}>
+        <VStack style={{ flex: 1 }}>
+          <Text size="sm" style={{ fontWeight: '600', color: cfg.textoTitulo }}>
             {titulo}
           </Text>
-          <Text size="xs" mt="$1" sx={{ color: cfg.textoDescricao }}>
+          <Text size="xs" style={{ marginTop: 4, color: cfg.textoDescricao }}>
             {descricao}
           </Text>
         </VStack>

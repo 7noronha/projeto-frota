@@ -1,14 +1,10 @@
-// IMPORTANTE: este import precisa ser o PRIMEIRO de todos — ele sobrescreve
-// console.warn antes de o barrel do @gluestack-ui/themed importar o
-// SafeAreaView depreciado do react-native.
-import '@/silenciar-avisos';
+import '@/global.css';
 import { useEffect } from 'react';
-import { GluestackUIProvider } from '@gluestack-ui/themed';
-import { config } from '@gluestack-ui/config';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { ErroApi, registrarHandlerNaoAutenticado } from '@/lib/api';
 
 const queryClient = new QueryClient({
@@ -38,16 +34,16 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <GluestackUIProvider config={config}>
+      <GluestackUIProvider mode="light">
+        <QueryClientProvider client={queryClient}>
           <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="login" />
             <Stack.Screen name="(motorista)" />
           </Stack>
           <StatusBar style="light" />
-        </GluestackUIProvider>
-      </QueryClientProvider>
+        </QueryClientProvider>
+      </GluestackUIProvider>
     </SafeAreaProvider>
   );
 }
