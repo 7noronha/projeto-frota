@@ -43,6 +43,7 @@
     "@fleetops/config": "*",
     "@types/node": "^25.6.2",
     "@types/react": "~19.1.10",
+    "babel-preset-expo": "~54.0.10",
     "babel-plugin-module-resolver": "5.0.0",
     "eslint": "^9.17.0",
     "eslint-plugin-react": "^7.37.0",
