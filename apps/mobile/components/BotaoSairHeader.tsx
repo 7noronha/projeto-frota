@@ -1,4 +1,5 @@
-import { Pressable, Text } from '@gluestack-ui/themed';
+import { Pressable } from '@/components/ui/pressable';
+import { Text } from '@/components/ui/text';
 import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { removerToken } from '@/lib/auth';
@@ -20,7 +21,7 @@ export function BotaoSairHeader(): React.ReactElement {
 
   return (
     <Pressable onPress={aoSair} accessibilityLabel="Sair da conta" hitSlop={8}>
-      <Text color="$white" fontWeight="$semibold" size="sm">
+      <Text size="sm" style={{ color: '#FFFFFF', fontWeight: '600' }}>
         Sair
       </Text>
     </Pressable>

@@ -1,5 +1,10 @@
-import { Toast, ToastDescription, ToastTitle, VStack, useToast } from '@gluestack-ui/themed';
-import type { ComponentProps } from 'react';
+import {
+  Toast,
+  ToastDescription,
+  ToastTitle,
+  useToast,
+} from '@/components/ui/toast';
+import { VStack } from '@/components/ui/vstack';
 
 type Variante = 'sucesso' | 'erro' | 'info';
 
@@ -16,8 +21,14 @@ const CORES: Record<Variante, { fundo: string; texto: string }> = {
   info: { fundo: '#0066FF', texto: '#FFFFFF' },
 };
 
+const ACAO: Record<Variante, 'success' | 'error' | 'info'> = {
+  sucesso: 'success',
+  erro: 'error',
+  info: 'info',
+};
+
 /**
- * Hook que retorna funções para disparar toasts via Gluestack.
+ * Hook que retorna funções para disparar toasts via Gluestack v2.
  * Uso:
  *   const notificar = useNotificar();
  *   notificar.sucesso({ titulo: 'Viagem iniciada' });
@@ -30,32 +41,30 @@ export function useNotificar(): {
   const toast = useToast();
 
   function mostrar(opts: MostrarOpcoes): void {
-    const cor = CORES[opts.variante ?? 'info'];
+    const variante = opts.variante ?? 'info';
+    const cor = CORES[variante];
     toast.show({
       placement: 'top',
       duration: opts.duracao ?? 3500,
-      render: ({ id }: { id: string }) => {
-        const toastProps: ComponentProps<typeof Toast> = {
-          nativeID: id,
-          action: opts.variante === 'erro' ? 'error' : 'success',
-          variant: 'solid',
-          sx: { backgroundColor: cor.fundo },
-        };
-        return (
-          <Toast {...toastProps}>
-            <VStack>
-              <ToastTitle sx={{ color: cor.texto, fontWeight: '$semibold' }}>
-                {opts.titulo}
-              </ToastTitle>
-              {opts.descricao && (
-                <ToastDescription sx={{ color: cor.texto }} size="sm">
-                  {opts.descricao}
-                </ToastDescription>
-              )}
-            </VStack>
-          </Toast>
-        );
-      },
+      render: ({ id }: { id: string }) => (
+        <Toast
+          nativeID={`toast-${id}`}
+          action={ACAO[variante]}
+          variant="solid"
+          style={{ backgroundColor: cor.fundo }}
+        >
+          <VStack>
+            <ToastTitle style={{ color: cor.texto, fontWeight: '600' }}>
+              {opts.titulo}
+            </ToastTitle>
+            {opts.descricao && (
+              <ToastDescription size="sm" style={{ color: cor.texto }}>
+                {opts.descricao}
+              </ToastDescription>
+            )}
+          </VStack>
+        </Toast>
+      ),
     });
   }
 
