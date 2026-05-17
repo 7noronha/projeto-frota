@@ -10,7 +10,7 @@
 
 1. **API (Backend)** — NestJS 11 + Fastify 5 + Prisma 6 + PostgreSQL 17
 2. **Web (Operador)** — Next.js 15 (App Router) + shadcn/ui + Tailwind 4
-3. **Mobile (Motorista)** — React Native + Expo 54 + Gluestack UI v2
+3. **Mobile (Motorista)** — React Native + Expo 54 + Gluestack UI v2 — **projeto standalone em `C:\fleetops-mobile`** (fora deste monorepo; ver seção "Mobile")
 
 **Escopo atual:** MVP — fluxo de viagens (criar → iniciar → finalizar).
 
@@ -128,8 +128,9 @@ Versões mínimas do projeto (Maio/2026):
 fleetops/
 ├── apps/
 │   ├── api/                  # NestJS + Fastify
-│   ├── web/                  # Next.js 15
-│   └── mobile/               # Expo
+│   └── web/                  # Next.js 15
+│   # mobile NÃO fica aqui — é projeto standalone em C:\fleetops-mobile
+│   # (fora do monorepo bun; ver seção "Mobile" abaixo)
 ├── packages/
 │   ├── types/                # DTOs e tipos compartilhados
 │   ├── validation/           # Schemas Zod compartilhados
@@ -227,16 +228,24 @@ export default async function PaginaViagem(props: { params: Params }) {
 - **Componentes shadcn/ui** em `components/ui/`; componentes de domínio em `components/<dominio>/`.
 - **Tailwind 4** — use as CSS variables da paleta (seção 9.2 do PRD), não hex hardcoded.
 
-### Mobile (Expo 54 + Gluestack UI v2)
+### Mobile (Expo 54 + Gluestack UI v2) — projeto STANDALONE
 
-- **Expo Router** para navegação (file-based).
-- **Gluestack UI v2 (NativeWind)** para todos os componentes — não misturar com outras libs de UI. Componentes são **vendorizados** em `apps/mobile/components/ui/` (gerados via `npx gluestack-ui add`); para adicionar um novo componente use o CLI do Gluestack, não escreva à mão.
-- v1 (`@gluestack-ui/themed`) foi removido — é incompatível com a New Architecture do Expo SDK 54. Não reintroduzir.
-- `components/ui/**` é código vendorizado: fica fora do `include` do tsconfig e o app usa `declaration: false` (corrige `TS2742` do Gluestack v2).
-- Cores de marca (#0A2540, #0066FF, #00C2FF) aplicadas via `style` inline; `className` (NativeWind) para layout e estados `active:`.
-- **JWT** armazenado em `expo-secure-store` (nunca `AsyncStorage`).
-- **TanStack Query** para data fetching, com `staleTime` adequado.
-- **Telas pequenas e focadas** — motorista usa em condições adversas (sol, pressa, pouco tempo).
+> **O app mobile NÃO faz parte deste monorepo.** Vive em **`C:\fleetops-mobile`**, com **npm** (não bun), git próprio, Expo SDK 54.
+>
+> **Causa raiz (documentada):** quando o mobile ficava dentro do monorepo, o `node_modules` ancestral (de `frota/` e `C:\www/`) duplicava `react-native` → o Metro empacotava duas cópias → crash nativo `java.lang.String cannot be cast to java.lang.Boolean` na New Architecture. Não era Gluestack, nem bun vs npm — era o **aninhamento sob um `node_modules` ancestral**. Solução: app fora de qualquer diretório com `node_modules` acima (`C:\fleetops-mobile`, raiz `C:\` limpa). `expo-doctor` confirma cópia única.
+>
+> **Não traga o mobile de volta para dentro de `frota`/`apps`.**
+
+Convenções do app (em `C:\fleetops-mobile`):
+
+- **npm** + `.npmrc` com `legacy-peer-deps=true` (peers web do Gluestack/react-aria conflitam com React 19 do SDK 54 — irrelevante para nativo).
+- **Expo Router** (file-based) + **Gluestack UI v2 (NativeWind)**. Componentes **vendorizados** em `components/ui/` (via `npx gluestack-ui add`); não escrever à mão. v1 (`@gluestack-ui/themed`) não reintroduzir.
+- `components/ui/**` fica fora do `include` do tsconfig + `declaration: false` (corrige `TS2742`).
+- Cores de marca (#0A2540, #0066FF, #00C2FF) via `style` inline; `className` (NativeWind) para layout/`active:`.
+- Tipos e datas são **vendorizados** localmente (`tipos.ts`, `lib/datetime.ts`) — sem acoplamento com `packages/*`. Manter em sincronia com a API se o contrato mudar.
+- **JWT** em `expo-secure-store`. **TanStack Query** para fetching.
+- API URL via `.env` (`EXPO_PUBLIC_API_URL`); aparelho físico precisa do IP LAN do PC (não `10.0.2.2`).
+- Dados de teste: `cd apps/api && bunx tsx prisma/seed-motorista-teste.ts` cria motorista `0000001234` / senha `12341234` + viagens nos 3 status.
 
 ---
 
@@ -382,7 +391,9 @@ O Claude Code **NUNCA deve**:
 - Bun (para dev)
 - Git
 
-> **bun + Expo (crítico):** o repo usa `bunfig.toml` com `[install] linker = "hoisted"`. O linker isolado padrão do bun cria cópias físicas duplicadas de pacotes nativos (`expo`, `react-native`, `expo-modules-core`), o que quebra a New Architecture do mobile com erro nativo `java.lang.String cannot be cast to java.lang.Boolean`. **Não remova esse `bunfig.toml`.** Após apagar `node_modules`, rode `cd apps/api && bunx prisma generate` antes de typecheck/testes.
+> **bun (`bunfig.toml`):** o repo usa `bunfig.toml` com `[install] linker = "hoisted"` (node_modules flat, estilo npm). Mantido por estabilidade/compatibilidade de api/web — pode ficar. Após apagar `node_modules`, rode `cd apps/api && bunx prisma generate` antes de typecheck/testes.
+>
+> **Mobile não está mais aqui:** o crash `java.lang.String cannot be cast to java.lang.Boolean` era `react-native` duplicado por `node_modules` ancestral — resolvido tirando o mobile do monorepo (ver seção "Mobile"). Não recriar o mobile dentro de `frota`.
 
 ### Comandos úteis (documentar à medida que forem criados)
 
