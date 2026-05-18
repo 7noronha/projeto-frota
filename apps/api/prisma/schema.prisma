@@ -3,11 +3,10 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  // Migrations usam conexão direta (Supabase: Session pooler 5432).
-  // Local: aponte DIRECT_URL para o mesmo Postgres do docker-compose.
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  // Prod (Supabase): Session pooler, porta 5432 — serve runtime + migrations.
+  // Local: Postgres do docker-compose.
+  url      = env("DATABASE_URL")
 }
 
 // ─── Usuários ─────────────────────────────────────────────────────────────────
