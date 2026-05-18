@@ -1,0 +1,13 @@
+# Contexto do Docker build da API (apps/api/Dockerfile) — manter enxuto.
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/coverage
+**/.expo
+.git
+.github
+*.log
+**/.env
+**/.env.*
+!**/.env.example
