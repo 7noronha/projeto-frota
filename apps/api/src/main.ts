@@ -43,7 +43,9 @@ async function bootstrap(): Promise<void> {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document);
 
-  const porta = process.env.API_PORT ? parseInt(process.env.API_PORT, 10) : 3001;
+  // API_PORT (local) → PORT (Railway/Render/Fly injetam PORT) → 3001
+  const portaEnv = process.env.API_PORT ?? process.env.PORT;
+  const porta = portaEnv ? parseInt(portaEnv, 10) : 3001;
   await app.listen(porta, '0.0.0.0');
 
   logger.log(`FleetOps API rodando em http://localhost:${porta}`);
