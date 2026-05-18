@@ -5,7 +5,9 @@
 FROM node:22-slim AS build
 RUN apt-get update && apt-get install -y openssl curl unzip ca-certificates \
   && rm -rf /var/lib/apt/lists/*
-RUN curl -fsSL https://bun.sh/install | bash
+# Pin do bun à versão do packageManager/lockfile (bun.lock gerado com 1.2.0).
+# Sem pin instala a mais recente e --frozen-lockfile falha por diff de formato.
+RUN curl -fsSL https://bun.sh/install | bash -s "bun-v1.2.0"
 ENV PATH="/root/.bun/bin:${PATH}"
 WORKDIR /app
 COPY . .
