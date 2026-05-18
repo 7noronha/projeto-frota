@@ -1,0 +1,6 @@
+# Lockfiles e configs sensíveis a EOL — sempre LF, sem conversão autocrlf
+# (Windows estava convertendo bun.lock para CRLF e quebrando o build Linux).
+bun.lock text eol=lf
+*.lock text eol=lf
+*.sh text eol=lf
+Dockerfile text eol=lf

@@ -11,7 +11,9 @@ RUN curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.13"
 ENV PATH="/root/.bun/bin:${PATH}"
 WORKDIR /app
 COPY . .
-RUN bun install --frozen-lockfile
+# Sem --frozen-lockfile: o autocrlf do Windows altera o EOL do bun.lock
+# e o frozen falha no Linux. bun usa o lockfile como base e reconcilia.
+RUN bun install
 RUN cd apps/api && bunx prisma generate
 RUN bunx turbo run build --filter=@fleetops/api
 
