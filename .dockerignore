@@ -11,3 +11,5 @@
 **/.env
 **/.env.*
 !**/.env.example
+
+# deploy: forca rebuild Railway (variaveis ja corrigidas)
