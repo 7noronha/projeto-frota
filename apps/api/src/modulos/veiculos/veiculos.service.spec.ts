@@ -3,6 +3,18 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { VeiculosService } from './veiculos.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CriarVeiculoDto, SituacaoVeiculoEnum } from './dto/criar-veiculo.dto';
+import { ForbiddenException } from '@nestjs/common';
+import { UsuarioJwt } from '@fleetops/types';
+import { TipoCombustivelEnum } from '../despesas/dto/criar-despesa.dto';
+
+const mockMotorista: UsuarioJwt = {
+  sub: 'uuid-motorista',
+  matricula: '0000001234',
+  nome: 'Motorista Teste',
+  perfil: 'motorista',
+  iat: 0,
+  exp: 0,
+};
 
 const mockVeiculoPrisma = {
   id: 'uuid-veiculo-1',
@@ -46,7 +58,8 @@ describe('VeiculosService', () => {
       create: jest.Mock;
       update: jest.Mock;
     };
-    viagem: { findFirst: jest.Mock };
+    viagem: { findFirst: jest.Mock; findMany: jest.Mock };
+    despesaVeiculo: { create: jest.Mock };
   };
 
   beforeEach(async () => {
@@ -58,7 +71,8 @@ describe('VeiculosService', () => {
         create: jest.fn(),
         update: jest.fn(),
       },
-      viagem: { findFirst: jest.fn() },
+      viagem: { findFirst: jest.fn(), findMany: jest.fn() },
+      despesaVeiculo: { create: jest.fn() },
     };
 
     const modulo: TestingModule = await Test.createTestingModule({
@@ -177,6 +191,96 @@ describe('VeiculosService', () => {
       const dadosUpdate = prisma.veiculo.update.mock.calls[0][0].data;
       expect(dadosUpdate).not.toHaveProperty('placa');
       expect(dadosUpdate).not.toHaveProperty('renavam');
+    });
+  });
+
+  describe('listarDoMotorista', () => {
+    it('deve retornar veículos distintos das viagens do motorista', async () => {
+      // Arrange
+      prisma.viagem.findMany.mockResolvedValue([{ veiculoId: 'uuid-veiculo-1' }]);
+      prisma.veiculo.findMany.mockResolvedValue([mockVeiculoPrisma]);
+
+      // Act
+      const resultado = await service.listarDoMotorista('uuid-motorista');
+
+      // Assert
+      expect(resultado).toHaveLength(1);
+      expect(resultado[0].placa).toBe('ABC1D23');
+    });
+
+    it('deve retornar lista vazia se o motorista não tem viagens', async () => {
+      // Arrange
+      prisma.viagem.findMany.mockResolvedValue([]);
+
+      // Act
+      const resultado = await service.listarDoMotorista('uuid-motorista');
+
+      // Assert
+      expect(resultado).toEqual([]);
+      expect(prisma.veiculo.findMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('criarAbastecimentoMotorista', () => {
+    const dto = {
+      valor: 287.5,
+      litros: 42.137,
+      precoLitro: 6.829,
+      tipoCombustivel: TipoCombustivelEnum.GASOLINA,
+      odometro: 152340,
+    };
+
+    const despesaCriada = {
+      id: 'uuid-despesa',
+      veiculoId: 'uuid-veiculo-1',
+      tipo: 'abastecimento',
+      data: new Date('2026-05-19'),
+      valor: 287.5,
+      litros: 42.137,
+      precoLitro: 6.829,
+      tipoCombustivel: 'gasolina',
+      odometro: 152340,
+      descricao: 'Abastecimento',
+      dataCriacao: new Date('2026-05-19T10:00:00'),
+    };
+
+    it('deve criar abastecimento quando o motorista tem viagem com o veículo', async () => {
+      // Arrange
+      prisma.viagem.findFirst.mockResolvedValue({ id: 'uuid-viagem' });
+      prisma.veiculo.findFirst.mockResolvedValue({ id: 'uuid-veiculo-1' });
+      prisma.despesaVeiculo.create.mockResolvedValue(despesaCriada);
+
+      // Act
+      const resultado = await service.criarAbastecimentoMotorista(
+        'uuid-veiculo-1',
+        dto,
+        mockMotorista,
+      );
+
+      // Assert
+      expect(resultado.tipo).toBe('abastecimento');
+      expect(prisma.despesaVeiculo.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('deve lançar ForbiddenException se o motorista não tem viagem com o veículo', async () => {
+      // Arrange
+      prisma.viagem.findFirst.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        service.criarAbastecimentoMotorista('uuid-veiculo-x', dto, mockMotorista),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('deve lançar NotFoundException se o veículo não existir', async () => {
+      // Arrange
+      prisma.viagem.findFirst.mockResolvedValue({ id: 'uuid-viagem' });
+      prisma.veiculo.findFirst.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        service.criarAbastecimentoMotorista('uuid-veiculo-1', dto, mockMotorista),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

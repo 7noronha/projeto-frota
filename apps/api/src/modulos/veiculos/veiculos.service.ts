@@ -1,16 +1,24 @@
 import { calcularPaginacao } from '../../common/utils/paginacao';
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { agoraBrasilia, formatarDataHoraBrasilia } from '@fleetops/utils/datetime';
-import { SituacaoVeiculo, RespostaPaginada } from '@fleetops/types';
+import { Decimal } from '@prisma/client/runtime/library';
+import {
+  agoraBrasilia,
+  formatarDataBrasilia,
+  formatarDataHoraBrasilia,
+} from '@fleetops/utils/datetime';
+import { SituacaoVeiculo, RespostaPaginada, UsuarioJwt } from '@fleetops/types';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CriarVeiculoDto, SituacaoVeiculoEnum } from './dto/criar-veiculo.dto';
 import { AtualizarVeiculoDto } from './dto/atualizar-veiculo.dto';
 import { VeiculoRespostaDto } from './dto/veiculo-resposta.dto';
 import { FiltrosListarVeiculosDto } from './dto/filtros-listar-veiculos.dto';
+import { CriarAbastecimentoDto } from './dto/criar-abastecimento.dto';
+import { AbastecimentoRespostaDto } from './dto/abastecimento-resposta.dto';
 
 type VeiculoPrisma = {
   id: string;
@@ -186,6 +194,88 @@ export class VeiculosService {
       situacao: veiculo.situacao as SituacaoVeiculo as SituacaoVeiculoEnum,
       observacoes: veiculo.observacoes,
       dataCriacao: formatarDataHoraBrasilia(veiculo.dataCriacao),
+    };
+  }
+
+  /**
+   * Veículos das viagens do motorista logado (distintos, ativos).
+   * Base para o motorista escolher onde lançar o abastecimento.
+   */
+  async listarDoMotorista(motoristaSub: string): Promise<VeiculoRespostaDto[]> {
+    const vinculos = await this.prisma.viagem.findMany({
+      where: { motoristaId: motoristaSub, dataExclusao: null },
+      select: { veiculoId: true },
+      distinct: ['veiculoId'],
+    });
+    const ids = vinculos.map((v) => v.veiculoId);
+    if (ids.length === 0) return [];
+
+    const veiculos = await this.prisma.veiculo.findMany({
+      where: { id: { in: ids }, dataExclusao: null, situacao: 'ativo' },
+      select: SELECT_VEICULO,
+      orderBy: { placa: 'asc' },
+    });
+    return veiculos.map((v) => this.mapearResposta(v));
+  }
+
+  /**
+   * Motorista lança ABASTECIMENTO em um veículo. Só é permitido se o
+   * motorista tiver ao menos uma viagem (não excluída) com esse veículo
+   * (menor privilégio — sem vínculo a uma viagem específica/status).
+   */
+  async criarAbastecimentoMotorista(
+    veiculoId: string,
+    dto: CriarAbastecimentoDto,
+    usuario: UsuarioJwt,
+  ): Promise<AbastecimentoRespostaDto> {
+    if (usuario.perfil === 'motorista') {
+      const vinculo = await this.prisma.viagem.findFirst({
+        where: { motoristaId: usuario.sub, veiculoId, dataExclusao: null },
+        select: { id: true },
+      });
+      if (!vinculo) {
+        throw new ForbiddenException(
+          'Você só pode lançar abastecimento em veículos das suas viagens',
+        );
+      }
+    }
+
+    const veiculo = await this.prisma.veiculo.findFirst({
+      where: { id: veiculoId, dataExclusao: null },
+      select: { id: true },
+    });
+    if (!veiculo) throw new NotFoundException('Veículo não encontrado');
+
+    const data = dto.data ? new Date(dto.data) : agoraBrasilia();
+    const descricao = dto.descricao?.trim() || 'Abastecimento';
+
+    const criada = await this.prisma.despesaVeiculo.create({
+      data: {
+        veiculoId,
+        tipo: 'abastecimento',
+        data,
+        valor: new Decimal(dto.valor),
+        descricao,
+        observacoes: dto.observacoes ?? null,
+        odometro: dto.odometro ?? null,
+        litros: new Decimal(dto.litros),
+        precoLitro: new Decimal(dto.precoLitro),
+        tipoCombustivel: dto.tipoCombustivel,
+      },
+    });
+
+    return {
+      id: criada.id,
+      veiculoId: criada.veiculoId,
+      tipo: criada.tipo,
+      data: formatarDataBrasilia(criada.data, 'yyyy-MM-dd'),
+      valor: Number(criada.valor),
+      litros: Number(criada.litros),
+      precoLitro: Number(criada.precoLitro),
+      tipoCombustivel: criada.tipoCombustivel ?? '',
+      odometro: criada.odometro,
+      descricao: criada.descricao,
+      dataCriacao: formatarDataHoraBrasilia(criada.dataCriacao),
     };
   }
 }
