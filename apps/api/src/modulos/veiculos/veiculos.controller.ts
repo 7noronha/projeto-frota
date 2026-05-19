@@ -21,15 +21,18 @@ import {
   ApiNotFoundResponse,
   ApiConflictResponse,
 } from '@nestjs/swagger';
-import { RespostaPaginada } from '@fleetops/types';
+import { RespostaPaginada, UsuarioJwt } from '@fleetops/types';
 import { VeiculosService } from './veiculos.service';
 import { CriarVeiculoDto } from './dto/criar-veiculo.dto';
 import { AtualizarVeiculoDto } from './dto/atualizar-veiculo.dto';
 import { VeiculoRespostaDto } from './dto/veiculo-resposta.dto';
 import { FiltrosListarVeiculosDto } from './dto/filtros-listar-veiculos.dto';
+import { CriarAbastecimentoDto } from './dto/criar-abastecimento.dto';
+import { AbastecimentoRespostaDto } from './dto/abastecimento-resposta.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { UsuarioAutenticado } from '../../common/decorators/usuario-autenticado.decorator';
 
 @ApiTags('Veículos')
 @ApiBearerAuth('JWT')
@@ -46,6 +49,16 @@ export class VeiculosController {
     @Query() filtros: FiltrosListarVeiculosDto,
   ): Promise<RespostaPaginada<VeiculoRespostaDto>> {
     return this.veiculosService.listar(filtros);
+  }
+
+  @Get('meus')
+  @Roles('motorista')
+  @ApiOperation({ summary: 'Veículos das viagens do motorista logado' })
+  @ApiOkResponse({ type: [VeiculoRespostaDto] })
+  async meusVeiculos(
+    @UsuarioAutenticado() usuario: UsuarioJwt,
+  ): Promise<VeiculoRespostaDto[]> {
+    return this.veiculosService.listarDoMotorista(usuario.sub);
   }
 
   @Get(':id')
@@ -87,5 +100,21 @@ export class VeiculosController {
   @ApiConflictResponse({ description: 'Veículo com viagem ativa não pode ser excluído' })
   async excluir(@Param('id') id: string): Promise<void> {
     return this.veiculosService.excluir(id);
+  }
+
+  @Post(':id/despesas')
+  @Roles('motorista')
+  @ApiOperation({
+    summary: 'Motorista lança abastecimento em veículo que ele dirige',
+  })
+  @ApiCreatedResponse({ type: AbastecimentoRespostaDto })
+  @ApiForbiddenResponse({ description: 'Motorista sem viagem com este veículo' })
+  @ApiNotFoundResponse({ description: 'Veículo não encontrado' })
+  async criarAbastecimento(
+    @Param('id') id: string,
+    @Body() dto: CriarAbastecimentoDto,
+    @UsuarioAutenticado() usuario: UsuarioJwt,
+  ): Promise<AbastecimentoRespostaDto> {
+    return this.veiculosService.criarAbastecimentoMotorista(id, dto, usuario);
   }
 }
