@@ -5,7 +5,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { agoraBrasilia, formatarDataHoraBrasilia } from '@fleetops/utils/datetime';
+import { Decimal } from '@prisma/client/runtime/library';
+import {
+  agoraBrasilia,
+  formatarDataBrasilia,
+  formatarDataHoraBrasilia,
+} from '@fleetops/utils/datetime';
 import { StatusViagem, UsuarioJwt, RespostaPaginada } from '@fleetops/types';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CriarViagemDto } from './dto/criar-viagem.dto';
@@ -14,6 +19,8 @@ import { IniciarViagemDto } from './dto/iniciar-viagem.dto';
 import { FinalizarViagemDto } from './dto/finalizar-viagem.dto';
 import { ViagemRespostaDto } from './dto/viagem-resposta.dto';
 import { FiltrosListarViagensDto } from './dto/filtros-listar-viagens.dto';
+import { CriarAbastecimentoDto } from './dto/criar-abastecimento.dto';
+import { AbastecimentoRespostaDto } from './dto/abastecimento-resposta.dto';
 
 // Converte "HH:MM" para Date (data epoch, hora UTC)
 function horaParaDate(hora: string): Date {
@@ -491,6 +498,69 @@ export class ViagensService {
       observacoes: viagem.observacoes,
       status: viagem.status as StatusViagem,
       dataCriacao: formatarDataHoraBrasilia(viagem.dataCriacao),
+    };
+  }
+
+  /**
+   * Lança um ABASTECIMENTO na viagem do próprio motorista. O veículo é
+   * derivado da viagem (motorista não escolhe veículo) e o tipo é fixo
+   * "abastecimento". Permitido só em viagens CRIADA ou EM_ANDAMENTO.
+   */
+  async criarAbastecimento(
+    viagemId: string,
+    dto: CriarAbastecimentoDto,
+    usuario: UsuarioJwt,
+  ): Promise<AbastecimentoRespostaDto> {
+    const viagem = await this.prisma.viagem.findFirst({
+      where: { id: viagemId, dataExclusao: null },
+      include: INCLUDE_RELACOES,
+    });
+
+    if (!viagem) throw new NotFoundException('Viagem não encontrada');
+
+    if (usuario.perfil === 'motorista' && viagem.motoristaId !== usuario.sub) {
+      throw new ForbiddenException(
+        'Motorista só pode lançar despesa nas suas próprias viagens',
+      );
+    }
+
+    if (viagem.status !== 'CRIADA' && viagem.status !== 'EM_ANDAMENTO') {
+      throw new BadRequestException(
+        `Não é possível lançar abastecimento em viagem com status "${viagem.status}". ` +
+          'Apenas viagens CRIADA ou EM_ANDAMENTO.',
+      );
+    }
+
+    const data = dto.data ? new Date(dto.data) : agoraBrasilia();
+    const descricao = dto.descricao?.trim() || 'Abastecimento';
+
+    const criada = await this.prisma.despesaVeiculo.create({
+      data: {
+        veiculoId: viagem.veiculoId,
+        tipo: 'abastecimento',
+        data,
+        valor: new Decimal(dto.valor),
+        descricao,
+        observacoes: dto.observacoes ?? null,
+        odometro: dto.odometro ?? null,
+        litros: new Decimal(dto.litros),
+        precoLitro: new Decimal(dto.precoLitro),
+        tipoCombustivel: dto.tipoCombustivel,
+      },
+    });
+
+    return {
+      id: criada.id,
+      veiculoId: criada.veiculoId,
+      tipo: criada.tipo,
+      data: formatarDataBrasilia(criada.data, 'yyyy-MM-dd'),
+      valor: Number(criada.valor),
+      litros: Number(criada.litros),
+      precoLitro: Number(criada.precoLitro),
+      tipoCombustivel: criada.tipoCombustivel ?? '',
+      odometro: criada.odometro,
+      descricao: criada.descricao,
+      dataCriacao: formatarDataHoraBrasilia(criada.dataCriacao),
     };
   }
 }

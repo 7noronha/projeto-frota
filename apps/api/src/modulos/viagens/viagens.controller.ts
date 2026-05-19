@@ -27,6 +27,8 @@ import { IniciarViagemDto } from './dto/iniciar-viagem.dto';
 import { FinalizarViagemDto } from './dto/finalizar-viagem.dto';
 import { ViagemRespostaDto } from './dto/viagem-resposta.dto';
 import { FiltrosListarViagensDto } from './dto/filtros-listar-viagens.dto';
+import { CriarAbastecimentoDto } from './dto/criar-abastecimento.dto';
+import { AbastecimentoRespostaDto } from './dto/abastecimento-resposta.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -112,5 +114,21 @@ export class ViagensController {
     @UsuarioAutenticado() usuario: UsuarioJwt,
   ): Promise<ViagemRespostaDto> {
     return this.viagensService.finalizar(id, dto, usuario);
+  }
+
+  @Post(':id/despesas')
+  @Roles('motorista')
+  @ApiOperation({
+    summary: 'Motorista lança um abastecimento na sua viagem (CRIADA/EM_ANDAMENTO)',
+  })
+  @ApiCreatedResponse({ type: AbastecimentoRespostaDto })
+  @ApiNotFoundResponse({ description: 'Viagem não encontrada' })
+  @ApiBadRequestResponse({ description: 'Status da viagem não permite lançamento' })
+  async criarAbastecimento(
+    @Param('id') id: string,
+    @Body() dto: CriarAbastecimentoDto,
+    @UsuarioAutenticado() usuario: UsuarioJwt,
+  ): Promise<AbastecimentoRespostaDto> {
+    return this.viagensService.criarAbastecimento(id, dto, usuario);
   }
 }

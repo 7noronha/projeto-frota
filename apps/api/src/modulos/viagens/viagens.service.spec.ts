@@ -3,6 +3,7 @@ import { BadRequestException, ForbiddenException, NotFoundException } from '@nes
 import { ViagensService } from './viagens.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CriarViagemDto } from './dto/criar-viagem.dto';
+import { TipoCombustivelEnum } from '../despesas/dto/criar-despesa.dto';
 import { UsuarioJwt } from '@fleetops/types';
 
 const mockUsuarioOperador: UsuarioJwt = {
@@ -90,6 +91,7 @@ describe('ViagensService', () => {
     usuario: { findFirst: jest.Mock };
     veiculo: { findFirst: jest.Mock; update: jest.Mock };
     viagem: { count: jest.Mock; findMany: jest.Mock; findFirst: jest.Mock; create: jest.Mock; update: jest.Mock };
+    despesaVeiculo: { create: jest.Mock };
     $transaction: jest.Mock;
   };
 
@@ -107,6 +109,21 @@ describe('ViagensService', () => {
         findFirst: jest.fn().mockResolvedValue(null),
         create: jest.fn().mockResolvedValue(mockViagem),
         update: jest.fn().mockResolvedValue(mockViagem),
+      },
+      despesaVeiculo: {
+        create: jest.fn().mockResolvedValue({
+          id: 'uuid-despesa',
+          veiculoId: 'uuid-veiculo',
+          tipo: 'abastecimento',
+          data: new Date('2026-05-19'),
+          valor: 287.5,
+          litros: 42.137,
+          precoLitro: 6.829,
+          tipoCombustivel: 'gasolina',
+          odometro: 152340,
+          descricao: 'Abastecimento',
+          dataCriacao: new Date('2026-05-19T10:00:00'),
+        }),
       },
       $transaction: jest.fn(),
     };
@@ -384,6 +401,82 @@ describe('ViagensService', () => {
       // Act & Assert
       await expect(
         service.finalizar('uuid-viagem', { odometroFinal: 15500 }, mockUsuarioOperador),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('criarAbastecimento', () => {
+    const dtoAbastecimento = {
+      valor: 287.5,
+      litros: 42.137,
+      precoLitro: 6.829,
+      tipoCombustivel: TipoCombustivelEnum.GASOLINA,
+      odometro: 152340,
+    };
+
+    it('deve criar abastecimento na viagem do próprio motorista (EM_ANDAMENTO)', async () => {
+      // Arrange
+      prisma.viagem.findFirst.mockResolvedValue({ ...mockViagem, status: 'EM_ANDAMENTO' });
+
+      // Act
+      const resultado = await service.criarAbastecimento(
+        'uuid-viagem',
+        dtoAbastecimento,
+        mockUsuarioMotorista,
+      );
+
+      // Assert
+      expect(resultado.tipo).toBe('abastecimento');
+      expect(resultado.veiculoId).toBe('uuid-veiculo');
+      expect(prisma.despesaVeiculo.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('deve permitir abastecimento em viagem CRIADA', async () => {
+      // Arrange
+      prisma.viagem.findFirst.mockResolvedValue({ ...mockViagem, status: 'CRIADA' });
+
+      // Act
+      const resultado = await service.criarAbastecimento(
+        'uuid-viagem',
+        dtoAbastecimento,
+        mockUsuarioMotorista,
+      );
+
+      // Assert
+      expect(resultado.id).toBe('uuid-despesa');
+    });
+
+    it('deve lançar NotFoundException se a viagem não existir', async () => {
+      // Arrange
+      prisma.viagem.findFirst.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        service.criarAbastecimento('inexistente', dtoAbastecimento, mockUsuarioMotorista),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('deve lançar ForbiddenException se a viagem não for do motorista', async () => {
+      // Arrange
+      prisma.viagem.findFirst.mockResolvedValue({
+        ...mockViagem,
+        status: 'EM_ANDAMENTO',
+        motoristaId: 'outro-motorista',
+      });
+
+      // Act & Assert
+      await expect(
+        service.criarAbastecimento('uuid-viagem', dtoAbastecimento, mockUsuarioMotorista),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('deve lançar BadRequestException se a viagem estiver FINALIZADA', async () => {
+      // Arrange
+      prisma.viagem.findFirst.mockResolvedValue({ ...mockViagem, status: 'FINALIZADA' });
+
+      // Act & Assert
+      await expect(
+        service.criarAbastecimento('uuid-viagem', dtoAbastecimento, mockUsuarioMotorista),
       ).rejects.toThrow(BadRequestException);
     });
   });
