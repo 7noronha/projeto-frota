@@ -17,7 +17,6 @@
     "@fleetops/utils": "*",
     "@fleetops/validation": "*",
     "@lojascem/components-react": "file:../../vendor/lojascem-components-react-3.3.1.tgz",
-    "@mapbox/search-js-react": "^1.0.0",
     "@react-input/mask": "^2.0.4",
     "clsx": "^2.1.1",
     "mapbox-gl": "^3.7.0",
