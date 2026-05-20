@@ -5,6 +5,7 @@ import { Badge, Button, Card, HStack, VStack, Heading, Text } from '@lojascem/co
 import { FormIniciarViagem } from '@/components/viagens/FormIniciarViagem';
 import { FormFinalizarViagem } from '@/components/viagens/FormFinalizarViagem';
 import type { ViagemDetalhada } from '@fleetops/types';
+import { formatarDataIso, formatarDataHoraIso } from '@fleetops/utils';
 
 type BadgeColor = 'info' | 'warning' | 'success' | 'default';
 
@@ -40,7 +41,7 @@ function CampoDetalhe({ rotulo, valor }: { rotulo: string; valor: React.ReactNod
 
 export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheViagemProps) {
   const rotulo = ROTULOS_STATUS[viagem.status] ?? { texto: viagem.status, color: 'default' as BadgeColor };
-  const dataViagem = new Date(viagem.dataViagem + 'T00:00:00').toLocaleDateString('pt-BR');
+  const dataViagem = formatarDataIso(viagem.dataViagem);
 
   return (
     <VStack className="gap-6 mx-auto max-w-3xl">
@@ -123,11 +124,11 @@ export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheVia
             <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
               <CampoDetalhe
                 rotulo="Início real"
-                valor={viagem.dataHoraInicioReal ? new Date(viagem.dataHoraInicioReal).toLocaleString('pt-BR') : null}
+                valor={viagem.dataHoraInicioReal ? formatarDataHoraIso(viagem.dataHoraInicioReal) : null}
               />
               <CampoDetalhe
                 rotulo="Fim real"
-                valor={viagem.dataHoraFimReal ? new Date(viagem.dataHoraFimReal).toLocaleString('pt-BR') : null}
+                valor={viagem.dataHoraFimReal ? formatarDataHoraIso(viagem.dataHoraFimReal) : null}
               />
               <CampoDetalhe
                 rotulo="Odômetro inicial"

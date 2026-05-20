@@ -4,9 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { TextField, TextArea, NumberField, Button, Alert, Card, HStack, Heading, SelectField, ListBox } from '@lojascem/components-react';
 import type { VeiculoResposta } from '@fleetops/types';
+import { agoraBrasilia } from '@fleetops/utils';
 
 const ANO_MINIMO = 1950;
-const anoAtual = new Date().getFullYear();
+const anoAtual = agoraBrasilia().getFullYear();
 
 const SITUACOES = [
   { label: 'Ativo', value: 'ativo' },

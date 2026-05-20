@@ -9,6 +9,7 @@ import { acaoExcluirDespesa, type Despesa, type TipoDespesa } from '@/app/(dashb
 import { EstadoVazio } from '@/components/EstadoVazio';
 import { DialogConfirmacao } from '@/components/DialogConfirmacao';
 import { notificar } from '@/lib/notificar';
+import { formatarDataIso } from '@fleetops/utils';
 
 interface TabelaDespesasProps {
   veiculoId: string;
@@ -47,7 +48,7 @@ function formatarMoeda(v: number): string {
 }
 
 function formatarData(iso: string): string {
-  return new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
+  return formatarDataIso(iso);
 }
 
 export function TabelaDespesas({ veiculoId, despesas }: TabelaDespesasProps) {
@@ -121,7 +122,7 @@ export function TabelaDespesas({ veiculoId, despesas }: TabelaDespesasProps) {
       detalhes.push(row.seguradora);
       if (row.vigenciaFim) {
         detalhes.push(
-          `até ${new Date(row.vigenciaFim + 'T00:00:00').toLocaleDateString('pt-BR')}`,
+          `até ${formatarDataIso(row.vigenciaFim)}`,
         );
       }
     }

@@ -2,6 +2,7 @@
 
 import { Card, HStack, VStack, Text, Badge, Heading } from '@lojascem/components-react';
 import type { UsuarioResposta } from '@fleetops/types';
+import { formatarDataIso } from '@fleetops/utils';
 
 interface CardResumoPerfilProps {
   usuario: UsuarioResposta;
@@ -94,7 +95,7 @@ export function CardResumoPerfil({ usuario }: CardResumoPerfilProps): React.Reac
               {usuario.cnhValidade && (
                 <Text size="xs" className="mt-0.5" style={{ color: '#64748b' }}>
                   Válida até{' '}
-                  {new Date(usuario.cnhValidade + 'T00:00:00').toLocaleDateString('pt-BR')}
+                  {formatarDataIso(usuario.cnhValidade)}
                 </Text>
               )}
             </div>

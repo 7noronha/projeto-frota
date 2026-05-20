@@ -9,6 +9,7 @@ import { Badge, Button } from '@lojascem/components-react';
 import { EstadoVazio } from '@/components/EstadoVazio';
 import { EstadoVazioFiltro } from '@/components/EstadoVazioFiltro';
 import type { ViagemDetalhada } from '@fleetops/types';
+import { formatarDataIso } from '@fleetops/utils';
 
 type BadgeColor = 'info' | 'warning' | 'success' | 'default';
 
@@ -27,7 +28,7 @@ export function TabelaViagens({ viagens, temFiltrosAtivos = false }: TabelaViage
   const router = useRouter();
 
   function corpoData(rowData: ViagemDetalhada) {
-    return new Date(rowData.dataViagem + 'T00:00:00').toLocaleDateString('pt-BR');
+    return formatarDataIso(rowData.dataViagem);
   }
 
   function corpoMotorista(rowData: ViagemDetalhada) {

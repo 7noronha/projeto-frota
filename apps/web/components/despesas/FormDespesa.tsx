@@ -14,6 +14,7 @@ import {
   SelectField,
   ListBox,
 } from '@lojascem/components-react';
+import { agoraBrasilia, formatarDataBrasilia } from '@fleetops/utils';
 import type { Despesa, TipoDespesa } from '@/app/(dashboard)/veiculos/[id]/despesas/actions';
 
 type AcaoFormulario = (
@@ -78,12 +79,10 @@ const TIPOS_DOCUMENTO = [
   { valor: 'outro', rotulo: 'Outro' },
 ];
 
-const ANO_ATUAL = new Date().getFullYear();
+const ANO_ATUAL = agoraBrasilia().getFullYear();
 
 function hojeBrasilia(): string {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }))
-    .toISOString()
-    .split('T')[0];
+  return formatarDataBrasilia(agoraBrasilia(), 'yyyy-MM-dd');
 }
 
 export function FormDespesa({ acao, veiculoId, despesaInicial, titulo }: FormDespesaProps) {
