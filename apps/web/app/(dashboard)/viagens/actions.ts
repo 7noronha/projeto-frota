@@ -5,6 +5,14 @@ import { redirect } from 'next/navigation';
 import { fetchServidor } from '@/lib/api-servidor';
 import type { ViagemDetalhada, RespostaPaginada, UsuarioResposta, VeiculoResposta } from '@fleetops/types';
 
+function numeroOuUndefined(v: FormDataEntryValue | null): number | undefined {
+  if (v == null) return undefined;
+  const s = String(v).trim();
+  if (s === '') return undefined;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 export async function buscarViagens(
   pagina = 1,
   filtros: { status?: string; motoristaId?: string; veiculoId?: string; dataInicio?: string; dataFim?: string } = {},
@@ -51,6 +59,10 @@ export async function acaoCriarViagem(
     solicitadoPor: formData.get('solicitadoPor'),
     autorizadoPor: formData.get('autorizadoPor'),
     observacoes: formData.get('observacoes') || undefined,
+    origemLatitude: numeroOuUndefined(formData.get('origemLatitude')),
+    origemLongitude: numeroOuUndefined(formData.get('origemLongitude')),
+    destinoLatitude: numeroOuUndefined(formData.get('destinoLatitude')),
+    destinoLongitude: numeroOuUndefined(formData.get('destinoLongitude')),
   };
 
   try {
@@ -78,6 +90,10 @@ export async function acaoAtualizarViagem(
     solicitadoPor: formData.get('solicitadoPor'),
     autorizadoPor: formData.get('autorizadoPor'),
     observacoes: formData.get('observacoes') || undefined,
+    origemLatitude: numeroOuUndefined(formData.get('origemLatitude')),
+    origemLongitude: numeroOuUndefined(formData.get('origemLongitude')),
+    destinoLatitude: numeroOuUndefined(formData.get('destinoLatitude')),
+    destinoLongitude: numeroOuUndefined(formData.get('destinoLongitude')),
   };
 
   try {

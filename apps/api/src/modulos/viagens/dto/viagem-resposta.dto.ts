@@ -19,6 +19,10 @@ export class ViagemRespostaDto {
   @ApiProperty() id: string;
   @ApiProperty() origem: string;
   @ApiProperty() destino: string;
+  @ApiPropertyOptional({ example: -23.561414 }) origemLatitude: number | null;
+  @ApiPropertyOptional({ example: -46.655881 }) origemLongitude: number | null;
+  @ApiPropertyOptional({ example: -23.55052 }) destinoLatitude: number | null;
+  @ApiPropertyOptional({ example: -46.633308 }) destinoLongitude: number | null;
   @ApiProperty() dataViagem: string;
   @ApiProperty() horaInicioPrevista: string;
   @ApiProperty() horaFimPrevista: string;

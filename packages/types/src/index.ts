@@ -82,6 +82,11 @@ export interface ViagemResposta {
   id: string;
   origem: string;
   destino: string;
+  // GPS — coordenadas opcionais
+  origemLatitude: number | null;
+  origemLongitude: number | null;
+  destinoLatitude: number | null;
+  destinoLongitude: number | null;
   dataViagem: string;
   horaInicioPrevista: string;
   horaFimPrevista: string;

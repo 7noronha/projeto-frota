@@ -134,6 +134,12 @@ model Viagem {
   id                  String    @id @default(uuid())
   origem              String    @db.VarChar(500)
   destino             String    @db.VarChar(500)
+  // GPS — coordenadas de origem/destino (opcionais; Fase 1 do GPS).
+  // Precisão: 7 casas decimais ~ 1,11 cm (suficiente para roteamento urbano).
+  origemLatitude      Decimal?  @map("origem_latitude")   @db.Decimal(10, 7)
+  origemLongitude     Decimal?  @map("origem_longitude")  @db.Decimal(10, 7)
+  destinoLatitude     Decimal?  @map("destino_latitude")  @db.Decimal(10, 7)
+  destinoLongitude    Decimal?  @map("destino_longitude") @db.Decimal(10, 7)
   dataViagem          DateTime  @map("data_viagem") @db.Date
   horaInicioPrevista  DateTime  @map("hora_inicio_prevista") @db.Time(0)
   horaFimPrevista     DateTime  @map("hora_fim_prevista") @db.Time(0)

@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { calcularPaginacao } from '../../common/utils/paginacao';
 import {
   BadRequestException,
@@ -32,6 +33,10 @@ type ViagemComRelacoes = {
   id: string;
   origem: string;
   destino: string;
+  origemLatitude: Prisma.Decimal | null;
+  origemLongitude: Prisma.Decimal | null;
+  destinoLatitude: Prisma.Decimal | null;
+  destinoLongitude: Prisma.Decimal | null;
   dataViagem: Date;
   horaInicioPrevista: Date;
   horaFimPrevista: Date;
@@ -243,6 +248,10 @@ export class ViagensService {
       data: {
         origem: enderecoSede,
         destino: dto.destino,
+        origemLatitude: dto.origemLatitude ?? null,
+        origemLongitude: dto.origemLongitude ?? null,
+        destinoLatitude: dto.destinoLatitude ?? null,
+        destinoLongitude: dto.destinoLongitude ?? null,
         dataViagem,
         horaInicioPrevista: horaParaDate(dto.horaInicioPrevista),
         horaFimPrevista: horaParaDate(dto.horaFimPrevista),
@@ -359,6 +368,10 @@ export class ViagensService {
         ...(dto.solicitadoPor !== undefined && { solicitadoPor: dto.solicitadoPor }),
         ...(dto.autorizadoPor !== undefined && { autorizadoPor: dto.autorizadoPor }),
         ...(dto.observacoes !== undefined && { observacoes: dto.observacoes ?? null }),
+        ...(dto.origemLatitude !== undefined && { origemLatitude: dto.origemLatitude ?? null }),
+        ...(dto.origemLongitude !== undefined && { origemLongitude: dto.origemLongitude ?? null }),
+        ...(dto.destinoLatitude !== undefined && { destinoLatitude: dto.destinoLatitude ?? null }),
+        ...(dto.destinoLongitude !== undefined && { destinoLongitude: dto.destinoLongitude ?? null }),
       },
       include: INCLUDE_RELACOES,
     });
@@ -463,6 +476,10 @@ export class ViagensService {
       id: viagem.id,
       origem: viagem.origem,
       destino: viagem.destino,
+      origemLatitude: viagem.origemLatitude != null ? Number(viagem.origemLatitude) : null,
+      origemLongitude: viagem.origemLongitude != null ? Number(viagem.origemLongitude) : null,
+      destinoLatitude: viagem.destinoLatitude != null ? Number(viagem.destinoLatitude) : null,
+      destinoLongitude: viagem.destinoLongitude != null ? Number(viagem.destinoLongitude) : null,
       dataViagem: viagem.dataViagem.toISOString().split('T')[0] ?? '',
       horaInicioPrevista: dateParaHora(viagem.horaInicioPrevista),
       horaFimPrevista: dateParaHora(viagem.horaFimPrevista),
