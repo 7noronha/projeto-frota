@@ -7,7 +7,9 @@ const config: Config = {
   transform: {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
-  collectCoverageFrom: ['**/*.(t|j)s', '!**/*.spec.(t|j)s', '!**/index.(t|j)s'],
+  // PRD §8.6: 70% de cobertura nos services (regra de negócio).
+  // Controllers, DTOs e módulos são exercidos via E2E/integração, não unit.
+  collectCoverageFrom: ['modulos/**/*.service.ts', '!**/*.spec.ts'],
   coverageDirectory: '../coverage',
   coverageThreshold: {
     global: { lines: 70 },
