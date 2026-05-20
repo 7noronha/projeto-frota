@@ -2,8 +2,8 @@
   "name": "fleetops",
   "private": true,
   "workspaces": [
-  "apps/*",
-  "packages/*"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
     "dev": "turbo run dev",

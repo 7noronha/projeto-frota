@@ -4,6 +4,9 @@ Cobertura mínima dos fluxos críticos do operador admin no web:
 
 - `login.spec.ts` — credencial inválida, login bem-sucedido, redirect de rota privada, validação Zod cliente
 - `navegacao.spec.ts` — sidebar com 8 itens, navegação para cada rota, botão "Sair"
+- `viagens.spec.ts` — fluxo crítico criar → iniciar → finalizar + validações de hora/data (PRD §8.6)
+  - Pré-requisito extra: `cd apps/api && bunx tsx prisma/seed-motorista-teste.ts`
+    (motorista ativo com CNH + 1 veículo). O spec dá `test.skip` se faltar motorista.
 
 ## Como rodar localmente
 

@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
+import helmet from '@fastify/helmet';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -14,6 +15,10 @@ async function bootstrap(): Promise<void> {
     AppModule,
     new FastifyAdapter({ logger: false }),
   );
+
+  // Helmet — headers de segurança (PRD §8.3). Mantemos CSP desligado por padrão
+  // pois o Swagger UI carrega assets inline; CORS já é tratado abaixo.
+  await app.register(helmet, { contentSecurityPolicy: false });
 
   // Hook de monitoria HTTP (todas as requisições)
   registrarLoggerHttp(app);
