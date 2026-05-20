@@ -6,6 +6,7 @@ import { FormIniciarViagem } from '@/components/viagens/FormIniciarViagem';
 import { FormFinalizarViagem } from '@/components/viagens/FormFinalizarViagem';
 import type { ViagemDetalhada } from '@fleetops/types';
 import { formatarDataIso, formatarDataHoraIso } from '@fleetops/utils';
+import { MapaViagem } from '@/components/mapas/MapaViagem';
 
 type BadgeColor = 'info' | 'warning' | 'success' | 'default';
 
@@ -93,6 +94,23 @@ export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheVia
           </dl>
         </Card.Content>
       </Card>
+
+      {/* Mapa — origem e destino (Fase 1 do GPS) */}
+      {(viagem.origemLatitude != null || viagem.destinoLatitude != null) && (
+        <Card>
+          <Card.Header className="font-semibold text-base text-slate-800">
+            Origem e destino no mapa
+          </Card.Header>
+          <Card.Content>
+            <MapaViagem
+              origemLatitude={viagem.origemLatitude}
+              origemLongitude={viagem.origemLongitude}
+              destinoLatitude={viagem.destinoLatitude}
+              destinoLongitude={viagem.destinoLongitude}
+            />
+          </Card.Content>
+        </Card>
+      )}
 
       {/* Motorista e Veículo */}
       <div className="grid grid-cols-2 gap-4">

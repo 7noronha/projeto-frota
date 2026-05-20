@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength, IsNotEmpty } from 'class-validator';
+import { IsDateString, IsNumber, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, MinLength, IsNotEmpty } from 'class-validator';
 import { Maiusculas } from '../../../common/decorators/maiusculas.decorator';
 
 export class CriarViagemDto {
@@ -51,4 +51,33 @@ export class CriarViagemDto {
   @IsOptional()
   @IsString()
   observacoes?: string;
+
+  // ─── GPS (Fase 1) — coordenadas opcionais ─────────────────────────────────
+  @ApiPropertyOptional({ example: -23.561414, description: 'Latitude da origem' })
+  @IsOptional()
+  @IsNumber({}, { message: 'origemLatitude inválida' })
+  @Min(-90, { message: 'origemLatitude deve estar entre -90 e 90' })
+  @Max(90, { message: 'origemLatitude deve estar entre -90 e 90' })
+  origemLatitude?: number;
+
+  @ApiPropertyOptional({ example: -46.655881, description: 'Longitude da origem' })
+  @IsOptional()
+  @IsNumber({}, { message: 'origemLongitude inválida' })
+  @Min(-180, { message: 'origemLongitude deve estar entre -180 e 180' })
+  @Max(180, { message: 'origemLongitude deve estar entre -180 e 180' })
+  origemLongitude?: number;
+
+  @ApiPropertyOptional({ example: -23.55052, description: 'Latitude do destino' })
+  @IsOptional()
+  @IsNumber({}, { message: 'destinoLatitude inválida' })
+  @Min(-90, { message: 'destinoLatitude deve estar entre -90 e 90' })
+  @Max(90, { message: 'destinoLatitude deve estar entre -90 e 90' })
+  destinoLatitude?: number;
+
+  @ApiPropertyOptional({ example: -46.633308, description: 'Longitude do destino' })
+  @IsOptional()
+  @IsNumber({}, { message: 'destinoLongitude inválida' })
+  @Min(-180, { message: 'destinoLongitude deve estar entre -180 e 180' })
+  @Max(180, { message: 'destinoLongitude deve estar entre -180 e 180' })
+  destinoLongitude?: number;
 }
