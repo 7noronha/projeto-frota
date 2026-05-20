@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import helmet from '@fastify/helmet';
+import compress from '@fastify/compress';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
@@ -15,6 +16,14 @@ async function bootstrap(): Promise<void> {
     AppModule,
     new FastifyAdapter({ logger: false }),
   );
+
+  // Compressão HTTP — brotli/gzip nas respostas > 1 KB. Reduz payload de
+  // listagens (/viagens, /relatorios) em ~70%.
+  await app.register(compress, {
+    global: true,
+    threshold: 1024,
+    encodings: ['br', 'gzip', 'deflate'],
+  });
 
   // Helmet — headers de segurança (PRD §8.3). Mantemos CSP desligado por padrão
   // pois o Swagger UI carrega assets inline; CORS já é tratado abaixo.

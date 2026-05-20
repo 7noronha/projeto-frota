@@ -4,9 +4,11 @@ import Image from 'next/image';
  * Hero visual da tela de login.
  *
  * Como trocar a foto:
- * 1. Salve uma imagem 1:1 (recomendado 920×920px, JPG/WEBP/PNG, <350 KB) em
+ * 1. Salve uma imagem 1:1 (recomendado 920×920px) em
  *    `apps/web/public/images/login.png`.
- * 2. Pronto — o componente já aponta pra esse arquivo.
+ * 2. Converta para WebP (qualidade 82) com:
+ *    `bunx sharp-cli -i apps/web/public/images/login.png -o apps/web/public/images/ -f webp -q 82`
+ * 3. Pronto — o componente já aponta pra `login.webp`.
  *
  * Se o arquivo não existir, o Next/Image vai retornar 404 mas o layout
  * mantém o espaço reservado (sem quebrar). Caia para o SVG legado
@@ -29,7 +31,7 @@ export function IlustracaoAuth() {
       aria-hidden="true"
     >
       <Image
-        src="/images/login.png"
+        src="/images/login.webp"
         alt=""
         fill
         sizes="(min-width: 1024px) 460px, 0px"

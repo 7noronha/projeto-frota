@@ -241,28 +241,39 @@ export class AlertasService {
     }
 
     // 6. Veículos com manutenção devida (km desde a última preventiva > intervalo padrão)
+    // Antes: 1 query findFirst por veículo (N+1). Agora: 2 queries totais —
+    // 1 pra veículos, 1 pra todas as preventivas; junta em memória.
     const veiculos = await this.prisma.veiculo.findMany({
       where: { situacao: 'ativo', dataExclusao: null },
       select: { id: true, placa: true, marca: true, modelo: true, odometroAtual: true },
     });
 
+    const preventivas = await this.prisma.despesaVeiculo.findMany({
+      where: {
+        tipo: 'manutencao',
+        tipoManutencao: 'preventiva',
+        dataExclusao: null,
+        odometro: { not: null },
+        veiculoId: { in: veiculos.map((v) => v.id) },
+      },
+      select: { veiculoId: true, odometro: true, data: true },
+      orderBy: { data: 'desc' },
+    });
+
+    // Como o orderBy é desc, o primeiro registro por veículo é o mais recente.
+    const ultimaPreventivaPorVeiculo = new Map<string, number>();
+    for (const p of preventivas) {
+      if (p.odometro != null && !ultimaPreventivaPorVeiculo.has(p.veiculoId)) {
+        ultimaPreventivaPorVeiculo.set(p.veiculoId, p.odometro);
+      }
+    }
+
     for (const v of veiculos) {
-      const ultimaPreventiva = await this.prisma.despesaVeiculo.findFirst({
-        where: {
-          veiculoId: v.id,
-          tipo: 'manutencao',
-          tipoManutencao: 'preventiva',
-          dataExclusao: null,
-          odometro: { not: null },
-        },
-        orderBy: { data: 'desc' },
-      });
+      const odometroUltima = ultimaPreventivaPorVeiculo.get(v.id);
+      // Sem histórico: operador decide quando cadastrar a primeira
+      if (odometroUltima == null) continue;
 
-      // Sem histórico de preventiva: considera o odometroAtual como referência
-      // (sem alerta — operador é quem decide cadastrar a primeira)
-      if (!ultimaPreventiva?.odometro) continue;
-
-      const kmDesdeUltima = v.odometroAtual - ultimaPreventiva.odometro;
+      const kmDesdeUltima = v.odometroAtual - odometroUltima;
       if (kmDesdeUltima < INTERVALO_MANUTENCAO_KM) continue;
 
       const excedente = kmDesdeUltima - INTERVALO_MANUTENCAO_KM;
@@ -271,7 +282,7 @@ export class AlertasService {
         tipo: 'manutencao_devida',
         severidade: excedente > 5_000 ? 'alto' : excedente > 1_000 ? 'medio' : 'baixo',
         titulo: `Manutenção preventiva devida há ${kmDesdeUltima.toLocaleString('pt-BR')} km`,
-        descricao: `${v.placa} · ${v.marca} ${v.modelo} · última preventiva em ${ultimaPreventiva.odometro.toLocaleString('pt-BR')} km, atual ${v.odometroAtual.toLocaleString('pt-BR')} km`,
+        descricao: `${v.placa} · ${v.marca} ${v.modelo} · última preventiva em ${odometroUltima.toLocaleString('pt-BR')} km, atual ${v.odometroAtual.toLocaleString('pt-BR')} km`,
         alvoId: v.id,
         alvoTipo: 'veiculo',
         href: `/veiculos/${v.id}/despesas/nova`,

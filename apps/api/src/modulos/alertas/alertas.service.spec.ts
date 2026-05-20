@@ -216,7 +216,12 @@ describe('AlertasService', () => {
       prisma.veiculo.findMany.mockResolvedValue([
         { id: 'v1', placa: 'ABC1D23', marca: 'Toyota', modelo: 'Corolla', odometroAtual: 31_000 },
       ]);
-      prisma.despesaVeiculo.findFirst.mockResolvedValue({ odometro: 10_000 });
+      prisma.despesaVeiculo.findMany.mockImplementation(({ where }) => {
+        if (where.tipo === 'manutencao') {
+          return Promise.resolve([{ veiculoId: 'v1', odometro: 10_000, data: new Date(2026, 0, 1) }]);
+        }
+        return Promise.resolve([]);
+      });
       const r = await service.listar();
       const a = r.find((x) => x.tipo === 'manutencao_devida');
       expect(a).toBeDefined();
@@ -227,7 +232,7 @@ describe('AlertasService', () => {
       prisma.veiculo.findMany.mockResolvedValue([
         { id: 'v1', placa: 'ABC1D23', marca: 'Toyota', modelo: 'Corolla', odometroAtual: 50_000 },
       ]);
-      prisma.despesaVeiculo.findFirst.mockResolvedValue(null);
+      // findMany de manutencao retorna lista vazia (default)
       const r = await service.listar();
       expect(r.find((x) => x.tipo === 'manutencao_devida')).toBeUndefined();
     });
@@ -236,7 +241,12 @@ describe('AlertasService', () => {
       prisma.veiculo.findMany.mockResolvedValue([
         { id: 'v1', placa: 'ABC1D23', marca: 'Toyota', modelo: 'Corolla', odometroAtual: 15_000 },
       ]);
-      prisma.despesaVeiculo.findFirst.mockResolvedValue({ odometro: 10_000 });
+      prisma.despesaVeiculo.findMany.mockImplementation(({ where }) => {
+        if (where.tipo === 'manutencao') {
+          return Promise.resolve([{ veiculoId: 'v1', odometro: 10_000, data: new Date(2026, 0, 1) }]);
+        }
+        return Promise.resolve([]);
+      });
       const r = await service.listar();
       expect(r.find((x) => x.tipo === 'manutencao_devida')).toBeUndefined();
     });

@@ -31,6 +31,8 @@ model Usuario {
   viagensCriadas       Viagem[] @relation("OperadorCriadorViagens")
 
   @@index([perfil], map: "idx_usuarios_perfil")
+  // Acelera o alerta de CNH vencida/vencendo (filtro perfil + ativo + cnhValidade <= limite)
+  @@index([cnhValidade], map: "idx_usuarios_cnh_validade")
   @@map("usuarios")
 }
 
@@ -125,6 +127,10 @@ model DespesaVeiculo {
   @@index([data], map: "idx_despesas_data")
   @@index([vigenciaFim], map: "idx_despesas_vigencia_fim")
   @@index([dataVencimento], map: "idx_despesas_data_vencimento")
+  // Cobre o alerta de manutenção preventiva (find batch por veiculoId+tipo+tipoManutencao)
+  @@index([tipo, tipoManutencao, data], map: "idx_despesas_tipo_manutencao_data")
+  // Cobre filtros gerais por tipo + data de criação (listagens, relatórios)
+  @@index([tipo, data], map: "idx_despesas_tipo_data")
   @@map("despesas_veiculos")
 }
 
@@ -167,6 +173,9 @@ model Viagem {
   @@index([motoristaId, status], map: "idx_viagens_motorista_status")
   @@index([veiculoId, status], map: "idx_viagens_veiculo_status")
   @@index([dataViagem], map: "idx_viagens_data")
+  // Alertas de viagem (EM_ANDAMENTO atrasadas / CRIADA vencida) varrem por status
+  // sem necessariamente passar pelo motorista ou veículo — esse índice cobre.
+  @@index([status, dataViagem], map: "idx_viagens_status_data")
   @@map("viagens")
 }
 
