@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@fleetops/types": "*",
+    "@fleetops/utils": "*",
     "@fleetops/validation": "*",
     "@lojascem/components-react": "file:../../vendor/lojascem-components-react-3.3.1.tgz",
     "@react-input/mask": "^2.0.4",

@@ -10,6 +10,7 @@ import { EstadoVazio } from '@/components/EstadoVazio';
 import { DialogConfirmacao } from '@/components/DialogConfirmacao';
 import { notificar } from '@/lib/notificar';
 import type { UsuarioResposta } from '@fleetops/types';
+import { formatarDataIso } from '@fleetops/utils';
 
 interface TabelaMotoristasProps {
   motoristas: UsuarioResposta[];
@@ -78,7 +79,7 @@ export function TabelaMotoristas({ motoristas }: TabelaMotoristasProps) {
         <span>{row.cnh}</span>
         {row.cnhValidade && (
           <span className="text-xs text-gray-500">
-            Válida até {new Date(row.cnhValidade + 'T00:00:00').toLocaleDateString('pt-BR')}
+            Válida até {formatarDataIso(row.cnhValidade)}
           </span>
         )}
       </span>

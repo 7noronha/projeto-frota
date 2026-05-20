@@ -1,4 +1,5 @@
 import { Icon, VStack, HStack, Text, Heading } from '@lojascem/components-react';
+import { agoraBrasilia } from '@fleetops/utils';
 import { FormularioLogin } from './FormularioLogin';
 import { IlustracaoAuth } from './IlustracaoAuth';
 
@@ -109,7 +110,7 @@ export default function PaginaLogin() {
       {/* ── Rodapé ──────────────────────────────────────────────────────────── */}
       <footer className="text-center py-3" style={{ flexShrink: 0 }}>
         <Text size="xs" style={{ color: '#94a3b8' }}>
-          © {new Date().getFullYear()} FleetOps — Todos os direitos reservados
+          © {agoraBrasilia().getFullYear()} FleetOps — Todos os direitos reservados
         </Text>
       </footer>
     </VStack>

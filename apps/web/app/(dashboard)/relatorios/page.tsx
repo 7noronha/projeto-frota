@@ -3,6 +3,7 @@ import { VStack, Heading, Text } from '@lojascem/components-react';
 import { FiltrosPeriodo } from '@/components/relatorios/FiltrosPeriodo';
 import { RelatorioMotoristas } from '@/components/relatorios/RelatorioMotoristas';
 import { RelatorioVeiculos } from '@/components/relatorios/RelatorioVeiculos';
+import { formatarDataIso } from '@fleetops/utils';
 import {
   buscarDistanciaPorMotorista,
   buscarDistanciaPorVeiculo,
@@ -25,12 +26,10 @@ export default async function PaginaRelatorios({ searchParams }: PaginaRelatorio
 
   const rotuloPeriodo = (() => {
     if (params.dataInicio && params.dataFim) {
-      const di = new Date(params.dataInicio + 'T00:00:00').toLocaleDateString('pt-BR');
-      const df = new Date(params.dataFim + 'T00:00:00').toLocaleDateString('pt-BR');
-      return `${di} a ${df}`;
+      return `${formatarDataIso(params.dataInicio)} a ${formatarDataIso(params.dataFim)}`;
     }
-    if (params.dataInicio) return `a partir de ${new Date(params.dataInicio + 'T00:00:00').toLocaleDateString('pt-BR')}`;
-    if (params.dataFim) return `até ${new Date(params.dataFim + 'T00:00:00').toLocaleDateString('pt-BR')}`;
+    if (params.dataInicio) return `a partir de ${formatarDataIso(params.dataInicio)}`;
+    if (params.dataFim) return `até ${formatarDataIso(params.dataFim)}`;
     return 'todo o histórico';
   })();
 

@@ -18,6 +18,7 @@ import {
 import { schemaCriarViagem } from '@fleetops/validation';
 import { validar } from '@/lib/validar';
 import type { UsuarioResposta, VeiculoResposta, ViagemDetalhada } from '@fleetops/types';
+import { agoraBrasilia, formatarDataBrasilia } from '@fleetops/utils';
 
 type AcaoFormulario = (
   estadoAnterior: { erro?: string } | null,
@@ -46,11 +47,7 @@ function naoVazio(valor: string, rotulo: string): string {
 }
 
 function hojeEmBrasilia(): string {
-  return new Date(
-    new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }),
-  )
-    .toISOString()
-    .split('T')[0];
+  return formatarDataBrasilia(agoraBrasilia(), 'yyyy-MM-dd');
 }
 
 export function FormViagem({
