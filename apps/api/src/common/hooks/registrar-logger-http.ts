@@ -45,6 +45,11 @@ function sanitizar(valor: unknown): unknown {
   return copia;
 }
 
+// Em produção, request 2xx só vai pro log se passar deste limite (ms).
+// Em dev, loga tudo. Evita CPU + I/O com JSON.stringify de payloads grandes.
+const LIMITE_LOG_OK_MS = 500;
+const EH_PRODUCAO = process.env.NODE_ENV === 'production';
+
 export function registrarLoggerHttp(app: NestFastifyApplication): void {
   const logger = new Logger('HTTP');
   const instancia = app.getHttpAdapter().getInstance();
@@ -57,6 +62,12 @@ export function registrarLoggerHttp(app: NestFastifyApplication): void {
   instancia.addHook('onResponse', (req: RequisicaoComExtras, res: RespostaComExtras, done: () => void) => {
     const status = res.statusCode;
     const duracaoMs = req.inicioMs ? Date.now() - req.inicioMs : 0;
+
+    // Atalho em produção: 2xx rápido vira no-op (não monta JSON nem chama Logger).
+    if (EH_PRODUCAO && status < 400 && duracaoMs < LIMITE_LOG_OK_MS) {
+      done();
+      return;
+    }
 
     const registro = {
       dataHora: agoraBrasilia(),
