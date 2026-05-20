@@ -15,6 +15,7 @@ import { IniciarViagemDto } from './dto/iniciar-viagem.dto';
 import { FinalizarViagemDto } from './dto/finalizar-viagem.dto';
 import { ViagemRespostaDto } from './dto/viagem-resposta.dto';
 import { FiltrosListarViagensDto } from './dto/filtros-listar-viagens.dto';
+import { GeocodingService, CoordenadasGeocode } from '../../common/geocoding/geocoding.service';
 
 // Converte "HH:MM" para Date (data epoch, hora UTC)
 function horaParaDate(hora: string): Date {
@@ -65,8 +66,12 @@ const INCLUDE_RELACOES = {
 @Injectable()
 export class ViagensService {
   private cacheSede: { valor: string; expiradoEm: number } | null = null;
+  private cacheSedeCoords: { endereco: string; coords: CoordenadasGeocode | null } | null = null;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly geocoding: GeocodingService,
+  ) {}
 
   /**
    * Verifica sobreposição de período para um motorista ou veículo numa data.
@@ -119,6 +124,19 @@ export class ViagensService {
     }
     this.cacheSede = { valor: config.valor, expiradoEm: agora + 5 * 60 * 1000 };
     return config.valor;
+  }
+
+  /**
+   * Geocoda o endereço da sede uma única vez por endereço — quando ele muda
+   * em `configuracoes`, o cache invalida sozinho e refazemos a chamada.
+   */
+  private async obterCoordenadasSede(endereco: string): Promise<CoordenadasGeocode | null> {
+    if (this.cacheSedeCoords && this.cacheSedeCoords.endereco === endereco) {
+      return this.cacheSedeCoords.coords;
+    }
+    const coords = await this.geocoding.geocodificar(endereco);
+    this.cacheSedeCoords = { endereco, coords };
+    return coords;
   }
 
   async listar(
@@ -244,14 +262,21 @@ export class ViagensService {
       );
     }
 
+    // 8. Geocoding (best-effort) — origem = sede; destino = endereço informado.
+    // Falhas não bloqueiam: viagem é criada sem coords se a API recusar.
+    const [coordsOrigem, coordsDestino] = await Promise.all([
+      this.obterCoordenadasSede(enderecoSede),
+      this.geocoding.geocodificar(dto.destino),
+    ]);
+
     const viagem = await this.prisma.viagem.create({
       data: {
         origem: enderecoSede,
         destino: dto.destino,
-        origemLatitude: dto.origemLatitude ?? null,
-        origemLongitude: dto.origemLongitude ?? null,
-        destinoLatitude: dto.destinoLatitude ?? null,
-        destinoLongitude: dto.destinoLongitude ?? null,
+        origemLatitude: coordsOrigem?.latitude ?? null,
+        origemLongitude: coordsOrigem?.longitude ?? null,
+        destinoLatitude: coordsDestino?.latitude ?? null,
+        destinoLongitude: coordsDestino?.longitude ?? null,
         dataViagem,
         horaInicioPrevista: horaParaDate(dto.horaInicioPrevista),
         horaFimPrevista: horaParaDate(dto.horaFimPrevista),
@@ -356,6 +381,12 @@ export class ViagensService {
       );
     }
 
+    // Se o destino mudou, re-geocoda (best-effort).
+    const destinoMudou = dto.destino !== undefined && dto.destino !== viagem.destino;
+    const coordsDestinoNovas = destinoMudou
+      ? await this.geocoding.geocodificar(dto.destino as string)
+      : null;
+
     const atualizada = await this.prisma.viagem.update({
       where: { id },
       data: {
@@ -368,10 +399,10 @@ export class ViagensService {
         ...(dto.solicitadoPor !== undefined && { solicitadoPor: dto.solicitadoPor }),
         ...(dto.autorizadoPor !== undefined && { autorizadoPor: dto.autorizadoPor }),
         ...(dto.observacoes !== undefined && { observacoes: dto.observacoes ?? null }),
-        ...(dto.origemLatitude !== undefined && { origemLatitude: dto.origemLatitude ?? null }),
-        ...(dto.origemLongitude !== undefined && { origemLongitude: dto.origemLongitude ?? null }),
-        ...(dto.destinoLatitude !== undefined && { destinoLatitude: dto.destinoLatitude ?? null }),
-        ...(dto.destinoLongitude !== undefined && { destinoLongitude: dto.destinoLongitude ?? null }),
+        ...(destinoMudou && {
+          destinoLatitude: coordsDestinoNovas?.latitude ?? null,
+          destinoLongitude: coordsDestinoNovas?.longitude ?? null,
+        }),
       },
       include: INCLUDE_RELACOES,
     });

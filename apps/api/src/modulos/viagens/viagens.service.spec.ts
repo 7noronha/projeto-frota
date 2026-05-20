@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ViagensService } from './viagens.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { GeocodingService } from '../../common/geocoding/geocoding.service';
 import { CriarViagemDto } from './dto/criar-viagem.dto';
 import { UsuarioJwt } from '@fleetops/types';
 
@@ -111,8 +112,16 @@ describe('ViagensService', () => {
       $transaction: jest.fn(),
     };
 
+    const geocodingMock: GeocodingService = {
+      geocodificar: jest.fn().mockResolvedValue(null),
+    } as unknown as GeocodingService;
+
     const modulo: TestingModule = await Test.createTestingModule({
-      providers: [ViagensService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        ViagensService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: GeocodingService, useValue: geocodingMock },
+      ],
     }).compile();
 
     service = modulo.get<ViagensService>(ViagensService);

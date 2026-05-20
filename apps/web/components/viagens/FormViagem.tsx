@@ -19,7 +19,6 @@ import { schemaCriarViagem } from '@fleetops/validation';
 import { validar } from '@/lib/validar';
 import type { UsuarioResposta, VeiculoResposta, ViagemDetalhada } from '@fleetops/types';
 import { agoraBrasilia, formatarDataBrasilia } from '@fleetops/utils';
-import { MapaSeletor } from '@/components/mapas/MapaSeletor';
 
 type AcaoFormulario = (
   estadoAnterior: { erro?: string } | null,
@@ -75,17 +74,6 @@ export function FormViagem({
   const [solicitadoPor, setSolicitadoPor] = useState(viagemInicial?.solicitadoPor ?? '');
   const [autorizadoPor, setAutorizadoPor] = useState(viagemInicial?.autorizadoPor ?? '');
   const [observacoes, setObservacoes] = useState(viagemInicial?.observacoes ?? '');
-  // GPS Fase 1 — coordenadas opcionais
-  const [origemMapa, setOrigemMapa] = useState<{ latitude: number; longitude: number } | null>(
-    viagemInicial?.origemLatitude != null && viagemInicial?.origemLongitude != null
-      ? { latitude: viagemInicial.origemLatitude, longitude: viagemInicial.origemLongitude }
-      : null,
-  );
-  const [destinoMapa, setDestinoMapa] = useState<{ latitude: number; longitude: number } | null>(
-    viagemInicial?.destinoLatitude != null && viagemInicial?.destinoLongitude != null
-      ? { latitude: viagemInicial.destinoLatitude, longitude: viagemInicial.destinoLongitude }
-      : null,
-  );
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -137,14 +125,6 @@ export function FormViagem({
     formData.set('solicitadoPor', solicitadoPor);
     formData.set('autorizadoPor', autorizadoPor);
     if (observacoes) formData.set('observacoes', observacoes);
-    if (origemMapa) {
-      formData.set('origemLatitude', String(origemMapa.latitude));
-      formData.set('origemLongitude', String(origemMapa.longitude));
-    }
-    if (destinoMapa) {
-      formData.set('destinoLatitude', String(destinoMapa.latitude));
-      formData.set('destinoLongitude', String(destinoMapa.longitude));
-    }
     const resultado = await acao(null, formData);
     setPendente(false);
     if (resultado?.erro) setErro(resultado.erro);
@@ -317,21 +297,6 @@ export function FormViagem({
                 onBlur={() => erroBlur('autorizadoPor', autorizadoPor, 'o autorizador')}
               />
             </div>
-
-            {/* Mapa — origem e destino (opcionais, Fase 1 do GPS) */}
-            <VStack gap={2}>
-              <Text size="sm" weight="medium" style={{ color: 'var(--fo-navy)' }}>
-                Origem e destino no mapa (opcional)
-              </Text>
-              <MapaSeletor
-                origem={origemMapa}
-                destino={destinoMapa}
-                onChange={({ origem, destino }) => {
-                  setOrigemMapa(origem);
-                  setDestinoMapa(destino);
-                }}
-              />
-            </VStack>
 
             {/* Observações */}
             <TextArea

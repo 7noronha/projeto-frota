@@ -98,11 +98,6 @@ export const schemaCamposViagem = z.object({
   solicitadoPor: z.string().min(3, 'Solicitado por deve ter no mínimo 3 caracteres').max(200),
   autorizadoPor: z.string().min(3, 'Autorizado por deve ter no mínimo 3 caracteres').max(200),
   observacoes: z.string().optional(),
-  // GPS — coordenadas opcionais (Fase 1 do GPS).
-  origemLatitude: z.number().gte(-90).lte(90).optional(),
-  origemLongitude: z.number().gte(-180).lte(180).optional(),
-  destinoLatitude: z.number().gte(-90).lte(90).optional(),
-  destinoLongitude: z.number().gte(-180).lte(180).optional(),
 });
 
 export const schemaCriarViagem = schemaCamposViagem.refine(
