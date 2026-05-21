@@ -41,10 +41,11 @@ export default function PaginaLogin() {
         style={{ minHeight: 0 }}
       >
 
-        {/* Ilustração — apenas em telas grandes */}
+        {/* Ilustração — apenas em telas grandes. Escala com o viewport:
+            laptop (lg) 460px · desktop (xl) 560px · wide (2xl) 640px */}
         <div
-          className="hidden lg:flex flex-col items-center gap-4"
-          style={{ flex: '0 0 auto', maxWidth: 440 }}
+          className="hidden lg:flex flex-col items-center gap-4 lg:max-w-[460px] xl:max-w-[560px] 2xl:max-w-[640px]"
+          style={{ flex: '0 0 auto' }}
         >
           <IlustracaoAuth />
 

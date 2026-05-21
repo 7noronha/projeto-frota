@@ -20,7 +20,6 @@ export function IlustracaoAuth() {
     <div
       style={{
         width: '100%',
-        maxWidth: 460,
         aspectRatio: '1 / 1',
         borderRadius: 20,
         overflow: 'hidden',
@@ -34,7 +33,7 @@ export function IlustracaoAuth() {
         src="/images/login.webp"
         alt=""
         fill
-        sizes="(min-width: 1024px) 460px, 0px"
+        sizes="(min-width: 1536px) 640px, (min-width: 1280px) 560px, (min-width: 1024px) 460px, 0px"
         priority
         style={{ objectFit: 'cover' }}
       />
