@@ -20,7 +20,10 @@ export function IlustracaoAuth() {
     <div
       style={{
         width: '100%',
-        aspectRatio: '1 / 1',
+        // Proporção ajustada pra casar com a altura do card de login
+        // (cabeçalho + 2 inputs + botão + divisor + info box ≈ 500px).
+        // A foto original é 1:1, então recebe leve crop top/bottom via cover.
+        aspectRatio: '21 / 25',
         borderRadius: 20,
         overflow: 'hidden',
         boxShadow: '0 12px 48px rgba(0, 50, 120, 0.18)',

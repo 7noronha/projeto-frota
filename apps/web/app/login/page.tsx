@@ -41,8 +41,8 @@ export default function PaginaLogin() {
         style={{ minHeight: 0 }}
       >
 
-        {/* Ilustração — mesma largura do card de login (420px) pra formar
-            par visual equilibrado lado a lado */}
+        {/* Ilustração — mesma largura e altura aproximada do card de login,
+            formando par visual equilibrado lado a lado. */}
         <div
           className="hidden lg:flex flex-col items-center gap-4"
           style={{ flex: '0 0 auto', width: 420 }}
