@@ -146,6 +146,12 @@ model Viagem {
   origemLongitude     Decimal?  @map("origem_longitude")  @db.Decimal(10, 7)
   destinoLatitude     Decimal?  @map("destino_latitude")  @db.Decimal(10, 7)
   destinoLongitude    Decimal?  @map("destino_longitude") @db.Decimal(10, 7)
+  // Rota planejada (Mapbox Directions API), persistida na criação da viagem.
+  // GeoJSON LineString como JSONB. Distância em km e duração em minutos.
+  // null se a Directions API não tiver coberto os pontos.
+  rotaGeometria       Json?     @map("rota_geometria")    @db.JsonB
+  rotaDistanciaKm     Decimal?  @map("rota_distancia_km") @db.Decimal(10, 2)
+  rotaDuracaoMin      Int?      @map("rota_duracao_min")
   dataViagem          DateTime  @map("data_viagem") @db.Date
   horaInicioPrevista  DateTime  @map("hora_inicio_prevista") @db.Time(0)
   horaFimPrevista     DateTime  @map("hora_fim_prevista") @db.Time(0)

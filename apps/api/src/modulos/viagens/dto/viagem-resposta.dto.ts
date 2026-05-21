@@ -23,6 +23,12 @@ export class ViagemRespostaDto {
   @ApiPropertyOptional({ example: -46.655881 }) origemLongitude: number | null;
   @ApiPropertyOptional({ example: -23.55052 }) destinoLatitude: number | null;
   @ApiPropertyOptional({ example: -46.633308 }) destinoLongitude: number | null;
+  @ApiPropertyOptional({ description: 'GeoJSON LineString da rota Mapbox Directions' })
+  rotaGeometria: unknown | null;
+  @ApiPropertyOptional({ example: 920.4, description: 'Distância real por estradas (km)' })
+  rotaDistanciaKm: number | null;
+  @ApiPropertyOptional({ example: 720, description: 'Duração estimada da rota (minutos)' })
+  rotaDuracaoMin: number | null;
   @ApiProperty() dataViagem: string;
   @ApiProperty() horaInicioPrevista: string;
   @ApiProperty() horaFimPrevista: string;

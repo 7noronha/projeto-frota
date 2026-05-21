@@ -3,6 +3,7 @@ import { BadRequestException, ForbiddenException, NotFoundException } from '@nes
 import { ViagensService } from './viagens.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { GeocodingService } from '../../common/geocoding/geocoding.service';
+import { DirectionsService } from '../../common/geocoding/directions.service';
 import { CriarViagemDto } from './dto/criar-viagem.dto';
 import { UsuarioJwt } from '@fleetops/types';
 
@@ -116,11 +117,16 @@ describe('ViagensService', () => {
       geocodificar: jest.fn().mockResolvedValue(null),
     } as unknown as GeocodingService;
 
+    const directionsMock: DirectionsService = {
+      rotear: jest.fn().mockResolvedValue(null),
+    } as unknown as DirectionsService;
+
     const modulo: TestingModule = await Test.createTestingModule({
       providers: [
         ViagensService,
         { provide: PrismaService, useValue: prisma },
         { provide: GeocodingService, useValue: geocodingMock },
+        { provide: DirectionsService, useValue: directionsMock },
       ],
     }).compile();
 

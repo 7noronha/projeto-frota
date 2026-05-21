@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, HStack, Text, Icon } from '@lojascem/components-react';
-import { distanciaKm, formatarDistancia, type PontoGeo } from '@fleetops/utils';
+import { distanciaKm, formatarDistancia, formatarTempo, type PontoGeo } from '@fleetops/utils';
 
 interface InfoDistanciaViagemProps {
   origemLatitude: number | null;
@@ -10,6 +10,11 @@ interface InfoDistanciaViagemProps {
   destinoLongitude: number | null;
   /** Em km. Quando informado, exibimos lado a lado com a linha reta. */
   distanciaPercorrida?: number | null;
+  /** Distância real por estradas (Mapbox Directions). Quando presente,
+   * substitui a linha reta como métrica primária. */
+  rotaDistanciaKm?: number | null;
+  /** Duração estimada da rota em minutos (Mapbox Directions). */
+  rotaDuracaoMin?: number | null;
 }
 
 function asPonto(lat: number | null, lng: number | null): PontoGeo | null {
@@ -28,11 +33,17 @@ export function InfoDistanciaViagem({
   destinoLatitude,
   destinoLongitude,
   distanciaPercorrida,
+  rotaDistanciaKm,
+  rotaDuracaoMin,
 }: InfoDistanciaViagemProps) {
   const origem = asPonto(origemLatitude, origemLongitude);
   const destino = asPonto(destinoLatitude, destinoLongitude);
   const linhaRetaKm = origem && destino ? distanciaKm(origem, destino) : null;
   const semCoords = !origem || !destino;
+  // Preferimos a distância da rota Mapbox (real) sobre a linha reta quando
+  // disponível. Linha reta vira fallback.
+  const distanciaPrincipal = rotaDistanciaKm ?? linhaRetaKm;
+  const usandoRotaReal = rotaDistanciaKm != null;
 
   return (
     <Card>
@@ -42,13 +53,13 @@ export function InfoDistanciaViagem({
             <Text size="xs" className="font-semibold uppercase tracking-wide" style={{ color: '#94a3b8' }}>
               Distância até o destino
             </Text>
-            {linhaRetaKm != null ? (
+            {distanciaPrincipal != null ? (
               <>
                 <Text size="lg" className="mt-1 font-bold" style={{ color: '#0A2540' }}>
-                  {formatarDistancia(linhaRetaKm)}
+                  {formatarDistancia(distanciaPrincipal)}
                 </Text>
                 <Text size="xs" style={{ color: '#94a3b8' }}>
-                  em linha reta, entre origem e destino
+                  {usandoRotaReal ? 'por estrada (rota Mapbox)' : 'em linha reta'}
                 </Text>
               </>
             ) : (
@@ -60,6 +71,23 @@ export function InfoDistanciaViagem({
               </HStack>
             )}
           </div>
+
+          {rotaDuracaoMin != null && (
+            <>
+              <div style={{ width: 1, height: 56, background: '#e2e8f0' }} />
+              <div style={{ flex: 1 }}>
+                <Text size="xs" className="font-semibold uppercase tracking-wide" style={{ color: '#94a3b8' }}>
+                  Tempo estimado
+                </Text>
+                <Text size="lg" className="mt-1 font-bold" style={{ color: '#0A2540' }}>
+                  {formatarTempo(rotaDuracaoMin)}
+                </Text>
+                <Text size="xs" style={{ color: '#94a3b8' }}>
+                  rota direta (sem trânsito)
+                </Text>
+              </div>
+            </>
+          )}
 
           {distanciaPercorrida != null && (
             <>

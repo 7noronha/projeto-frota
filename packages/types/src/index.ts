@@ -87,6 +87,10 @@ export interface ViagemResposta {
   origemLongitude: number | null;
   destinoLatitude: number | null;
   destinoLongitude: number | null;
+  // Cache da rota Mapbox Directions: GeoJSON LineString + distância/duração real
+  rotaGeometria: unknown | null;
+  rotaDistanciaKm: number | null;
+  rotaDuracaoMin: number | null;
   dataViagem: string;
   horaInicioPrevista: string;
   horaFimPrevista: string;

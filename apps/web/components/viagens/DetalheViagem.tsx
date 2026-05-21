@@ -103,6 +103,8 @@ export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheVia
         destinoLatitude={viagem.destinoLatitude}
         destinoLongitude={viagem.destinoLongitude}
         distanciaPercorrida={viagem.distanciaPercorrida}
+        rotaDistanciaKm={viagem.rotaDistanciaKm}
+        rotaDuracaoMin={viagem.rotaDuracaoMin}
       />
 
       {/* Mapa — origem e destino (Fase 1 do GPS) */}
@@ -117,6 +119,7 @@ export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheVia
               origemLongitude={viagem.origemLongitude}
               destinoLatitude={viagem.destinoLatitude}
               destinoLongitude={viagem.destinoLongitude}
+              rotaGeometria={viagem.rotaGeometria}
             />
           </Card.Content>
         </Card>

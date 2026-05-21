@@ -10,6 +10,9 @@ interface MapaViagemProps {
   origemLongitude: number | null;
   destinoLatitude: number | null;
   destinoLongitude: number | null;
+  /** Rota cacheada pelo servidor (Mapbox Directions). Quando presente,
+   * o componente NÃO faz nova chamada — apenas renderiza. */
+  rotaGeometria?: unknown | null;
   altura?: number;
 }
 
@@ -37,6 +40,7 @@ export function MapaViagem({
   origemLongitude,
   destinoLatitude,
   destinoLongitude,
+  rotaGeometria,
   altura = 350,
 }: MapaViagemProps) {
   const mapRef = useRef<MapRef | null>(null);
@@ -57,8 +61,19 @@ export function MapaViagem({
     [destinoLatitude, destinoLongitude],
   );
 
-  // Busca a rota real pela Mapbox Directions sempre que origem/destino mudam
+  // 1. Se a rota já veio cacheada do servidor, usa direto (zero chamada à API).
+  // 2. Senão, busca pela Mapbox Directions (fallback pra viagens antigas).
   useEffect(() => {
+    if (rotaGeometria) {
+      // O backend já cuidou da rota — usa a geometria persistida
+      setRota({
+        type: 'Feature',
+        properties: {},
+        geometry: rotaGeometria as LineString,
+      });
+      return;
+    }
+
     if (!origem || !destino || !MAPBOX_TOKEN) {
       setRota(null);
       return;
@@ -109,7 +124,7 @@ export function MapaViagem({
     return () => {
       cancelado = true;
     };
-  }, [origem, destino]);
+  }, [origem, destino, rotaGeometria]);
 
   // Auto-enquadra o mapa para mostrar a rota toda (origem + destino + traçado)
   useEffect(() => {

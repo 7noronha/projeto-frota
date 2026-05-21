@@ -16,6 +16,7 @@ import { FinalizarViagemDto } from './dto/finalizar-viagem.dto';
 import { ViagemRespostaDto } from './dto/viagem-resposta.dto';
 import { FiltrosListarViagensDto } from './dto/filtros-listar-viagens.dto';
 import { GeocodingService, CoordenadasGeocode } from '../../common/geocoding/geocoding.service';
+import { DirectionsService } from '../../common/geocoding/directions.service';
 
 // Converte "HH:MM" para Date (data epoch, hora UTC)
 function horaParaDate(hora: string): Date {
@@ -38,6 +39,9 @@ type ViagemComRelacoes = {
   origemLongitude: Prisma.Decimal | null;
   destinoLatitude: Prisma.Decimal | null;
   destinoLongitude: Prisma.Decimal | null;
+  rotaGeometria: Prisma.JsonValue | null;
+  rotaDistanciaKm: Prisma.Decimal | null;
+  rotaDuracaoMin: number | null;
   dataViagem: Date;
   horaInicioPrevista: Date;
   horaFimPrevista: Date;
@@ -54,6 +58,8 @@ type ViagemComRelacoes = {
   observacoes: string | null;
   status: string;
   dataCriacao: Date;
+  dataAtualizacao: Date;
+  dataExclusao: Date | null;
   motorista: { id: string; nome: string; matricula: string };
   veiculo: { id: string; placa: string; marca: string; modelo: string; odometroAtual: number };
 };
@@ -71,6 +77,7 @@ export class ViagensService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly geocoding: GeocodingService,
+    private readonly directions: DirectionsService,
   ) {}
 
   /**
@@ -197,12 +204,46 @@ export class ViagensService {
     // Geocoda na primeira leitura e persiste. Best-effort: se falhar, segue.
     const precisaOrigem = viagem.origemLatitude == null || viagem.origemLongitude == null;
     const precisaDestino = viagem.destinoLatitude == null || viagem.destinoLongitude == null;
+    let viagemAtual = viagem;
     if (precisaOrigem || precisaDestino) {
-      const viagemComBackfill = await this.tentarBackfillCoordenadas(viagem, precisaOrigem, precisaDestino);
-      return this.mapearResposta(viagemComBackfill);
+      viagemAtual = await this.tentarBackfillCoordenadas(viagem, precisaOrigem, precisaDestino);
     }
 
-    return this.mapearResposta(viagem);
+    // Backfill da rota (Directions API) — só depois das coords existirem
+    if (
+      viagemAtual.rotaGeometria == null &&
+      viagemAtual.origemLatitude != null &&
+      viagemAtual.origemLongitude != null &&
+      viagemAtual.destinoLatitude != null &&
+      viagemAtual.destinoLongitude != null
+    ) {
+      viagemAtual = await this.tentarBackfillRota(viagemAtual);
+    }
+
+    return this.mapearResposta(viagemAtual);
+  }
+
+  /**
+   * Tenta resolver a rota via Mapbox Directions e persistir no banco.
+   * Best-effort: se falhar, devolve a viagem original sem rota.
+   */
+  private async tentarBackfillRota(viagem: ViagemComRelacoes): Promise<ViagemComRelacoes> {
+    const rota = await this.directions.rotear(
+      { latitude: Number(viagem.origemLatitude), longitude: Number(viagem.origemLongitude) },
+      { latitude: Number(viagem.destinoLatitude), longitude: Number(viagem.destinoLongitude) },
+    );
+    if (!rota) return viagem;
+
+    const atualizada = await this.prisma.viagem.update({
+      where: { id: viagem.id },
+      data: {
+        rotaGeometria: rota.geometria as Prisma.InputJsonValue,
+        rotaDistanciaKm: rota.distanciaKm,
+        rotaDuracaoMin: Math.round(rota.duracaoMin),
+      },
+      include: INCLUDE_RELACOES,
+    });
+    return atualizada;
   }
 
   /**
@@ -315,6 +356,12 @@ export class ViagensService {
       this.geocoding.geocodificar(dto.destino),
     ]);
 
+    // 9. Routing (best-effort) — só se os dois pontos foram geocodados
+    const rota =
+      coordsOrigem && coordsDestino
+        ? await this.directions.rotear(coordsOrigem, coordsDestino)
+        : null;
+
     const viagem = await this.prisma.viagem.create({
       data: {
         origem: enderecoSede,
@@ -323,6 +370,9 @@ export class ViagensService {
         origemLongitude: coordsOrigem?.longitude ?? null,
         destinoLatitude: coordsDestino?.latitude ?? null,
         destinoLongitude: coordsDestino?.longitude ?? null,
+        rotaGeometria: (rota?.geometria as Prisma.InputJsonValue) ?? Prisma.JsonNull,
+        rotaDistanciaKm: rota?.distanciaKm ?? null,
+        rotaDuracaoMin: rota ? Math.round(rota.duracaoMin) : null,
         dataViagem,
         horaInicioPrevista: horaParaDate(dto.horaInicioPrevista),
         horaFimPrevista: horaParaDate(dto.horaFimPrevista),
@@ -427,7 +477,8 @@ export class ViagensService {
       );
     }
 
-    // Se o destino mudou, re-geocoda (best-effort).
+    // Se o destino mudou, re-geocoda (best-effort) e invalida o cache da rota.
+    // O backfill de rota em buscarPorId vai recalcular na próxima leitura.
     const destinoMudou = dto.destino !== undefined && dto.destino !== viagem.destino;
     const coordsDestinoNovas = destinoMudou
       ? await this.geocoding.geocodificar(dto.destino as string)
@@ -448,6 +499,10 @@ export class ViagensService {
         ...(destinoMudou && {
           destinoLatitude: coordsDestinoNovas?.latitude ?? null,
           destinoLongitude: coordsDestinoNovas?.longitude ?? null,
+          // Invalida a rota cacheada — buscarPorId vai recalcular no próximo GET.
+          rotaGeometria: Prisma.JsonNull,
+          rotaDistanciaKm: null,
+          rotaDuracaoMin: null,
         }),
       },
       include: INCLUDE_RELACOES,
@@ -557,6 +612,9 @@ export class ViagensService {
       origemLongitude: viagem.origemLongitude != null ? Number(viagem.origemLongitude) : null,
       destinoLatitude: viagem.destinoLatitude != null ? Number(viagem.destinoLatitude) : null,
       destinoLongitude: viagem.destinoLongitude != null ? Number(viagem.destinoLongitude) : null,
+      rotaGeometria: viagem.rotaGeometria,
+      rotaDistanciaKm: viagem.rotaDistanciaKm != null ? Number(viagem.rotaDistanciaKm) : null,
+      rotaDuracaoMin: viagem.rotaDuracaoMin,
       dataViagem: viagem.dataViagem.toISOString().split('T')[0] ?? '',
       horaInicioPrevista: dateParaHora(viagem.horaInicioPrevista),
       horaFimPrevista: dateParaHora(viagem.horaFimPrevista),
