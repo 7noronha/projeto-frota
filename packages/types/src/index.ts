@@ -91,6 +91,9 @@ export interface ViagemResposta {
   rotaGeometria: unknown | null;
   rotaDistanciaKm: number | null;
   rotaDuracaoMin: number | null;
+  /** Velocidade média histórica do motorista desta viagem (km/h).
+   * Calibrada a partir de viagens FINALIZADAS dele. 40 km/h se sem amostras. */
+  velocidadeMediaKmH: number | null;
   dataViagem: string;
   horaInicioPrevista: string;
   horaFimPrevista: string;

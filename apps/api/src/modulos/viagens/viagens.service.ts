@@ -17,6 +17,7 @@ import { ViagemRespostaDto } from './dto/viagem-resposta.dto';
 import { FiltrosListarViagensDto } from './dto/filtros-listar-viagens.dto';
 import { GeocodingService, CoordenadasGeocode } from '../../common/geocoding/geocoding.service';
 import { DirectionsService } from '../../common/geocoding/directions.service';
+import { VelocidadeService } from '../relatorios/velocidade.service';
 
 // Converte "HH:MM" para Date (data epoch, hora UTC)
 function horaParaDate(hora: string): Date {
@@ -78,6 +79,7 @@ export class ViagensService {
     private readonly prisma: PrismaService,
     private readonly geocoding: GeocodingService,
     private readonly directions: DirectionsService,
+    private readonly velocidade: VelocidadeService,
   ) {}
 
   /**
@@ -220,7 +222,9 @@ export class ViagensService {
       viagemAtual = await this.tentarBackfillRota(viagemAtual);
     }
 
-    return this.mapearResposta(viagemAtual);
+    // Velocidade média calibrada pelo histórico do motorista
+    const vel = await this.velocidade.porMotorista(viagemAtual.motoristaId);
+    return this.mapearResposta(viagemAtual, vel.velocidadeMediaKmH);
   }
 
   /**
@@ -600,10 +604,17 @@ export class ViagensService {
       }),
     ]);
 
+    // Esta viagem agora entra no cálculo de velocidade média — invalida o
+    // cache do motorista pra recálculo na próxima leitura
+    this.velocidade.invalidar(viagem.motoristaId);
+
     return this.mapearResposta(atualizada);
   }
 
-  private mapearResposta(viagem: ViagemComRelacoes): ViagemRespostaDto {
+  private mapearResposta(
+    viagem: ViagemComRelacoes,
+    velocidadeMediaKmH: number | null = null,
+  ): ViagemRespostaDto {
     return {
       id: viagem.id,
       origem: viagem.origem,
@@ -615,6 +626,7 @@ export class ViagensService {
       rotaGeometria: viagem.rotaGeometria,
       rotaDistanciaKm: viagem.rotaDistanciaKm != null ? Number(viagem.rotaDistanciaKm) : null,
       rotaDuracaoMin: viagem.rotaDuracaoMin,
+      velocidadeMediaKmH,
       dataViagem: viagem.dataViagem.toISOString().split('T')[0] ?? '',
       horaInicioPrevista: dateParaHora(viagem.horaInicioPrevista),
       horaFimPrevista: dateParaHora(viagem.horaFimPrevista),

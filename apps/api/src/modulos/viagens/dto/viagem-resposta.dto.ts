@@ -29,6 +29,8 @@ export class ViagemRespostaDto {
   rotaDistanciaKm: number | null;
   @ApiPropertyOptional({ example: 720, description: 'Duração estimada da rota (minutos)' })
   rotaDuracaoMin: number | null;
+  @ApiPropertyOptional({ example: 65.5, description: 'Velocidade média histórica do motorista (km/h)' })
+  velocidadeMediaKmH: number | null;
   @ApiProperty() dataViagem: string;
   @ApiProperty() horaInicioPrevista: string;
   @ApiProperty() horaFimPrevista: string;

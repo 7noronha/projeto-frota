@@ -4,6 +4,7 @@ import { ViagensService } from './viagens.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { GeocodingService } from '../../common/geocoding/geocoding.service';
 import { DirectionsService } from '../../common/geocoding/directions.service';
+import { VelocidadeService } from '../relatorios/velocidade.service';
 import { CriarViagemDto } from './dto/criar-viagem.dto';
 import { UsuarioJwt } from '@fleetops/types';
 
@@ -121,12 +122,29 @@ describe('ViagensService', () => {
       rotear: jest.fn().mockResolvedValue(null),
     } as unknown as DirectionsService;
 
+    const velocidadeMock: VelocidadeService = {
+      porMotorista: jest.fn().mockResolvedValue({
+        motoristaId: null,
+        veiculoId: null,
+        velocidadeMediaKmH: 40,
+        amostras: 0,
+      }),
+      global: jest.fn().mockResolvedValue({
+        motoristaId: null,
+        veiculoId: null,
+        velocidadeMediaKmH: 40,
+        amostras: 0,
+      }),
+      invalidar: jest.fn(),
+    } as unknown as VelocidadeService;
+
     const modulo: TestingModule = await Test.createTestingModule({
       providers: [
         ViagensService,
         { provide: PrismaService, useValue: prisma },
         { provide: GeocodingService, useValue: geocodingMock },
         { provide: DirectionsService, useValue: directionsMock },
+        { provide: VelocidadeService, useValue: velocidadeMock },
       ],
     }).compile();
 
