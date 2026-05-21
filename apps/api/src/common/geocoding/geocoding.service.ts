@@ -36,6 +36,47 @@ export class GeocodingService {
       return null;
     }
 
+    // Mapbox limita queries a 20 tokens (palavras). Se o endereço passar
+    // disso, tenta primeiro com a versão completa e, se receber 422, cai
+    // pra uma versão limpa (remove parênteses, S/Nº, expressões longas).
+    const candidatos = [endereco, ...this.gerarCandidatosSimplificados(endereco)];
+
+    for (const candidato of candidatos) {
+      const coords = await this.tentar(candidato);
+      if (coords) {
+        this.cache.set(chave, coords);
+        return coords;
+      }
+    }
+
+    this.cache.set(chave, null);
+    return null;
+  }
+
+  /**
+   * Gera versões progressivamente mais limpas do endereço para tentar
+   * quando o Mapbox recusa por "Query too long" (422) ou sem resultados.
+   *
+   * Remove ruído típico de endereços brasileiros descritivos:
+   *  - parênteses e seu conteúdo
+   *  - "S/Nº", "S/N", "SN"
+   *  - "na região do/da", "em" antes de cidade
+   *  - vírgulas duplicadas
+   */
+  private gerarCandidatosSimplificados(endereco: string): string[] {
+    const limpo = endereco
+      .replace(/\([^)]*\)/g, '')
+      .replace(/\bs\/n[º°o]?\b/gi, '')
+      .replace(/\bna regi[aã]o (do|da)\b/gi, '')
+      .replace(/,\s*,/g, ',')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/\s+,/g, ',')
+      .trim();
+    if (limpo && limpo !== endereco) return [limpo];
+    return [];
+  }
+
+  private async tentar(endereco: string): Promise<CoordenadasGeocode | null> {
     const url =
       `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(endereco)}.json` +
       `?access_token=${this.token}&country=BR&limit=1&language=pt`;
@@ -44,26 +85,19 @@ export class GeocodingService {
       const resposta = await fetch(url);
       if (!resposta.ok) {
         this.logger.warn(`Mapbox respondeu ${resposta.status} para "${endereco}"`);
-        this.cache.set(chave, null);
         return null;
       }
       const dados = (await resposta.json()) as {
         features?: Array<{ center?: [number, number] }>;
       };
       const center = dados.features?.[0]?.center;
-      if (!center || center.length < 2) {
-        this.cache.set(chave, null);
-        return null;
-      }
+      if (!center || center.length < 2) return null;
       const [longitude, latitude] = center;
-      const coords: CoordenadasGeocode = { latitude, longitude };
-      this.cache.set(chave, coords);
-      return coords;
+      return { latitude, longitude };
     } catch (erro) {
       this.logger.error(
         `Falha ao geocodar "${endereco}": ${erro instanceof Error ? erro.message : 'erro desconhecido'}`,
       );
-      this.cache.set(chave, null);
       return null;
     }
   }
