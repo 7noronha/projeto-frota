@@ -20,10 +20,8 @@ export function IlustracaoAuth() {
     <div
       style={{
         width: '100%',
-        // Proporção ajustada pra casar com a altura do card de login
-        // (cabeçalho + 2 inputs + botão + divisor + info box ≈ 500px).
-        // A foto original é 1:1, então recebe leve crop top/bottom via cover.
-        aspectRatio: '21 / 25',
+        // Quadrado 1:1 — a foto original é quadrada, exibe sem crop.
+        aspectRatio: '1 / 1',
         borderRadius: 20,
         overflow: 'hidden',
         boxShadow: '0 12px 48px rgba(0, 50, 120, 0.18)',
@@ -36,7 +34,7 @@ export function IlustracaoAuth() {
         src="/images/login.webp"
         alt=""
         fill
-        sizes="(min-width: 1024px) 420px, 0px"
+        sizes="(min-width: 1024px) 500px, 0px"
         priority
         style={{ objectFit: 'cover' }}
       />

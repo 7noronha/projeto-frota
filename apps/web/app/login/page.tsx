@@ -41,11 +41,11 @@ export default function PaginaLogin() {
         style={{ minHeight: 0 }}
       >
 
-        {/* Ilustração — mesma largura e altura aproximada do card de login,
-            formando par visual equilibrado lado a lado. */}
+        {/* Ilustração — quadrado 500×500 (altura casa com o card; largura
+            maior pra foto caber sem crop). */}
         <div
           className="hidden lg:flex flex-col items-center gap-4"
-          style={{ flex: '0 0 auto', width: 420 }}
+          style={{ flex: '0 0 auto', width: 500 }}
         >
           <IlustracaoAuth />
 
