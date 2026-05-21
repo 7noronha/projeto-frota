@@ -33,7 +33,7 @@ export function IlustracaoAuth() {
         src="/images/login.webp"
         alt=""
         fill
-        sizes="(min-width: 1536px) 640px, (min-width: 1280px) 560px, (min-width: 1024px) 460px, 0px"
+        sizes="(min-width: 1024px) 420px, 0px"
         priority
         style={{ objectFit: 'cover' }}
       />
