@@ -6,85 +6,64 @@ export interface CoordenadasGeocode {
 }
 
 /**
- * Serviço de geocoding (texto → coordenadas) usando a API pública do
- * Nominatim/OpenStreetMap.
+ * Serviço de geocoding (texto → coordenadas) usando a Mapbox Geocoding API.
  *
- * Sem token. A política do Nominatim exige User-Agent identificável e
- * limite de 1 req/seg — o limite é respeitado por uma fila interna que
- * serializa requisições. Para volumes maiores que o MVP, considerar
- * provider pago (LocationIQ, OpenCage, Mapbox) ou hospedar Nominatim.
+ * Resolve endereços para lat/lng no servidor, no momento de criar/atualizar
+ * a viagem. As coordenadas persistidas viram cache: o detalhe da viagem e
+ * o app mobile leem direto do banco, sem geocodar novamente.
  *
- * Tolerante a falha: se a API recusar ou estiver fora, retorna null —
- * a viagem é criada sem coordenadas e o mapa simplesmente não é exibido.
- * Não bloqueia o fluxo principal.
+ * Tolerante a falha: se o token não estiver configurado ou a API recusar,
+ * retorna `null` — a viagem é criada sem coordenadas e o mapa simplesmente
+ * não é exibido. Não bloqueia o fluxo principal de criação.
+ *
+ * Limite gratuito: 100.000 buscas/mês (free tier do Mapbox). Mais que
+ * suficiente para o MVP.
  */
 @Injectable()
 export class GeocodingService {
   private readonly logger = new Logger(GeocodingService.name);
+  private readonly token = process.env.MAPBOX_TOKEN ?? '';
   private readonly cache = new Map<string, CoordenadasGeocode | null>();
-
-  /**
-   * Serializa requisições em fila — Nominatim exige ≤ 1 req/segundo.
-   * Promise encadeada com setTimeout entre cada chamada.
-   */
-  private filaPromise: Promise<void> = Promise.resolve();
-  private readonly intervaloMinMs = 1100;
-
-  private readonly endpoint = 'https://nominatim.openstreetmap.org/search';
-  // Identifica a aplicação conforme exigido pela política de uso do Nominatim.
-  // Em produção real, substituir o e-mail pelo do operador da instância.
-  private readonly userAgent = 'FleetOps/1.0 (https://github.com/7noronha/projeto-frota)';
 
   async geocodificar(endereco: string): Promise<CoordenadasGeocode | null> {
     const chave = endereco.trim().toLowerCase();
     if (!chave) return null;
     if (this.cache.has(chave)) return this.cache.get(chave) ?? null;
 
-    // Aguarda a vez na fila (rate limit do Nominatim)
-    const minhaVez = this.filaPromise.then(() => this.requisitar(endereco));
-    this.filaPromise = minhaVez.then(
-      () => new Promise((resolve) => setTimeout(resolve, this.intervaloMinMs)),
-    );
+    if (!this.token) {
+      this.logger.warn('MAPBOX_TOKEN não configurada — geocoding desabilitado.');
+      // Não cacheia: se o token aparecer depois, tentamos de novo
+      return null;
+    }
 
-    const resultado = await minhaVez;
-    this.cache.set(chave, resultado);
-    return resultado;
-  }
-
-  private async requisitar(endereco: string): Promise<CoordenadasGeocode | null> {
-    const url = new URL(this.endpoint);
-    url.searchParams.set('q', endereco);
-    url.searchParams.set('format', 'json');
-    url.searchParams.set('limit', '1');
-    url.searchParams.set('countrycodes', 'br');
-    url.searchParams.set('addressdetails', '0');
-    url.searchParams.set('accept-language', 'pt-BR');
+    const url =
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(endereco)}.json` +
+      `?access_token=${this.token}&country=BR&limit=1&language=pt`;
 
     try {
-      const resposta = await fetch(url.toString(), {
-        headers: {
-          'User-Agent': this.userAgent,
-          'Accept-Language': 'pt-BR',
-        },
-      });
+      const resposta = await fetch(url);
       if (!resposta.ok) {
-        this.logger.warn(`Nominatim respondeu ${resposta.status} para "${endereco}"`);
+        this.logger.warn(`Mapbox respondeu ${resposta.status} para "${endereco}"`);
+        this.cache.set(chave, null);
         return null;
       }
-      const dados = (await resposta.json()) as Array<{ lat?: string; lon?: string }>;
-      const primeiro = dados[0];
-      if (!primeiro?.lat || !primeiro?.lon) return null;
-
-      const latitude = Number(primeiro.lat);
-      const longitude = Number(primeiro.lon);
-      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
-      return { latitude, longitude };
+      const dados = (await resposta.json()) as {
+        features?: Array<{ center?: [number, number] }>;
+      };
+      const center = dados.features?.[0]?.center;
+      if (!center || center.length < 2) {
+        this.cache.set(chave, null);
+        return null;
+      }
+      const [longitude, latitude] = center;
+      const coords: CoordenadasGeocode = { latitude, longitude };
+      this.cache.set(chave, coords);
+      return coords;
     } catch (erro) {
       this.logger.error(
-        `Falha ao geocodar "${endereco}" via Nominatim: ${
-          erro instanceof Error ? erro.message : 'erro desconhecido'
-        }`,
+        `Falha ao geocodar "${endereco}": ${erro instanceof Error ? erro.message : 'erro desconhecido'}`,
       );
+      this.cache.set(chave, null);
       return null;
     }
   }
