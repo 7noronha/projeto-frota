@@ -7,6 +7,7 @@ import { FormFinalizarViagem } from '@/components/viagens/FormFinalizarViagem';
 import type { ViagemDetalhada } from '@fleetops/types';
 import { formatarDataIso, formatarDataHoraIso } from '@fleetops/utils';
 import { MapaViagem } from '@/components/mapas/MapaViagem';
+import { InfoDistanciaViagem } from '@/components/viagens/InfoDistanciaViagem';
 
 type BadgeColor = 'info' | 'warning' | 'success' | 'default';
 
@@ -94,6 +95,15 @@ export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheVia
           </dl>
         </Card.Content>
       </Card>
+
+      {/* Distância em linha reta (sempre que houver coords) */}
+      <InfoDistanciaViagem
+        origemLatitude={viagem.origemLatitude}
+        origemLongitude={viagem.origemLongitude}
+        destinoLatitude={viagem.destinoLatitude}
+        destinoLongitude={viagem.destinoLongitude}
+        distanciaPercorrida={viagem.distanciaPercorrida}
+      />
 
       {/* Mapa — origem e destino (Fase 1 do GPS) */}
       {(viagem.origemLatitude != null || viagem.destinoLatitude != null) && (

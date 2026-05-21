@@ -7,3 +7,9 @@ export {
   formatarDataIso,
   formatarDataHoraIso,
 } from './datetime';
+export {
+  distanciaKm,
+  formatarDistancia,
+  formatarTempo,
+  type PontoGeo,
+} from './distancia';
