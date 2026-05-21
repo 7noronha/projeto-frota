@@ -22,5 +22,11 @@ export function middleware(request: NextRequest): NextResponse {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$).*)'],
+  // Exclui da auth: rotas internas do Next, favicon e arquivos estáticos
+  // comuns servidos a partir de /public (imagens, SVGs, fontes). Sem essa
+  // exclusão, o middleware redireciona até o asset da tela de login pra
+  // /login, criando um loop e a imagem nunca carrega.
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:png|jpe?g|webp|avif|gif|svg|ico|woff2?|ttf|otf|map)$).*)',
+  ],
 };
