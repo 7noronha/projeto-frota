@@ -192,7 +192,53 @@ export class ViagensService {
       throw new ForbiddenException('Acesso negado a esta viagem');
     }
 
+    // Backfill preguiçoso de coordenadas — viagens criadas antes do GPS ou
+    // quando o MAPBOX_TOKEN ainda não estava setado entram aqui sem lat/lng.
+    // Geocoda na primeira leitura e persiste. Best-effort: se falhar, segue.
+    const precisaOrigem = viagem.origemLatitude == null || viagem.origemLongitude == null;
+    const precisaDestino = viagem.destinoLatitude == null || viagem.destinoLongitude == null;
+    if (precisaOrigem || precisaDestino) {
+      const viagemComBackfill = await this.tentarBackfillCoordenadas(viagem, precisaOrigem, precisaDestino);
+      return this.mapearResposta(viagemComBackfill);
+    }
+
     return this.mapearResposta(viagem);
+  }
+
+  /**
+   * Tenta resolver coords faltantes via Mapbox e persistir. Retorna a
+   * viagem (atualizada se o geocoding funcionou, ou a original).
+   */
+  private async tentarBackfillCoordenadas(
+    viagem: ViagemComRelacoes,
+    precisaOrigem: boolean,
+    precisaDestino: boolean,
+  ): Promise<ViagemComRelacoes> {
+    const [coordsOrigem, coordsDestino] = await Promise.all([
+      precisaOrigem ? this.geocoding.geocodificar(viagem.origem) : Promise.resolve(null),
+      precisaDestino ? this.geocoding.geocodificar(viagem.destino) : Promise.resolve(null),
+    ]);
+
+    if (!coordsOrigem && !coordsDestino) {
+      return viagem;
+    }
+
+    const atualizada = await this.prisma.viagem.update({
+      where: { id: viagem.id },
+      data: {
+        ...(coordsOrigem && {
+          origemLatitude: coordsOrigem.latitude,
+          origemLongitude: coordsOrigem.longitude,
+        }),
+        ...(coordsDestino && {
+          destinoLatitude: coordsDestino.latitude,
+          destinoLongitude: coordsDestino.longitude,
+        }),
+      },
+      include: INCLUDE_RELACOES,
+    });
+
+    return atualizada;
   }
 
   async criar(dto: CriarViagemDto, operadorId: string): Promise<ViagemRespostaDto> {

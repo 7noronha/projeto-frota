@@ -301,6 +301,61 @@ describe('ViagensService', () => {
         ForbiddenException,
       );
     });
+
+    it('deve fazer backfill de coordenadas quando viagem nao tem lat/lng e geocoding funciona', async () => {
+      // Arrange — viagem antiga sem coordenadas (cenário real: criada antes do GPS)
+      const viagemSemCoords = {
+        ...mockViagem,
+        origemLatitude: null,
+        origemLongitude: null,
+        destinoLatitude: null,
+        destinoLongitude: null,
+      };
+      prisma.viagem.findFirst.mockResolvedValue(viagemSemCoords);
+
+      // Geocoding agora retorna coords para ambos os endereços
+      const geocodingService = (service as unknown as { geocoding: GeocodingService }).geocoding;
+      (geocodingService.geocodificar as jest.Mock)
+        .mockResolvedValueOnce({ latitude: -15.7942, longitude: -47.8822 })
+        .mockResolvedValueOnce({ latitude: -23.5505, longitude: -46.6333 });
+
+      prisma.viagem.update.mockResolvedValue({
+        ...viagemSemCoords,
+        origemLatitude: -15.7942,
+        origemLongitude: -47.8822,
+        destinoLatitude: -23.5505,
+        destinoLongitude: -46.6333,
+      });
+
+      // Act
+      const resp = await service.buscarPorId('uuid-viagem', mockUsuarioOperador);
+
+      // Assert
+      expect(geocodingService.geocodificar).toHaveBeenCalledWith(viagemSemCoords.origem);
+      expect(geocodingService.geocodificar).toHaveBeenCalledWith(viagemSemCoords.destino);
+      expect(prisma.viagem.update).toHaveBeenCalled();
+      expect(resp.origemLatitude).toBe(-15.7942);
+      expect(resp.destinoLatitude).toBe(-23.5505);
+    });
+
+    it('nao deve persistir nada se backfill nao resolver nenhuma coordenada', async () => {
+      // Arrange — viagem sem coords + token Mapbox ausente (geocoding retorna null)
+      prisma.viagem.findFirst.mockResolvedValue({
+        ...mockViagem,
+        origemLatitude: null,
+        origemLongitude: null,
+        destinoLatitude: null,
+        destinoLongitude: null,
+      });
+
+      // Act
+      const resp = await service.buscarPorId('uuid-viagem', mockUsuarioOperador);
+
+      // Assert
+      expect(prisma.viagem.update).not.toHaveBeenCalled();
+      expect(resp.origemLatitude).toBeNull();
+      expect(resp.destinoLatitude).toBeNull();
+    });
   });
 
   describe('iniciar', () => {

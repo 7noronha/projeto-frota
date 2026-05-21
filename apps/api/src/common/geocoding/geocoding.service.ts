@@ -29,7 +29,7 @@ export class GeocodingService {
 
     if (!this.token) {
       this.logger.warn('MAPBOX_TOKEN não configurada — geocoding desabilitado.');
-      this.cache.set(chave, null);
+      // Não cacheia: se o token aparecer depois, tentamos de novo
       return null;
     }
 
