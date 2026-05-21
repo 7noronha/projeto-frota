@@ -27,10 +27,12 @@ import { CriarUsuarioDto } from './dto/criar-usuario.dto';
 import { AtualizarUsuarioDto } from './dto/atualizar-usuario.dto';
 import { UsuarioRespostaDto } from './dto/usuario-resposta.dto';
 import { FiltrosListarUsuariosDto } from './dto/filtros-listar-usuarios.dto';
+import { RegistrarPushTokenDto } from './dto/push-token.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
-import type { RespostaPaginada } from '@fleetops/types';
+import { UsuarioAutenticado } from '../../common/decorators/usuario-autenticado.decorator';
+import type { RespostaPaginada, UsuarioJwt } from '@fleetops/types';
 
 @ApiTags('Usuários')
 @ApiBearerAuth('JWT')
@@ -105,5 +107,19 @@ export class UsuariosController {
   @ApiNotFoundResponse({ description: 'Usuário não encontrado' })
   async excluir(@Param('id') id: string): Promise<void> {
     return this.usuariosService.excluir(id);
+  }
+
+  @Patch('me/push-token')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Registra/atualiza o token Expo Push do usuário logado',
+    description:
+      'Chamado pelo app mobile após login. Aceita null/string vazia para desregistrar (logout/permissão revogada).',
+  })
+  async registrarPushToken(
+    @Body() dto: RegistrarPushTokenDto,
+    @UsuarioAutenticado() usuario: UsuarioJwt,
+  ): Promise<void> {
+    await this.usuariosService.registrarPushToken(usuario.sub, dto.token);
   }
 }

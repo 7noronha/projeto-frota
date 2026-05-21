@@ -18,6 +18,7 @@ import { FiltrosListarViagensDto } from './dto/filtros-listar-viagens.dto';
 import { GeocodingService, CoordenadasGeocode } from '../../common/geocoding/geocoding.service';
 import { DirectionsService } from '../../common/geocoding/directions.service';
 import { VelocidadeService } from '../relatorios/velocidade.service';
+import { PushNotificationService } from '../../common/notificacoes/push-notification.service';
 
 // Converte "HH:MM" para Date (data epoch, hora UTC)
 function horaParaDate(hora: string): Date {
@@ -80,6 +81,7 @@ export class ViagensService {
     private readonly geocoding: GeocodingService,
     private readonly directions: DirectionsService,
     private readonly velocidade: VelocidadeService,
+    private readonly push: PushNotificationService,
   ) {}
 
   /**
@@ -390,6 +392,23 @@ export class ViagensService {
       },
       include: INCLUDE_RELACOES,
     });
+
+    // Notifica o motorista — fire-and-forget pra não bloquear a resposta.
+    // O dataViagem vem em UTC, formatamos pra dd/MM em Brasília.
+    const dataFmt = dataViagem.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      timeZone: 'America/Sao_Paulo',
+    });
+    this.push
+      .enviarParaUsuario(dto.motoristaId, {
+        titulo: 'Nova viagem atribuída',
+        corpo: `${dto.destino} · ${dataFmt} às ${dto.horaInicioPrevista}`,
+        dados: { tela: 'viagem', viagemId: viagem.id },
+      })
+      .catch(() => {
+        /* já loga internamente; ignora pra não derrubar a request */
+      });
 
     return this.mapearResposta(viagem);
   }

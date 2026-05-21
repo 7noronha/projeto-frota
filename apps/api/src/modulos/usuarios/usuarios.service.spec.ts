@@ -164,4 +164,30 @@ describe('UsuariosService', () => {
       await expect(service.inativar('uuid-inexistente')).rejects.toThrow(NotFoundException);
     });
   });
+
+  describe('registrarPushToken', () => {
+    it('deve persistir o token quando informado', async () => {
+      await service.registrarPushToken('uuid-user', 'ExponentPushToken[abc]');
+      expect(prisma.usuario.update).toHaveBeenCalledWith({
+        where: { id: 'uuid-user' },
+        data: { expoPushToken: 'ExponentPushToken[abc]' },
+      });
+    });
+
+    it('deve gravar null quando token vier vazio (desregistro)', async () => {
+      await service.registrarPushToken('uuid-user', '');
+      expect(prisma.usuario.update).toHaveBeenCalledWith({
+        where: { id: 'uuid-user' },
+        data: { expoPushToken: null },
+      });
+    });
+
+    it('deve gravar null quando token vier null', async () => {
+      await service.registrarPushToken('uuid-user', null);
+      expect(prisma.usuario.update).toHaveBeenCalledWith({
+        where: { id: 'uuid-user' },
+        data: { expoPushToken: null },
+      });
+    });
+  });
 });

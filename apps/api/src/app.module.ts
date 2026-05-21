@@ -10,6 +10,7 @@ import { ConfiguracoesModule } from './modulos/configuracoes/configuracoes.modul
 import { RelatoriosModule } from './modulos/relatorios/relatorios.module';
 import { AlertasModule } from './modulos/alertas/alertas.module';
 import { DespesasModule } from './modulos/despesas/despesas.module';
+import { NotificacoesModule } from './common/notificacoes/notificacoes.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { DespesasModule } from './modulos/despesas/despesas.module';
       },
     ]),
     PrismaModule,
+    NotificacoesModule,
     AuthModule,
     UsuariosModule,
     VeiculosModule,

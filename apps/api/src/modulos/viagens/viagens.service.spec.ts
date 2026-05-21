@@ -5,6 +5,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { GeocodingService } from '../../common/geocoding/geocoding.service';
 import { DirectionsService } from '../../common/geocoding/directions.service';
 import { VelocidadeService } from '../relatorios/velocidade.service';
+import { PushNotificationService } from '../../common/notificacoes/push-notification.service';
 import { CriarViagemDto } from './dto/criar-viagem.dto';
 import { UsuarioJwt } from '@fleetops/types';
 
@@ -138,6 +139,11 @@ describe('ViagensService', () => {
       invalidar: jest.fn(),
     } as unknown as VelocidadeService;
 
+    const pushMock: PushNotificationService = {
+      enviarParaUsuario: jest.fn().mockResolvedValue(false),
+      enviarParaUsuarios: jest.fn().mockResolvedValue(0),
+    } as unknown as PushNotificationService;
+
     const modulo: TestingModule = await Test.createTestingModule({
       providers: [
         ViagensService,
@@ -145,6 +151,7 @@ describe('ViagensService', () => {
         { provide: GeocodingService, useValue: geocodingMock },
         { provide: DirectionsService, useValue: directionsMock },
         { provide: VelocidadeService, useValue: velocidadeMock },
+        { provide: PushNotificationService, useValue: pushMock },
       ],
     }).compile();
 

@@ -22,6 +22,9 @@ model Usuario {
   cnh             String?   @db.VarChar(20)
   cnhValidade     DateTime? @map("cnh_validade") @db.Date
   ativo           Boolean   @default(true)
+  // Token Expo Push para notificações no app mobile (registrado no login).
+  // Null quando o usuário nunca abriu o app ou negou permissão.
+  expoPushToken   String?   @map("expo_push_token") @db.VarChar(200)
 
   dataCriacao     DateTime  @default(now()) @map("data_criacao") @db.Timestamp(6)
   dataAtualizacao DateTime  @updatedAt @map("data_atualizacao") @db.Timestamp(6)

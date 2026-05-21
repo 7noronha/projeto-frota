@@ -223,6 +223,18 @@ export class UsuariosService {
     });
   }
 
+  /**
+   * Registra ou desregistra o token Expo Push do usuário (chamado no
+   * login do app mobile). Null/string vazia desativa as notificações.
+   */
+  async registrarPushToken(usuarioId: string, token: string | null | undefined): Promise<void> {
+    const valorFinal = token && token.trim() !== '' ? token.trim() : null;
+    await this.prisma.usuario.update({
+      where: { id: usuarioId },
+      data: { expoPushToken: valorFinal },
+    });
+  }
+
   private mapearResposta(usuario: UsuarioPrisma): UsuarioRespostaDto {
     return {
       id: usuario.id,
