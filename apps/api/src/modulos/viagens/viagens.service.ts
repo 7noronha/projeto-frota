@@ -15,6 +15,7 @@ import { IniciarViagemDto } from './dto/iniciar-viagem.dto';
 import { FinalizarViagemDto } from './dto/finalizar-viagem.dto';
 import { ViagemRespostaDto } from './dto/viagem-resposta.dto';
 import { FiltrosListarViagensDto } from './dto/filtros-listar-viagens.dto';
+import { CriarPosicaoDto, PosicaoRespostaDto } from './dto/criar-posicao.dto';
 import { GeocodingService, CoordenadasGeocode } from '../../common/geocoding/geocoding.service';
 import { DirectionsService } from '../../common/geocoding/directions.service';
 import { VelocidadeService } from '../relatorios/velocidade.service';
@@ -628,6 +629,94 @@ export class ViagensService {
     this.velocidade.invalidar(viagem.motoristaId);
 
     return this.mapearResposta(atualizada);
+  }
+
+  /**
+   * Registra uma posição GPS na viagem. Só o motorista atribuído pode
+   * registrar, e só enquanto a viagem está EM_ANDAMENTO.
+   */
+  async registrarPosicao(
+    viagemId: string,
+    usuario: UsuarioJwt,
+    dto: CriarPosicaoDto,
+  ): Promise<PosicaoRespostaDto> {
+    const viagem = await this.prisma.viagem.findFirst({
+      where: { id: viagemId, dataExclusao: null },
+      select: { id: true, motoristaId: true, status: true },
+    });
+    if (!viagem) throw new NotFoundException('Viagem não encontrada');
+
+    // Só o motorista da viagem pode reportar posição
+    if (usuario.perfil === 'motorista' && viagem.motoristaId !== usuario.sub) {
+      throw new ForbiddenException('Motorista só pode reportar posição em suas próprias viagens');
+    }
+    // Operador/admin não tem por que enviar — bloqueia
+    if (usuario.perfil !== 'motorista') {
+      throw new ForbiddenException('Apenas motoristas podem reportar posição');
+    }
+
+    if (viagem.status !== 'EM_ANDAMENTO') {
+      throw new BadRequestException(
+        `Posição só pode ser registrada em viagens EM_ANDAMENTO (status atual: ${viagem.status})`,
+      );
+    }
+
+    const capturadoEm = dto.capturadoEm ? new Date(dto.capturadoEm) : agoraBrasilia();
+
+    const criada = await this.prisma.posicaoViagem.create({
+      data: {
+        viagemId,
+        latitude: dto.latitude,
+        longitude: dto.longitude,
+        precisaoM: dto.precisaoM ?? null,
+        capturadoEm,
+      },
+    });
+
+    return {
+      id: criada.id,
+      viagemId: criada.viagemId,
+      latitude: Number(criada.latitude),
+      longitude: Number(criada.longitude),
+      precisaoM: criada.precisaoM != null ? Number(criada.precisaoM) : null,
+      capturadoEm: formatarDataHoraBrasilia(criada.capturadoEm),
+    };
+  }
+
+  /**
+   * Últimas N posições de uma viagem (operador acompanhando + motorista
+   * conferindo). Ordenadas da mais recente pra mais antiga.
+   */
+  async listarPosicoes(
+    viagemId: string,
+    usuario: UsuarioJwt,
+    limite = 50,
+  ): Promise<PosicaoRespostaDto[]> {
+    const viagem = await this.prisma.viagem.findFirst({
+      where: { id: viagemId, dataExclusao: null },
+      select: { motoristaId: true },
+    });
+    if (!viagem) throw new NotFoundException('Viagem não encontrada');
+
+    // Motorista só vê posições das próprias viagens
+    if (usuario.perfil === 'motorista' && viagem.motoristaId !== usuario.sub) {
+      throw new ForbiddenException('Acesso negado a esta viagem');
+    }
+
+    const posicoes = await this.prisma.posicaoViagem.findMany({
+      where: { viagemId },
+      orderBy: { capturadoEm: 'desc' },
+      take: Math.min(Math.max(limite, 1), 500),
+    });
+
+    return posicoes.map((p) => ({
+      id: p.id,
+      viagemId: p.viagemId,
+      latitude: Number(p.latitude),
+      longitude: Number(p.longitude),
+      precisaoM: p.precisaoM != null ? Number(p.precisaoM) : null,
+      capturadoEm: formatarDataHoraBrasilia(p.capturadoEm),
+    }));
   }
 
   private mapearResposta(

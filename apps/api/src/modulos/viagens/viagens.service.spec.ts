@@ -94,6 +94,7 @@ describe('ViagensService', () => {
     usuario: { findFirst: jest.Mock };
     veiculo: { findFirst: jest.Mock; update: jest.Mock };
     viagem: { count: jest.Mock; findMany: jest.Mock; findFirst: jest.Mock; create: jest.Mock; update: jest.Mock };
+    posicaoViagem: { create: jest.Mock; findMany: jest.Mock };
     $transaction: jest.Mock;
   };
 
@@ -111,6 +112,10 @@ describe('ViagensService', () => {
         findFirst: jest.fn().mockResolvedValue(null),
         create: jest.fn().mockResolvedValue(mockViagem),
         update: jest.fn().mockResolvedValue(mockViagem),
+      },
+      posicaoViagem: {
+        create: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
       },
       $transaction: jest.fn(),
     };
@@ -480,6 +485,106 @@ describe('ViagensService', () => {
       await expect(
         service.finalizar('uuid-viagem', { odometroFinal: 15500 }, mockUsuarioOperador),
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('registrarPosicao', () => {
+    const dtoPosicao = { latitude: -23.5, longitude: -46.6 };
+
+    it('deve criar posicao quando motorista da viagem reporta em EM_ANDAMENTO', async () => {
+      prisma.viagem.findFirst.mockResolvedValue({
+        id: 'uuid-viagem',
+        motoristaId: 'uuid-motorista',
+        status: 'EM_ANDAMENTO',
+      });
+      prisma.posicaoViagem.create.mockResolvedValue({
+        id: 'uuid-pos',
+        viagemId: 'uuid-viagem',
+        latitude: -23.5,
+        longitude: -46.6,
+        precisaoM: null,
+        capturadoEm: new Date('2026-05-21T18:30:00'),
+      });
+
+      const r = await service.registrarPosicao('uuid-viagem', mockUsuarioMotorista, dtoPosicao);
+      expect(r.latitude).toBe(-23.5);
+      expect(prisma.posicaoViagem.create).toHaveBeenCalled();
+    });
+
+    it('deve lancar Forbidden se outro motorista tentar', async () => {
+      prisma.viagem.findFirst.mockResolvedValue({
+        id: 'uuid-viagem',
+        motoristaId: 'outro-motorista',
+        status: 'EM_ANDAMENTO',
+      });
+      await expect(
+        service.registrarPosicao('uuid-viagem', mockUsuarioMotorista, dtoPosicao),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('deve lancar Forbidden se operador/admin tentar (so motorista reporta)', async () => {
+      prisma.viagem.findFirst.mockResolvedValue({
+        id: 'uuid-viagem',
+        motoristaId: 'uuid-motorista',
+        status: 'EM_ANDAMENTO',
+      });
+      await expect(
+        service.registrarPosicao('uuid-viagem', mockUsuarioOperador, dtoPosicao),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('deve lancar BadRequest se viagem nao estiver EM_ANDAMENTO', async () => {
+      prisma.viagem.findFirst.mockResolvedValue({
+        id: 'uuid-viagem',
+        motoristaId: 'uuid-motorista',
+        status: 'CRIADA',
+      });
+      await expect(
+        service.registrarPosicao('uuid-viagem', mockUsuarioMotorista, dtoPosicao),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('deve lancar NotFound se viagem nao existir', async () => {
+      prisma.viagem.findFirst.mockResolvedValue(null);
+      await expect(
+        service.registrarPosicao('inexistente', mockUsuarioMotorista, dtoPosicao),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('listarPosicoes', () => {
+    it('deve listar posicoes mais recentes primeiro', async () => {
+      prisma.viagem.findFirst.mockResolvedValue({ motoristaId: 'uuid-motorista' });
+      prisma.posicaoViagem.findMany.mockResolvedValue([
+        {
+          id: 'p1',
+          viagemId: 'uuid-viagem',
+          latitude: -23.5,
+          longitude: -46.6,
+          precisaoM: 10,
+          capturadoEm: new Date('2026-05-21T18:30:00'),
+        },
+      ]);
+      const r = await service.listarPosicoes('uuid-viagem', mockUsuarioOperador);
+      expect(r).toHaveLength(1);
+      expect(prisma.posicaoViagem.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ orderBy: { capturadoEm: 'desc' }, take: 50 }),
+      );
+    });
+
+    it('deve travar limite entre 1 e 500', async () => {
+      prisma.viagem.findFirst.mockResolvedValue({ motoristaId: 'uuid-motorista' });
+      await service.listarPosicoes('uuid-viagem', mockUsuarioOperador, 10000);
+      expect(prisma.posicaoViagem.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 500 }),
+      );
+    });
+
+    it('motorista nao pode listar posicoes de viagem alheia', async () => {
+      prisma.viagem.findFirst.mockResolvedValue({ motoristaId: 'outro' });
+      await expect(
+        service.listarPosicoes('uuid-viagem', mockUsuarioMotorista),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 });

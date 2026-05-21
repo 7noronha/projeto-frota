@@ -27,6 +27,7 @@ import { IniciarViagemDto } from './dto/iniciar-viagem.dto';
 import { FinalizarViagemDto } from './dto/finalizar-viagem.dto';
 import { ViagemRespostaDto } from './dto/viagem-resposta.dto';
 import { FiltrosListarViagensDto } from './dto/filtros-listar-viagens.dto';
+import { CriarPosicaoDto, PosicaoRespostaDto } from './dto/criar-posicao.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -112,5 +113,33 @@ export class ViagensController {
     @UsuarioAutenticado() usuario: UsuarioJwt,
   ): Promise<ViagemRespostaDto> {
     return this.viagensService.finalizar(id, dto, usuario);
+  }
+
+  @Post(':id/posicoes')
+  @Roles('motorista')
+  @ApiOperation({
+    summary: 'Reporta posição GPS atual (apenas motorista, viagem EM_ANDAMENTO)',
+    description: 'O app mobile envia 1 ponto a cada 3 min durante a viagem.',
+  })
+  @ApiCreatedResponse({ type: PosicaoRespostaDto })
+  @ApiBadRequestResponse({ description: 'Viagem não está EM_ANDAMENTO' })
+  async registrarPosicao(
+    @Param('id') id: string,
+    @Body() dto: CriarPosicaoDto,
+    @UsuarioAutenticado() usuario: UsuarioJwt,
+  ): Promise<PosicaoRespostaDto> {
+    return this.viagensService.registrarPosicao(id, usuario, dto);
+  }
+
+  @Get(':id/posicoes')
+  @Roles('admin', 'operador', 'gerente', 'encarregado', 'motorista')
+  @ApiOperation({ summary: 'Últimas posições GPS registradas na viagem (desc)' })
+  @ApiOkResponse({ type: [PosicaoRespostaDto] })
+  async listarPosicoes(
+    @Param('id') id: string,
+    @UsuarioAutenticado() usuario: UsuarioJwt,
+    @Query('limite') limite?: string,
+  ): Promise<PosicaoRespostaDto[]> {
+    return this.viagensService.listarPosicoes(id, usuario, limite ? parseInt(limite, 10) : 50);
   }
 }

@@ -178,6 +178,7 @@ model Viagem {
   motorista       Usuario   @relation("MotoristaViagens", fields: [motoristaId], references: [id])
   operadorCriador Usuario   @relation("OperadorCriadorViagens", fields: [operadorCriadorId], references: [id])
   veiculo         Veiculo   @relation(fields: [veiculoId], references: [id])
+  posicoes        PosicaoViagem[]
 
   @@index([motoristaId, status], map: "idx_viagens_motorista_status")
   @@index([veiculoId, status], map: "idx_viagens_veiculo_status")
@@ -186,6 +187,28 @@ model Viagem {
   // sem necessariamente passar pelo motorista ou veículo — esse índice cobre.
   @@index([status, dataViagem], map: "idx_viagens_status_data")
   @@map("viagens")
+}
+
+// ─── Posições da viagem (rastreamento em tempo real) ──────────────────────────
+
+model PosicaoViagem {
+  id           String   @id @default(uuid())
+  viagemId     String   @map("viagem_id")
+  latitude     Decimal  @db.Decimal(10, 7)
+  longitude    Decimal  @db.Decimal(10, 7)
+  // Precisão do GPS reportada pelo dispositivo (metros). Quando ausente,
+  // o app não informou — nem todos os devices entregam isso.
+  precisaoM    Decimal? @map("precisao_m")  @db.Decimal(8, 2)
+  // Quando o GPS capturou a posição (timestamp do device). Pode estar
+  // levemente atrasado em relação a dataCriacao se a rede engasgar.
+  capturadoEm  DateTime @map("capturado_em") @db.Timestamp(6)
+  dataCriacao  DateTime @default(now()) @map("data_criacao") @db.Timestamp(6)
+
+  viagem       Viagem   @relation(fields: [viagemId], references: [id], onDelete: Cascade)
+
+  // Query mais frequente: "últimas posições de uma viagem" → ordenado desc
+  @@index([viagemId, capturadoEm(sort: Desc)], map: "idx_posicoes_viagem_tempo")
+  @@map("posicoes_viagem")
 }
 
 // ─── Configurações do Sistema ─────────────────────────────────────────────────
