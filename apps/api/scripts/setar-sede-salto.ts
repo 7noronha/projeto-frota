@@ -9,7 +9,8 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 const TOKEN = process.env.MAPBOX_TOKEN;
 const SEDE = 'Rodovia Engenheiro Ermenio de Oliveira Penteado, SP-75, Salto, SP';
-const DIST_KM = 15;
+const DIST_MIN_KM = 10;
+const DIST_MAX_KM = 15;
 const R = 6371;
 
 const rad = (g: number): number => (g * Math.PI) / 180;
@@ -93,13 +94,18 @@ async function main(): Promise<void> {
 
   for (let i = 0; i < viagens.length; i++) {
     const v = viagens[i];
+    // Distância determinística no range [10,15] baseada nos primeiros 4 bytes
+    // do UUID — reproduzível, mas variada entre viagens.
+    const seedNum = parseInt(v.id.replace(/-/g, '').slice(0, 8), 16);
+    const distKm =
+      DIST_MIN_KM + ((seedNum % 1000) / 1000) * (DIST_MAX_KM - DIST_MIN_KM);
     const brBase = BEARINGS[i % BEARINGS.length];
 
     let geo: Feature | null = null;
     let brFinal = brBase;
     for (let t = 0; t < 4 && !geo; t++) {
       const b = (brBase + t * 20) % 360;
-      const pt = pontoDistante(sedeLat, sedeLng, DIST_KM, b);
+      const pt = pontoDistante(sedeLat, sedeLng, distKm, b);
       geo = await reverse(pt.latitude, pt.longitude);
       if (geo) brFinal = b;
     }
@@ -123,7 +129,7 @@ async function main(): Promise<void> {
       },
     });
     console.log(
-      `  [${v.id.slice(0, 8)}] ${v.status.padEnd(13)} ${brFinal}° · ${geo.place_name.slice(0, 65)}`,
+      `  [${v.id.slice(0, 8)}] ${v.status.padEnd(13)} ${distKm.toFixed(1)}km @ ${brFinal}° · ${geo.place_name.slice(0, 60)}`,
     );
   }
 
