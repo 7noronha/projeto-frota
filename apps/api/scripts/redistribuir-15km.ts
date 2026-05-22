@@ -42,22 +42,31 @@ async function reverseGeocode(lat: number, lng: number): Promise<Feature | null>
   return j.features?.[0] ?? null;
 }
 
+async function geocodarTexto(endereco: string): Promise<Feature | null> {
+  const url =
+    `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(endereco)}.json` +
+    `?access_token=${TOKEN}&country=BR&limit=1&language=pt`;
+  const r = await fetch(url);
+  if (!r.ok) return null;
+  const j = (await r.json()) as { features?: Feature[] };
+  return j.features?.[0] ?? null;
+}
+
 async function main(): Promise<void> {
   if (!TOKEN) {
     console.error('MAPBOX_TOKEN não setada');
     process.exit(1);
   }
 
+  // Inclui TODAS as viagens (até FINALIZADAS) — dado de teste.
+  // Em produção real, manteria o filtro status: { in: ['CRIADA', 'EM_ANDAMENTO'] }.
+  // Geocoda origem sob demanda se faltar coords.
   const viagens = await prisma.viagem.findMany({
-    where: {
-      dataExclusao: null,
-      status: { in: ['CRIADA', 'EM_ANDAMENTO'] },
-      origemLatitude: { not: null },
-      origemLongitude: { not: null },
-    },
+    where: { dataExclusao: null },
     select: {
       id: true,
       status: true,
+      origem: true,
       origemLatitude: true,
       origemLongitude: true,
     },
@@ -71,8 +80,23 @@ async function main(): Promise<void> {
 
   for (let i = 0; i < viagens.length; i++) {
     const v = viagens[i];
-    const origemLat = Number(v.origemLatitude);
-    const origemLng = Number(v.origemLongitude);
+
+    // Geocoda origem se faltar coords (viagens antigas sem backfill)
+    let origemLat: number;
+    let origemLng: number;
+    if (v.origemLatitude == null || v.origemLongitude == null) {
+      const geoOrigem = await geocodarTexto(v.origem);
+      if (!geoOrigem) {
+        console.log(`  [${v.id.slice(0, 8)}] ${v.status} ✗ origem não geocodável`);
+        continue;
+      }
+      origemLng = geoOrigem.center[0];
+      origemLat = geoOrigem.center[1];
+    } else {
+      origemLat = Number(v.origemLatitude);
+      origemLng = Number(v.origemLongitude);
+    }
+
     const bearingBase = BEARINGS[i % BEARINGS.length];
 
     // Tenta o bearing principal e até 3 offsets de +20° caso a reverse
@@ -94,6 +118,9 @@ async function main(): Promise<void> {
     await prisma.viagem.update({
       where: { id: v.id },
       data: {
+        // Persiste origem geocodada (caso tenha sido feita nesta execução)
+        origemLatitude: origemLat,
+        origemLongitude: origemLng,
         destino: geo.place_name,
         destinoLatitude: geo.center[1],
         destinoLongitude: geo.center[0],
