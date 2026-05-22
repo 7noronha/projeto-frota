@@ -13,6 +13,10 @@ interface MapaViagemProps {
   /** Rota cacheada pelo servidor (Mapbox Directions). Quando presente,
    * o componente NÃO faz nova chamada — apenas renderiza. */
   rotaGeometria?: unknown | null;
+  /** Posição atual do motorista (vinda do polling de /viagens/:id/posicoes).
+   * Quando presente, renderiza um pin laranja com a posição. */
+  motoristaLatitude?: number | null;
+  motoristaLongitude?: number | null;
   altura?: number;
 }
 
@@ -41,6 +45,8 @@ export function MapaViagem({
   destinoLatitude,
   destinoLongitude,
   rotaGeometria,
+  motoristaLatitude,
+  motoristaLongitude,
   altura = 350,
 }: MapaViagemProps) {
   const mapRef = useRef<MapRef | null>(null);
@@ -59,6 +65,13 @@ export function MapaViagem({
         ? { latitude: destinoLatitude, longitude: destinoLongitude }
         : null,
     [destinoLatitude, destinoLongitude],
+  );
+  const motorista = useMemo(
+    () =>
+      motoristaLatitude != null && motoristaLongitude != null
+        ? { latitude: motoristaLatitude, longitude: motoristaLongitude }
+        : null,
+    [motoristaLatitude, motoristaLongitude],
   );
 
   // 1. Se a rota já veio cacheada do servidor, usa direto (zero chamada à API).
@@ -230,6 +243,15 @@ export function MapaViagem({
         ) : null}
         {destino ? (
           <Marker latitude={destino.latitude} longitude={destino.longitude} color="#0066FF" />
+        ) : null}
+        {/* Motorista: pulse laranja pra destacar movimento em tempo real */}
+        {motorista ? (
+          <Marker latitude={motorista.latitude} longitude={motorista.longitude} anchor="center">
+            <div className="motorista-pin" aria-label="Posição atual do motorista">
+              <div className="motorista-pin-pulse" />
+              <div className="motorista-pin-dot" />
+            </div>
+          </Marker>
         ) : null}
       </Map>
     </div>

@@ -278,3 +278,48 @@ dialog {
   max-width: 480px;
   width: 100%;
 }
+
+/* Pin do motorista no mapa (rastreamento em tempo real) */
+.motorista-pin {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+}
+
+.motorista-pin-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #f97316;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+.motorista-pin-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(249, 115, 22, 0.4);
+  transform: translate(-50%, -50%);
+  animation: motorista-pulse 1.8s ease-out infinite;
+  z-index: 1;
+}
+
+@keyframes motorista-pulse {
+  0%   { transform: translate(-50%, -50%) scale(0.6); opacity: 0.7; }
+  100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motorista-pin-pulse { animation: none; opacity: 0.4; }
+}
+

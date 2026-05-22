@@ -8,6 +8,7 @@ import type { ViagemDetalhada } from '@fleetops/types';
 import { formatarDataIso, formatarDataHoraIso } from '@fleetops/utils';
 import { MapaViagem } from '@/components/mapas/MapaViagem';
 import { InfoDistanciaViagem } from '@/components/viagens/InfoDistanciaViagem';
+import { usePosicaoMotorista } from '@/lib/usePosicaoMotorista';
 
 type BadgeColor = 'info' | 'warning' | 'success' | 'default';
 
@@ -28,6 +29,27 @@ interface DetalheViagemProps {
   acaoFinalizar: AcaoFormulario;
 }
 
+/**
+ * Quanto tempo passou desde um timestamp ISO/Brasília. "há 30s", "há 2 min",
+ * "há 1h". Aceita strings no formato dd/MM/yyyy HH:mm:ss da API.
+ */
+function tempoDesde(timestamp: string): string {
+  const agora = Date.now();
+  // formato Brasília "dd/MM/yyyy HH:mm:ss" precisa ser convertido
+  const m = timestamp.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})/);
+  const ms = m
+    ? new Date(`${m[3]}-${m[2]}-${m[1]}T${m[4]}:${m[5]}:${m[6]}-03:00`).getTime()
+    : new Date(timestamp).getTime();
+  if (!Number.isFinite(ms)) return 'há poucos instantes';
+  const seg = Math.max(Math.round((agora - ms) / 1000), 0);
+  if (seg < 60) return `há ${seg}s`;
+  const min = Math.floor(seg / 60);
+  if (min < 60) return `há ${min} min`;
+  const h = Math.floor(min / 60);
+  const m2 = min % 60;
+  return m2 === 0 ? `há ${h}h` : `há ${h}h ${m2}min`;
+}
+
 function CampoDetalhe({ rotulo, valor }: { rotulo: string; valor: React.ReactNode }) {
   return (
     <div>
@@ -44,6 +66,12 @@ function CampoDetalhe({ rotulo, valor }: { rotulo: string; valor: React.ReactNod
 export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheViagemProps) {
   const rotulo = ROTULOS_STATUS[viagem.status] ?? { texto: viagem.status, color: 'default' as BadgeColor };
   const dataViagem = formatarDataIso(viagem.dataViagem);
+
+  // Rastreamento em tempo real: só polla enquanto viagem está em andamento
+  const posicaoMotorista = usePosicaoMotorista({
+    viagemId: viagem.id,
+    ativo: viagem.status === 'EM_ANDAMENTO',
+  });
 
   return (
     <VStack className="gap-6 mx-auto max-w-3xl">
@@ -107,11 +135,20 @@ export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheVia
         rotaDuracaoMin={viagem.rotaDuracaoMin}
       />
 
-      {/* Mapa — origem e destino (Fase 1 do GPS) */}
+      {/* Mapa — origem, destino + posição do motorista em tempo real */}
       {(viagem.origemLatitude != null || viagem.destinoLatitude != null) && (
         <Card>
           <Card.Header className="font-semibold text-base text-slate-800">
-            Origem e destino no mapa
+            <HStack alignItems="center" justifyContent="between">
+              <span>Origem e destino no mapa</span>
+              {viagem.status === 'EM_ANDAMENTO' && (
+                <Text size="xs" style={{ color: posicaoMotorista ? '#f97316' : '#94a3b8' }}>
+                  {posicaoMotorista
+                    ? `Motorista visto ${tempoDesde(posicaoMotorista.capturadoEm)}`
+                    : 'Aguardando posição do motorista…'}
+                </Text>
+              )}
+            </HStack>
           </Card.Header>
           <Card.Content>
             <MapaViagem
@@ -120,6 +157,8 @@ export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheVia
               destinoLatitude={viagem.destinoLatitude}
               destinoLongitude={viagem.destinoLongitude}
               rotaGeometria={viagem.rotaGeometria}
+              motoristaLatitude={posicaoMotorista?.latitude}
+              motoristaLongitude={posicaoMotorista?.longitude}
             />
           </Card.Content>
         </Card>
