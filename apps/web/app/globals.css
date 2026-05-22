@@ -78,74 +78,9 @@ body {
   outline-color: rgba(255, 255, 255, 0.5);
 }
 
-/* ─── Sidebar — rail dinâmico (estreito → expande no hover, sobrepondo) ───── */
-.sidebar-rail {
-  width: 72px;
-  overflow: hidden;
-  transition: width 220ms ease;
-}
-
-/* Expande ao passar o mouse OU ao focar um item via teclado (acessibilidade) */
-.sidebar-rail:hover,
-.sidebar-rail:focus-within {
-  width: 236px;
-  box-shadow: 8px 0 32px rgba(0, 0, 0, 0.22);
-}
-
-/* Estado estreito: ícone perfeitamente centralizado — sem gap nem padding
-   horizontal para o rótulo (largura 0) não deslocar o ícone */
-.sidebar-rail .nav-sidebar-item {
+/* ─── Sidebar fixa (sempre expandida, 240px) ──────────────────────────────── */
+.sidebar .nav-sidebar-item {
   white-space: nowrap;
-  justify-content: center;
-  gap: 0;
-  padding-left: 0;
-  padding-right: 0;
-  transition:
-    background 150ms ease-out,
-    color 150ms ease-out,
-    padding 220ms ease;
-}
-
-.sidebar-rail:hover .nav-sidebar-item,
-.sidebar-rail:focus-within .nav-sidebar-item {
-  justify-content: flex-start;
-  gap: 0.75rem;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-}
-
-/* Ícone nunca encolhe — garante que apareça mesmo com o rótulo recolhido */
-.sidebar-rail .nav-sidebar-item > svg,
-.sidebar-rail .nav-sidebar-item > i,
-.sidebar-rail .nav-sidebar-item [data-icon],
-.sidebar-rail .nav-sidebar-item [class*='icon'] {
-  flex-shrink: 0;
-}
-
-/* Rótulos textuais — sem largura no estado estreito (não empurram o ícone),
-   surgem com fade ao expandir */
-.sidebar-rail .sidebar-rotulo {
-  opacity: 0;
-  max-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  transition:
-    opacity 180ms ease,
-    max-width 220ms ease;
-}
-
-.sidebar-rail:hover .sidebar-rotulo,
-.sidebar-rail:focus-within .sidebar-rotulo {
-  opacity: 1;
-  max-width: 160px;
-}
-
-/* Quem prefere menos movimento: sem animação de largura/opacidade */
-@media (prefers-reduced-motion: reduce) {
-  .sidebar-rail,
-  .sidebar-rail .sidebar-rotulo {
-    transition: none;
-  }
 }
 
 /* ─── Login — campos estilo underline ────────────────────────────────────── */

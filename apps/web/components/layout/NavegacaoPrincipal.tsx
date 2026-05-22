@@ -25,24 +25,16 @@ export function NavegacaoPrincipal() {
   }
 
   return (
-    <>
-      {/* Espaçador — mantém os 72px no fluxo flex para o conteúdo não deslocar
-          quando a sidebar expande sobre ele (overlay). */}
-      <div aria-hidden="true" style={{ width: 72, flexShrink: 0 }} />
-
-      <aside
-        aria-label="Navegação principal"
-        className="sidebar-rail flex h-screen flex-col"
-        style={{
-          position: 'fixed',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          zIndex: 40,
-          background: '#0A2540',
-          borderRight: '1px solid rgba(255,255,255,0.08)',
-        }}
-      >
+    <aside
+      aria-label="Navegação principal"
+      className="sidebar flex h-screen flex-col"
+      style={{
+        width: 240,
+        flexShrink: 0,
+        background: '#0A2540',
+        borderRight: '1px solid rgba(255,255,255,0.08)',
+      }}
+    >
         {/* Logo */}
         <HStack
           alignItems="center"
@@ -56,7 +48,7 @@ export function NavegacaoPrincipal() {
           >
             <Icon name="PiTruckBold" size="sm" color="light" />
           </div>
-          <Text as="span" size="xl" className="sidebar-rotulo font-bold text-white">
+          <Text as="span" size="xl" className="font-bold text-white">
             FleetOps
           </Text>
         </HStack>
@@ -75,7 +67,7 @@ export function NavegacaoPrincipal() {
                   data-active={ativo ? 'true' : undefined}
                 >
                   <Icon name={item.icone} size="md" color="light" />
-                  <Text as="span" size="sm" className="sidebar-rotulo font-medium text-white">
+                  <Text as="span" size="sm" className="font-medium text-white">
                     {item.rotulo}
                   </Text>
                 </Link>
@@ -114,6 +106,5 @@ export function NavegacaoPrincipal() {
           </button>
         </div>
       </aside>
-    </>
   );
 }
