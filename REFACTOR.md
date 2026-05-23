@@ -26,44 +26,27 @@
 
 ### ✅ Pronto
 
-- `prisma/schema.prisma` — schema novo completo (todas as 22 tabelas)
-- `prisma/migrations/20260523004059_schema_snake_case_int_ids/` — migration inicial
-- `prisma/migrations/20260523005225_add_expo_push_token_usuarios/` — coluna push token
-- `prisma/seed.ts` — popula 9 lookups + admin (matrícula 0000000001, senha Admin@123456)
-- `packages/types/src/index.ts` — todos os tipos refatorados
-- `packages/validation/src/index.ts` — schemas Zod refatorados (`schemaId` substituiu `schemaUuid`)
-- `apps/api/src/modulos/auth/auth.service.ts`
-- `apps/api/src/modulos/configuracoes/configuracoes.service.ts`
-- `apps/api/src/modulos/configuracoes/dto/configuracao-resposta.dto.ts`
-- `apps/api/src/modulos/usuarios/usuarios.service.ts`
-- `apps/api/src/modulos/usuarios/dto/criar-usuario.dto.ts`
+- `prisma/schema.prisma` — schema novo completo (22 tabelas)
+- `prisma/migrations/20260523004059_schema_snake_case_int_ids/`
+- `prisma/migrations/20260523005225_add_expo_push_token_usuarios/`
+- `prisma/seed.ts` (admin 0000000001 / Admin@123456 + 9 lookups)
+- `packages/types/src/index.ts` (tipos refatorados)
+- `packages/validation/src/index.ts` (schemaId substituiu schemaUuid)
+- `apps/api/src/common/decorators/roles.decorator.ts` (string[] no lugar de Perfil[])
+- `apps/api/src/common/guards/roles.guard.ts`
+- `apps/api/src/common/notificacoes/push-notification.service.ts` (IDs INT)
+- `apps/api/src/modulos/auth/` — service + DTOs (3)
+- `apps/api/src/modulos/configuracoes/` — completo
+- `apps/api/src/modulos/usuarios/` — completo (service, controller, 4 DTOs)
+- `apps/api/src/modulos/veiculos/` — completo (service, controller, 6 DTOs)
+- `apps/api/src/modulos/viagens/` — completo (service, controller, 7 DTOs)
+- `apps/api/src/modulos/relatorios/velocidade.service.ts`
 
 ### ⏳ Falta (em ordem sugerida pra próximas sessões)
 
-#### Sessão 2: terminar usuarios + auth + veiculos
+#### Sessão 2: terminar usuarios + auth + veiculos ✅ CONCLUÍDA
 
-- [ ] `usuarios/dto/atualizar-usuario.dto.ts` (perfil string → perfil_id INT)
-- [ ] `usuarios/dto/filtros-listar-usuarios.dto.ts` (perfil → perfil_id, validar)
-- [ ] `usuarios/dto/usuario-resposta.dto.ts` (id string → number, perfil string → ItemLookup)
-- [ ] `usuarios/dto/push-token.dto.ts` (ajustar)
-- [ ] `usuarios/usuarios.controller.ts` (id params Int, decorators @Roles atualizados)
-- [ ] `auth/dto/*` (3 DTOs)
-- [ ] `auth/auth.controller.ts`
-- [ ] `auth/strategies/jwt.strategy.ts` (payload sub: number)
-- [ ] `auth/guards/jwt-auth.guard.ts` (provavelmente OK)
-- [ ] `common/decorators/usuario-autenticado.decorator.ts` (deve estar OK)
-- [ ] `common/guards/roles.guard.ts` (perfil agora vem do FK, mas no JWT já é string nome)
-- [ ] `veiculos/veiculos.service.ts` (situacao string → situacao_id INT)
-- [ ] `veiculos/veiculos.controller.ts`
-- [ ] `veiculos/dto/*` (3 DTOs)
-
-#### Sessão 3: viagens (módulo central)
-
-- [ ] `viagens/viagens.service.ts` (status string → status_id INT, todas as relations include status/motorista/veiculo)
-- [ ] `viagens/viagens.controller.ts`
-- [ ] `viagens/dto/*` (6 DTOs)
-- [ ] Geocoding + Directions services (não mudam muito)
-- [ ] Velocidade service (já existe, só ajustar)
+#### Sessão 3: viagens ✅ CONCLUÍDA
 
 #### Sessão 4: despesas SPLIT em 6 módulos
 

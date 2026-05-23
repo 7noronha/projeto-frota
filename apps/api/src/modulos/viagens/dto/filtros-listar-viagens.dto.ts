@@ -1,28 +1,28 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDateString, IsEnum, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
-
-export enum StatusViagemEnum {
-  CRIADA = 'CRIADA',
-  EM_ANDAMENTO = 'EM_ANDAMENTO',
-  FINALIZADA = 'FINALIZADA',
-}
+import { IsDateString, IsInt, IsOptional, Max, Min } from 'class-validator';
 
 export class FiltrosListarViagensDto {
-  @ApiPropertyOptional({ enum: StatusViagemEnum })
+  @ApiPropertyOptional({ example: 1, description: 'ID do status (FK status_viagem.id)' })
   @IsOptional()
-  @IsEnum(StatusViagemEnum)
-  status?: StatusViagemEnum;
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  status_id?: number;
 
-  @ApiPropertyOptional({ description: 'UUID do motorista' })
+  @ApiPropertyOptional({ description: 'ID do motorista' })
   @IsOptional()
-  @IsUUID('4')
-  motoristaId?: string;
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  motorista_id?: number;
 
-  @ApiPropertyOptional({ description: 'UUID do veículo' })
+  @ApiPropertyOptional({ description: 'ID do veículo' })
   @IsOptional()
-  @IsUUID('4')
-  veiculoId?: string;
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  veiculo_id?: number;
 
   @ApiPropertyOptional({ example: '2026-05-01', description: 'Início do período (YYYY-MM-DD)' })
   @IsOptional()

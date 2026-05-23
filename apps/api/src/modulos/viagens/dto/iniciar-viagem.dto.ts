@@ -7,5 +7,5 @@ export class IniciarViagemDto {
   @Type(() => Number)
   @IsInt()
   @Min(0, { message: 'Odômetro inicial não pode ser negativo' })
-  odometroInicial: number;
+  odometro_inicial: number;
 }

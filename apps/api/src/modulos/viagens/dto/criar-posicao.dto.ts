@@ -4,20 +4,20 @@ import { IsDateString, IsNumber, IsOptional, Max, Min } from 'class-validator';
 export class CriarPosicaoDto {
   @ApiProperty({ example: -23.561414, description: 'Latitude WGS84' })
   @IsNumber({}, { message: 'Latitude inválida' })
-  @Min(-90, { message: 'Latitude deve estar entre -90 e 90' })
-  @Max(90, { message: 'Latitude deve estar entre -90 e 90' })
+  @Min(-90)
+  @Max(90)
   latitude: number;
 
   @ApiProperty({ example: -46.655881, description: 'Longitude WGS84' })
   @IsNumber({}, { message: 'Longitude inválida' })
-  @Min(-180, { message: 'Longitude deve estar entre -180 e 180' })
-  @Max(180, { message: 'Longitude deve estar entre -180 e 180' })
+  @Min(-180)
+  @Max(180)
   longitude: number;
 
   @ApiPropertyOptional({ example: 8.5, description: 'Precisão do GPS em metros' })
   @IsOptional()
   @IsNumber({}, { message: 'Precisão inválida' })
-  @Min(0, { message: 'Precisão não pode ser negativa' })
+  @Min(0)
   precisaoM?: number;
 
   @ApiProperty({
@@ -30,10 +30,10 @@ export class CriarPosicaoDto {
 }
 
 export class PosicaoRespostaDto {
-  @ApiProperty() id: string;
-  @ApiProperty() viagemId: string;
+  @ApiProperty() id: number;
+  @ApiProperty() viagem_id: number;
   @ApiProperty() latitude: number;
   @ApiProperty() longitude: number;
-  @ApiPropertyOptional() precisaoM: number | null;
-  @ApiProperty() capturadoEm: string;
+  @ApiPropertyOptional() precisao_m: number | null;
+  @ApiProperty() capturado_em: string;
 }
