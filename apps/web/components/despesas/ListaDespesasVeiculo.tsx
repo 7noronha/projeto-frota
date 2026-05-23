@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import {
   Button,
   Heading,
@@ -27,6 +28,7 @@ type AbaDespesa =
   | 'documentacoes';
 
 interface ListaDespesasVeiculoProps {
+  veiculoId: number;
   multas: MultaResposta[];
   abastecimentos: AbastecimentoResposta[];
   manutencoes: ManutencaoResposta[];
@@ -91,19 +93,40 @@ export function ListaDespesasVeiculo(props: ListaDespesasVeiculoProps) {
       </HStack>
 
       <HStack alignItems="center" justifyContent="between">
-        <Heading size="md">{ABAS.find((a) => a.id === aba)?.rotulo}</Heading>
-        <Text size="sm" style={{ color: 'var(--fo-text-secondary)' }}>
-          Total: <span className="font-semibold">{brl(totais[aba])}</span>
-        </Text>
+        <HStack alignItems="center" gap={2}>
+          <Heading size="md">{ABAS.find((a) => a.id === aba)?.rotulo}</Heading>
+          <Text size="sm" style={{ color: 'var(--fo-text-secondary)' }}>
+            Total: <span className="font-semibold">{brl(totais[aba])}</span>
+          </Text>
+        </HStack>
+        <Link href={`/veiculos/${props.veiculoId}/${aba}/nova`} style={{ textDecoration: 'none' }}>
+          <Button color="primary" size="sm" leftIcon="PiPlusBold">
+            Novo lançamento
+          </Button>
+        </Link>
       </HStack>
 
-      {aba === 'multas' && <TabelaMultas itens={props.multas} />}
-      {aba === 'abastecimentos' && <TabelaAbastecimentos itens={props.abastecimentos} />}
-      {aba === 'manutencoes' && <TabelaManutencoes itens={props.manutencoes} />}
-      {aba === 'impostos' && <TabelaImpostos itens={props.impostos} />}
-      {aba === 'seguros' && <TabelaSeguros itens={props.seguros} />}
-      {aba === 'documentacoes' && <TabelaDocumentacoes itens={props.documentacoes} />}
+      {aba === 'multas' && <TabelaMultas veiculoId={props.veiculoId} itens={props.multas} />}
+      {aba === 'abastecimentos' && (
+        <TabelaAbastecimentos veiculoId={props.veiculoId} itens={props.abastecimentos} />
+      )}
+      {aba === 'manutencoes' && (
+        <TabelaManutencoes veiculoId={props.veiculoId} itens={props.manutencoes} />
+      )}
+      {aba === 'impostos' && <TabelaImpostos veiculoId={props.veiculoId} itens={props.impostos} />}
+      {aba === 'seguros' && <TabelaSeguros veiculoId={props.veiculoId} itens={props.seguros} />}
+      {aba === 'documentacoes' && (
+        <TabelaDocumentacoes veiculoId={props.veiculoId} itens={props.documentacoes} />
+      )}
     </VStack>
+  );
+}
+
+function LinkEditar({ href }: { href: string }) {
+  return (
+    <Link href={href} style={{ textDecoration: 'none', color: 'var(--fo-primary)', fontWeight: 600 }}>
+      Editar
+    </Link>
   );
 }
 
@@ -152,7 +175,7 @@ function Cabecalho({ children }: { children: React.ReactNode }) {
   );
 }
 
-function TabelaMultas({ itens }: { itens: MultaResposta[] }) {
+function TabelaMultas({ veiculoId, itens }: { veiculoId: number; itens: MultaResposta[] }) {
   if (itens.length === 0) return <Vazio tipo="multas" />;
   return (
     <div style={{ border: '1px solid var(--fo-border)', borderRadius: 8, overflow: 'hidden' }}>
@@ -170,13 +193,16 @@ function TabelaMultas({ itens }: { itens: MultaResposta[] }) {
           <div style={{ flex: 3 }}>{m.descricao}</div>
           <div style={{ flex: 1, textAlign: 'right', fontWeight: 600 }}>{brl(m.valor)}</div>
           <div style={{ flex: 1 }}>{m.data_vencimento ? formatarDataIso(m.data_vencimento) : '—'}</div>
+          <div style={{ flex: 1, textAlign: 'right' }}>
+            <LinkEditar href={`/veiculos/${veiculoId}/multas/${m.id}/editar`} />
+          </div>
         </Linha>
       ))}
     </div>
   );
 }
 
-function TabelaAbastecimentos({ itens }: { itens: AbastecimentoResposta[] }) {
+function TabelaAbastecimentos({ veiculoId, itens }: { veiculoId: number; itens: AbastecimentoResposta[] }) {
   if (itens.length === 0) return <Vazio tipo="abastecimentos" />;
   return (
     <div style={{ border: '1px solid var(--fo-border)', borderRadius: 8, overflow: 'hidden' }}>
@@ -198,13 +224,16 @@ function TabelaAbastecimentos({ itens }: { itens: AbastecimentoResposta[] }) {
           <div style={{ flex: 1, textAlign: 'right' }}>
             {a.odometro != null ? a.odometro.toLocaleString('pt-BR') : '—'}
           </div>
+          <div style={{ flex: 1, textAlign: 'right' }}>
+            <LinkEditar href={`/veiculos/${veiculoId}/abastecimentos/${a.id}/editar`} />
+          </div>
         </Linha>
       ))}
     </div>
   );
 }
 
-function TabelaManutencoes({ itens }: { itens: ManutencaoResposta[] }) {
+function TabelaManutencoes({ veiculoId, itens }: { veiculoId: number; itens: ManutencaoResposta[] }) {
   if (itens.length === 0) return <Vazio tipo="manutenções" />;
   return (
     <div style={{ border: '1px solid var(--fo-border)', borderRadius: 8, overflow: 'hidden' }}>
@@ -226,13 +255,16 @@ function TabelaManutencoes({ itens }: { itens: ManutencaoResposta[] }) {
             {m.odometro != null ? m.odometro.toLocaleString('pt-BR') : '—'}
           </div>
           <div style={{ flex: 1, textAlign: 'right', fontWeight: 600 }}>{brl(m.valor)}</div>
+          <div style={{ flex: 1, textAlign: 'right' }}>
+            <LinkEditar href={`/veiculos/${veiculoId}/manutencoes/${m.id}/editar`} />
+          </div>
         </Linha>
       ))}
     </div>
   );
 }
 
-function TabelaImpostos({ itens }: { itens: ImpostoResposta[] }) {
+function TabelaImpostos({ veiculoId, itens }: { veiculoId: number; itens: ImpostoResposta[] }) {
   if (itens.length === 0) return <Vazio tipo="impostos" />;
   return (
     <div style={{ border: '1px solid var(--fo-border)', borderRadius: 8, overflow: 'hidden' }}>
@@ -256,13 +288,16 @@ function TabelaImpostos({ itens }: { itens: ImpostoResposta[] }) {
           </div>
           <div style={{ flex: 1 }}>{i.data_vencimento ? formatarDataIso(i.data_vencimento) : '—'}</div>
           <div style={{ flex: 1, textAlign: 'right', fontWeight: 600 }}>{brl(i.valor)}</div>
+          <div style={{ flex: 1, textAlign: 'right' }}>
+            <LinkEditar href={`/veiculos/${veiculoId}/impostos/${i.id}/editar`} />
+          </div>
         </Linha>
       ))}
     </div>
   );
 }
 
-function TabelaSeguros({ itens }: { itens: SeguroResposta[] }) {
+function TabelaSeguros({ veiculoId, itens }: { veiculoId: number; itens: SeguroResposta[] }) {
   if (itens.length === 0) return <Vazio tipo="seguros" />;
   return (
     <div style={{ border: '1px solid var(--fo-border)', borderRadius: 8, overflow: 'hidden' }}>
@@ -282,13 +317,16 @@ function TabelaSeguros({ itens }: { itens: SeguroResposta[] }) {
           <div style={{ flex: 1 }}>{formatarDataIso(s.vigencia_inicio)}</div>
           <div style={{ flex: 1 }}>{formatarDataIso(s.vigencia_fim)}</div>
           <div style={{ flex: 1, textAlign: 'right', fontWeight: 600 }}>{brl(s.valor)}</div>
+          <div style={{ flex: 1, textAlign: 'right' }}>
+            <LinkEditar href={`/veiculos/${veiculoId}/seguros/${s.id}/editar`} />
+          </div>
         </Linha>
       ))}
     </div>
   );
 }
 
-function TabelaDocumentacoes({ itens }: { itens: DocumentacaoResposta[] }) {
+function TabelaDocumentacoes({ veiculoId, itens }: { veiculoId: number; itens: DocumentacaoResposta[] }) {
   if (itens.length === 0) return <Vazio tipo="documentações" />;
   return (
     <div style={{ border: '1px solid var(--fo-border)', borderRadius: 8, overflow: 'hidden' }}>
@@ -306,6 +344,9 @@ function TabelaDocumentacoes({ itens }: { itens: DocumentacaoResposta[] }) {
           <div style={{ flex: 1 }}>{formatarDataIso(d.data)}</div>
           <div style={{ flex: 1 }}>{d.data_vencimento ? formatarDataIso(d.data_vencimento) : '—'}</div>
           <div style={{ flex: 1, textAlign: 'right', fontWeight: 600 }}>{brl(d.valor)}</div>
+          <div style={{ flex: 1, textAlign: 'right' }}>
+            <LinkEditar href={`/veiculos/${veiculoId}/documentacoes/${d.id}/editar`} />
+          </div>
         </Linha>
       ))}
     </div>

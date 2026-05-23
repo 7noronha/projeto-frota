@@ -72,6 +72,7 @@ export default async function PaginaDespesas(props: { params: Params }) {
       </HStack>
 
       <ListaDespesasVeiculo
+        veiculoId={id}
         multas={multas.dados}
         abastecimentos={abastecimentos.dados}
         manutencoes={manutencoes.dados}
