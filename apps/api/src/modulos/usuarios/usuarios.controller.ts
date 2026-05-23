@@ -7,6 +7,7 @@ import {
   Delete,
   Body,
   Param,
+  ParseIntPipe,
   Query,
   UseGuards,
   HttpCode,
@@ -57,7 +58,7 @@ export class UsuariosController {
   @ApiOperation({ summary: 'Busca usuário por ID' })
   @ApiOkResponse({ type: UsuarioRespostaDto })
   @ApiNotFoundResponse({ description: 'Usuário não encontrado' })
-  async buscarPorId(@Param('id') id: string): Promise<UsuarioRespostaDto> {
+  async buscarPorId(@Param('id', ParseIntPipe) id: number): Promise<UsuarioRespostaDto> {
     return this.usuariosService.buscarPorId(id);
   }
 
@@ -76,7 +77,7 @@ export class UsuariosController {
   @ApiOkResponse({ type: UsuarioRespostaDto })
   @ApiNotFoundResponse({ description: 'Usuário não encontrado' })
   async atualizar(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: AtualizarUsuarioDto,
   ): Promise<UsuarioRespostaDto> {
     return this.usuariosService.atualizar(id, dto);
@@ -87,7 +88,7 @@ export class UsuariosController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Inativa usuário (ativo = false)' })
   @ApiNotFoundResponse({ description: 'Usuário não encontrado' })
-  async inativar(@Param('id') id: string): Promise<void> {
+  async inativar(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.usuariosService.inativar(id);
   }
 
@@ -96,7 +97,7 @@ export class UsuariosController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Reativa usuário (ativo = true)' })
   @ApiNotFoundResponse({ description: 'Usuário não encontrado' })
-  async reativar(@Param('id') id: string): Promise<void> {
+  async reativar(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.usuariosService.atualizar(id, { ativo: true });
   }
 
@@ -105,7 +106,7 @@ export class UsuariosController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Remove usuário do sistema (soft delete via data_exclusao)' })
   @ApiNotFoundResponse({ description: 'Usuário não encontrado' })
-  async excluir(@Param('id') id: string): Promise<void> {
+  async excluir(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.usuariosService.excluir(id);
   }
 

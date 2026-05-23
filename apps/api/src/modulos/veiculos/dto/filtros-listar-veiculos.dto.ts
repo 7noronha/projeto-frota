@@ -1,7 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
-import { SituacaoVeiculoEnum } from './criar-veiculo.dto';
+import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class FiltrosListarVeiculosDto {
   @ApiPropertyOptional({ example: 'ABC', description: 'Filtrar por placa (busca parcial)' })
@@ -14,10 +13,12 @@ export class FiltrosListarVeiculosDto {
   @IsString()
   modelo?: string;
 
-  @ApiPropertyOptional({ enum: SituacaoVeiculoEnum })
+  @ApiPropertyOptional({ example: 1, description: 'Filtrar por situação (FK situacoes_veiculo.id)' })
   @IsOptional()
-  @IsEnum(SituacaoVeiculoEnum)
-  situacao?: SituacaoVeiculoEnum;
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  situacao_id?: number;
 
   @ApiPropertyOptional({ default: 1, minimum: 1 })
   @IsOptional()

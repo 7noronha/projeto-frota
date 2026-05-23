@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsEnum,
   IsInt,
   IsOptional,
   IsString,
@@ -13,13 +12,6 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { Maiusculas } from '../../../common/decorators/maiusculas.decorator';
-
-export enum SituacaoVeiculoEnum {
-  ATIVO = 'ativo',
-  EM_MANUTENCAO = 'em_manutencao',
-  INATIVO = 'inativo',
-  BAIXADO = 'baixado',
-}
 
 const ANO_MINIMO = 1950;
 const ANO_MAXIMO = new Date().getFullYear() + 2;
@@ -55,14 +47,14 @@ export class CriarVeiculoDto {
   @IsInt()
   @Min(ANO_MINIMO, { message: `Ano de fabricação mínimo: ${ANO_MINIMO}` })
   @Max(ANO_MAXIMO, { message: `Ano de fabricação máximo: ${ANO_MAXIMO}` })
-  anoFabricacao: number;
+  ano_fabricacao: number;
 
   @ApiProperty({ example: 2024 })
   @Type(() => Number)
   @IsInt()
   @Min(ANO_MINIMO, { message: `Ano do modelo mínimo: ${ANO_MINIMO}` })
   @Max(ANO_MAXIMO, { message: `Ano do modelo máximo: ${ANO_MAXIMO}` })
-  anoModelo: number;
+  ano_modelo: number;
 
   @ApiProperty({ example: 'BRANCO' })
   @Maiusculas()
@@ -81,16 +73,18 @@ export class CriarVeiculoDto {
   @Type(() => Number)
   @IsInt()
   @Min(0, { message: 'Odômetro não pode ser negativo' })
-  odometroAtual: number;
+  odometro_atual: number;
 
   @ApiProperty({ example: '2023-06-15', description: 'Data de aquisição (YYYY-MM-DD)' })
   @IsString()
   @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'Data deve estar no formato YYYY-MM-DD' })
-  dataAquisicao: string;
+  data_aquisicao: string;
 
-  @ApiProperty({ enum: SituacaoVeiculoEnum, example: SituacaoVeiculoEnum.ATIVO })
-  @IsEnum(SituacaoVeiculoEnum, { message: 'Situação inválida' })
-  situacao: SituacaoVeiculoEnum;
+  @ApiProperty({ example: 1, description: 'ID da situação (FK situacoes_veiculo.id)' })
+  @Type(() => Number)
+  @IsInt({ message: 'situacao_id inválido' })
+  @Min(1)
+  situacao_id: number;
 
   @ApiPropertyOptional({ example: 'REVISÃO REALIZADA EM 10/2024' })
   @Maiusculas()
