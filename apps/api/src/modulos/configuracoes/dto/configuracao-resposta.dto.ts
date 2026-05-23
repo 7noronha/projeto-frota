@@ -8,5 +8,5 @@ export class ConfiguracaoRespostaDto {
   valor: string;
 
   @ApiProperty({ example: '2026-05-11T08:00:00' })
-  dataAtualizacao: Date;
+  data_hora_atualizacao: Date;
 }

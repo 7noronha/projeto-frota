@@ -6,7 +6,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { Perfil } from '@fleetops/types';
 import { agoraBrasilia, formatarDataHoraBrasilia } from '@fleetops/utils/datetime';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CriarUsuarioDto } from './dto/criar-usuario.dto';
@@ -15,20 +14,21 @@ import { UsuarioRespostaDto } from './dto/usuario-resposta.dto';
 import { FiltrosListarUsuariosDto } from './dto/filtros-listar-usuarios.dto';
 import type { RespostaPaginada } from '@fleetops/types';
 
-type UsuarioPrisma = {
-  id: string;
+const BCRYPT_SALT_ROUNDS = 10;
+
+type UsuarioComPerfil = {
+  id: number;
   matricula: string;
   nome: string;
-  perfil: string;
+  perfil_id: number;
+  perfil: { id: number; nome: string; descricao: string | null };
   email: string | null;
   telefone: string | null;
   cnh: string | null;
-  cnhValidade: Date | null;
+  cnh_validade: Date | null;
   ativo: boolean;
-  dataCriacao: Date;
+  data_hora_criacao: Date;
 };
-
-const BCRYPT_SALT_ROUNDS = 10;
 
 @Injectable()
 export class UsuariosService {
@@ -37,7 +37,6 @@ export class UsuariosService {
   async listar(filtros: FiltrosListarUsuariosDto): Promise<RespostaPaginada<UsuarioRespostaDto>> {
     const { pagina, tamanhoPagina, skip } = calcularPaginacao(filtros);
 
-    // Limite para "CNH vencendo": hoje + N dias (data limite inclusiva)
     const limiteCnh =
       filtros.cnhVencendoAteDias !== undefined
         ? (() => {
@@ -49,35 +48,22 @@ export class UsuariosService {
         : undefined;
 
     const where = {
-      dataExclusao: null as null,
-      ...(filtros.perfil && { perfil: filtros.perfil }),
+      data_hora_exclusao: null as null,
+      ...(filtros.perfil_id && { perfil_id: filtros.perfil_id }),
       ...(filtros.matricula && { matricula: { contains: filtros.matricula } }),
       ...(filtros.nome && { nome: { contains: filtros.nome, mode: 'insensitive' as const } }),
       ...(filtros.ativo !== undefined && { ativo: filtros.ativo }),
-      ...(limiteCnh && {
-        cnhValidade: { not: null, lte: limiteCnh },
-      }),
+      ...(limiteCnh && { cnh_validade: { not: null, lte: limiteCnh } }),
     };
 
     const [total, usuarios] = await Promise.all([
-      this.prisma.usuario.count({ where }),
-      this.prisma.usuario.findMany({
+      this.prisma.usuarios.count({ where }),
+      this.prisma.usuarios.findMany({
         where,
         skip,
         take: tamanhoPagina,
-        orderBy: { dataCriacao: 'desc' },
-        select: {
-          id: true,
-          matricula: true,
-          nome: true,
-          perfil: true,
-          email: true,
-          telefone: true,
-          cnh: true,
-          cnhValidade: true,
-          ativo: true,
-          dataCriacao: true,
-        },
+        orderBy: { data_hora_criacao: 'desc' },
+        include: { perfil: true },
       }),
     ]);
 
@@ -85,82 +71,71 @@ export class UsuariosService {
       dados: usuarios.map((u) => this.mapearResposta(u)),
       total,
       pagina,
-      tamanhoPagina,
-      totalPaginas: Math.ceil(total / tamanhoPagina),
+      tamanho_pagina: tamanhoPagina,
+      total_paginas: Math.ceil(total / tamanhoPagina),
     };
   }
 
-  async buscarPorId(id: string): Promise<UsuarioRespostaDto> {
-    const usuario = await this.prisma.usuario.findFirst({
-      where: { id, dataExclusao: null },
-      select: {
-        id: true,
-        matricula: true,
-        nome: true,
-        perfil: true,
-        email: true,
-        telefone: true,
-        cnh: true,
-        cnhValidade: true,
-        ativo: true,
-        dataCriacao: true,
-      },
+  async buscarPorId(id: number): Promise<UsuarioRespostaDto> {
+    const usuario = await this.prisma.usuarios.findFirst({
+      where: { id, data_hora_exclusao: null },
+      include: { perfil: true },
     });
-
     if (!usuario) throw new NotFoundException('Usuário não encontrado');
     return this.mapearResposta(usuario);
   }
 
   async criar(dto: CriarUsuarioDto): Promise<UsuarioRespostaDto> {
-    if (dto.perfil === 'motorista' && (!dto.cnh || !dto.cnhValidade)) {
+    const perfil = await this.prisma.perfis_usuario.findUnique({ where: { id: dto.perfil_id } });
+    if (!perfil) throw new BadRequestException('Perfil inválido');
+
+    if (perfil.nome === 'motorista' && (!dto.cnh || !dto.cnh_validade)) {
       throw new BadRequestException('CNH e validade da CNH são obrigatórios para motoristas');
     }
 
-    const existente = await this.prisma.usuario.findFirst({
-      where: { matricula: dto.matricula, dataExclusao: null },
+    const existente = await this.prisma.usuarios.findFirst({
+      where: { matricula: dto.matricula, data_hora_exclusao: null },
     });
     if (existente) throw new ConflictException('Matrícula já está em uso');
 
     const senhaHash = await bcrypt.hash(dto.senha, BCRYPT_SALT_ROUNDS);
 
-    const usuario = await this.prisma.usuario.create({
+    const usuario = await this.prisma.usuarios.create({
       data: {
         matricula: dto.matricula,
         nome: dto.nome,
-        senhaHash,
-        perfil: dto.perfil,
+        senha_hash: senhaHash,
+        perfil_id: dto.perfil_id,
         email: dto.email ?? null,
         telefone: dto.telefone ?? null,
         cnh: dto.cnh ?? null,
-        cnhValidade: dto.cnhValidade ? new Date(dto.cnhValidade) : null,
+        cnh_validade: dto.cnh_validade ? new Date(dto.cnh_validade) : null,
         ativo: dto.ativo ?? true,
       },
-      select: {
-        id: true,
-        matricula: true,
-        nome: true,
-        perfil: true,
-        email: true,
-        telefone: true,
-        cnh: true,
-        cnhValidade: true,
-        ativo: true,
-        dataCriacao: true,
-      },
+      include: { perfil: true },
     });
 
     return this.mapearResposta(usuario);
   }
 
-  async atualizar(id: string, dto: AtualizarUsuarioDto): Promise<UsuarioRespostaDto> {
-    const usuario = await this.prisma.usuario.findFirst({
-      where: { id, dataExclusao: null },
+  async atualizar(id: number, dto: AtualizarUsuarioDto): Promise<UsuarioRespostaDto> {
+    const usuario = await this.prisma.usuarios.findFirst({
+      where: { id, data_hora_exclusao: null },
+      include: { perfil: true },
     });
     if (!usuario) throw new NotFoundException('Usuário não encontrado');
 
-    if (dto.perfil === 'motorista') {
+    // Validar perfil novo, se mudou
+    let perfilNovo = usuario.perfil;
+    if (dto.perfil_id && dto.perfil_id !== usuario.perfil_id) {
+      const p = await this.prisma.perfis_usuario.findUnique({ where: { id: dto.perfil_id } });
+      if (!p) throw new BadRequestException('Perfil inválido');
+      perfilNovo = p;
+    }
+
+    if (perfilNovo.nome === 'motorista') {
       const cnhFinal = dto.cnh ?? usuario.cnh;
-      const cnhValidadeFinal = dto.cnhValidade ?? usuario.cnhValidade;
+      const cnhValidadeFinal = dto.cnh_validade ?? usuario.cnh_validade;
       if (!cnhFinal || !cnhValidadeFinal) {
         throw new BadRequestException('CNH e validade da CNH são obrigatórios para motoristas');
       }
@@ -168,87 +143,66 @@ export class UsuariosService {
 
     const senhaHash = dto.senha ? await bcrypt.hash(dto.senha, BCRYPT_SALT_ROUNDS) : undefined;
 
-    const atualizado = await this.prisma.usuario.update({
+    const atualizado = await this.prisma.usuarios.update({
       where: { id },
       data: {
         ...(dto.nome && { nome: dto.nome }),
-        ...(senhaHash && { senhaHash }),
-        ...(dto.perfil && { perfil: dto.perfil }),
+        ...(senhaHash && { senha_hash: senhaHash }),
+        ...(dto.perfil_id && { perfil_id: dto.perfil_id }),
         ...(dto.email !== undefined && { email: dto.email }),
         ...(dto.telefone !== undefined && { telefone: dto.telefone }),
         ...(dto.cnh !== undefined && { cnh: dto.cnh }),
-        ...(dto.cnhValidade !== undefined && {
-          cnhValidade: dto.cnhValidade ? new Date(dto.cnhValidade) : null,
+        ...(dto.cnh_validade !== undefined && {
+          cnh_validade: dto.cnh_validade ? new Date(dto.cnh_validade) : null,
         }),
         ...(dto.ativo !== undefined && { ativo: dto.ativo }),
       },
-      select: {
-        id: true,
-        matricula: true,
-        nome: true,
-        perfil: true,
-        email: true,
-        telefone: true,
-        cnh: true,
-        cnhValidade: true,
-        ativo: true,
-        dataCriacao: true,
-      },
+      include: { perfil: true },
     });
 
     return this.mapearResposta(atualizado);
   }
 
-  async inativar(id: string): Promise<void> {
-    const usuario = await this.prisma.usuario.findFirst({
-      where: { id, dataExclusao: null },
+  async inativar(id: number): Promise<void> {
+    const usuario = await this.prisma.usuarios.findFirst({
+      where: { id, data_hora_exclusao: null },
     });
     if (!usuario) throw new NotFoundException('Usuário não encontrado');
+    await this.prisma.usuarios.update({ where: { id }, data: { ativo: false } });
+  }
 
-    await this.prisma.usuario.update({
+  async excluir(id: number): Promise<void> {
+    const usuario = await this.prisma.usuarios.findFirst({
+      where: { id, data_hora_exclusao: null },
+    });
+    if (!usuario) throw new NotFoundException('Usuário não encontrado');
+    await this.prisma.usuarios.update({
       where: { id },
-      data: { ativo: false },
+      data: { data_hora_exclusao: agoraBrasilia() },
     });
   }
 
-  async excluir(id: string): Promise<void> {
-    const usuario = await this.prisma.usuario.findFirst({
-      where: { id, dataExclusao: null },
-    });
-    if (!usuario) throw new NotFoundException('Usuário não encontrado');
-
-    await this.prisma.usuario.update({
-      where: { id },
-      data: { dataExclusao: agoraBrasilia() },
-    });
-  }
-
-  /**
-   * Registra ou desregistra o token Expo Push do usuário (chamado no
-   * login do app mobile). Null/string vazia desativa as notificações.
-   */
-  async registrarPushToken(usuarioId: string, token: string | null | undefined): Promise<void> {
+  async registrarPushToken(usuarioId: number, token: string | null | undefined): Promise<void> {
     const valorFinal = token && token.trim() !== '' ? token.trim() : null;
-    await this.prisma.usuario.update({
+    await this.prisma.usuarios.update({
       where: { id: usuarioId },
-      data: { expoPushToken: valorFinal },
+      data: { expo_push_token: valorFinal },
     });
   }
 
-  private mapearResposta(usuario: UsuarioPrisma): UsuarioRespostaDto {
+  private mapearResposta(u: UsuarioComPerfil): UsuarioRespostaDto {
     return {
-      id: usuario.id,
-      matricula: usuario.matricula,
-      nome: usuario.nome,
-      perfil: usuario.perfil as Perfil,
-      email: usuario.email,
-      telefone: usuario.telefone,
-      cnh: usuario.cnh,
-      cnhValidade: usuario.cnhValidade
-        ? usuario.cnhValidade.toISOString().split('T')[0]
-        : null,
-      ativo: usuario.ativo,
-      dataCriacao: formatarDataHoraBrasilia(usuario.dataCriacao),
+      id: u.id,
+      matricula: u.matricula,
+      nome: u.nome,
+      perfil_id: u.perfil_id,
+      perfil: { id: u.perfil.id, nome: u.perfil.nome, descricao: u.perfil.descricao },
+      email: u.email,
+      telefone: u.telefone,
+      cnh: u.cnh,
+      cnh_validade: u.cnh_validade ? u.cnh_validade.toISOString().split('T')[0] ?? null : null,
+      ativo: u.ativo,
+      data_hora_criacao: formatarDataHoraBrasilia(u.data_hora_criacao),
     };
   }
 }

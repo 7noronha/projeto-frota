@@ -98,6 +98,7 @@ model usuarios {
   cnh                   String?   @db.VarChar(20)
   cnh_validade          DateTime? @db.Date
   ativo                 Boolean   @default(true)
+  expo_push_token       String?   @db.VarChar(200)
   data_hora_criacao     DateTime  @default(now()) @db.Timestamp(6)
   data_hora_atualizacao DateTime  @updatedAt @db.Timestamp(6)
   data_hora_exclusao    DateTime? @db.Timestamp(6)
