@@ -1,7 +1,7 @@
 # Refactor: schema snake_case + INT IDs + tipos como FK
 
 **Branch:** `refactor/schema-snake-case-reset`
-**Status:** Em andamento. Backend não compila.
+**Status:** Sessões 1-8 concluídas. Typecheck verde em API + web + mobile. Falta apenas Sessão 9 (deploy prod) e pendências menores.
 **Motivação:** Normalizar schema (extrair impostos + outras subcategorias de despesas, transformar tipo-strings em FKs pra tabelas auxiliares), padronizar nomenclatura.
 
 ---
@@ -48,7 +48,45 @@
 
 #### Sessão 3: viagens ✅ CONCLUÍDA
 
-#### Sessão 4: despesas SPLIT em 6 módulos
+#### Sessão 4: despesas SPLIT em 6 módulos ✅ CONCLUÍDA
+
+#### Sessão 5: alertas + relatorios ✅ CONCLUÍDA
+
+#### Sessão 6: seeds + lookups endpoint ✅ CONCLUÍDA
+- Seeds reescritos (seed-motorista-teste, seed-teste-viagens)
+- Specs antigas movidas para `.OLD-specs-uuid-snapshot/` (rewrite pendente)
+- Scripts antigos movidos para `scripts/.OLD-uuid-snapshot/` (rewrite pendente)
+- Endpoint `GET /lookups/:nome` criado (whitelist de 9 tabelas auxiliares)
+
+#### Sessão 7: web (Next.js) ✅ CONCLUÍDA
+- 40+ arquivos refatorados (snake_case + IDs INT)
+- ItemLookup acesso via `.nome`
+- `RespostaPaginada.total_paginas/tamanho_pagina`
+- `apps/web/.OLD-despesas-uuid-snapshot/` — despesas web aguarda rewrite em 6 telas
+
+#### Sessão 8: mobile (Expo) ✅ CONCLUÍDA
+- `tipos.ts` reescrito
+- 3 telas + 5 componentes refatorados
+- `abastecimento.tsx` agora consome `/lookups/tipos_combustivel`
+
+#### Sessão 9: deploy (PENDENTE — exige ação manual)
+- [ ] Backup do Supabase prod
+- [ ] Reset destrutivo: `prisma migrate reset` apontando para prod (perde dados antigos)
+- [ ] Rodar seeds principal + teste
+- [ ] Railway: setar `MAPBOX_TOKEN`
+- [ ] Vercel: setar `NEXT_PUBLIC_MAPBOX_TOKEN`, redeploy sem cache
+- [ ] Merge da branch `refactor/schema-snake-case-reset` em `main`
+
+#### Pendências pós-merge (menores)
+- [ ] Specs `.OLD-specs-uuid-snapshot/` — ~1800 linhas de testes a reescrever
+- [ ] Despesas web (`apps/web/.OLD-despesas-uuid-snapshot/`) — rewrite em 6 telas separadas (multas, abastecimentos, manutenções, impostos, seguros, documentações)
+- [ ] Scripts de data-fix (`apps/api/scripts/.OLD-uuid-snapshot/`) — rewrite se forem reutilizados
+
+---
+
+## ❌ HISTÓRICO ORIGINAL (mantido para referência)
+
+#### Sessão 4 (original): despesas SPLIT em 6 módulos
 
 Hoje existe `apps/api/src/modulos/despesas/` com 1 service tabelão. Tem que virar 6 módulos novos:
 
