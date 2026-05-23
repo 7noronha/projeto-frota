@@ -20,8 +20,8 @@ export interface Alerta {
   severidade: SeveridadeAlerta;
   titulo: string;
   descricao: string;
-  alvoId: string;
-  alvoTipo: 'motorista' | 'viagem' | 'veiculo' | 'despesa';
+  alvoId: number;
+  alvoTipo: 'motorista' | 'viagem' | 'veiculo' | 'multa' | 'seguro';
   href?: string;
 }
 
@@ -32,12 +32,46 @@ const INTERVALO_MANUTENCAO_KM = 10_000;
 export class AlertasService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Coleta alertas para o operador:
-   * - CNHs vencidas e vencendo em ≤ 30 dias
-   * - Viagens EM_ANDAMENTO que passaram da hora fim prevista (atrasadas)
-   * - Viagens CRIADA cuja data já passou (não iniciadas a tempo)
-   */
+  private cachePerfilMotoristaId: number | null = null;
+  private cacheStatusViagem = new Map<string, number>();
+  private cacheSituacaoVeiculo = new Map<string, number>();
+  private cacheTipoManutencao = new Map<string, number>();
+
+  private async perfilMotoristaId(): Promise<number> {
+    if (this.cachePerfilMotoristaId !== null) return this.cachePerfilMotoristaId;
+    const p = await this.prisma.perfis_usuario.findUnique({ where: { nome: 'motorista' } });
+    if (!p) throw new Error('perfil "motorista" não encontrado');
+    this.cachePerfilMotoristaId = p.id;
+    return p.id;
+  }
+
+  private async statusViagemId(nome: string): Promise<number> {
+    const cached = this.cacheStatusViagem.get(nome);
+    if (cached !== undefined) return cached;
+    const s = await this.prisma.status_viagem.findUnique({ where: { nome } });
+    if (!s) throw new Error(`status_viagem "${nome}" não encontrado`);
+    this.cacheStatusViagem.set(nome, s.id);
+    return s.id;
+  }
+
+  private async situacaoVeiculoId(nome: string): Promise<number> {
+    const cached = this.cacheSituacaoVeiculo.get(nome);
+    if (cached !== undefined) return cached;
+    const s = await this.prisma.situacoes_veiculo.findUnique({ where: { nome } });
+    if (!s) throw new Error(`situacao_veiculo "${nome}" não encontrada`);
+    this.cacheSituacaoVeiculo.set(nome, s.id);
+    return s.id;
+  }
+
+  private async tipoManutencaoId(nome: string): Promise<number | null> {
+    const cached = this.cacheTipoManutencao.get(nome);
+    if (cached !== undefined) return cached;
+    const t = await this.prisma.tipos_manutencao.findUnique({ where: { nome } });
+    if (!t) return null;
+    this.cacheTipoManutencao.set(nome, t.id);
+    return t.id;
+  }
+
   async listar(): Promise<Alerta[]> {
     const alertas: Alerta[] = [];
 
@@ -48,19 +82,20 @@ export class AlertasService {
     limite30.setDate(limite30.getDate() + 30);
 
     // 1. Motoristas com CNH vencida ou vencendo em <= 30 dias
-    const motoristas = await this.prisma.usuario.findMany({
+    const perfilMotoristaId = await this.perfilMotoristaId();
+    const motoristas = await this.prisma.usuarios.findMany({
       where: {
-        perfil: 'motorista',
+        perfil_id: perfilMotoristaId,
         ativo: true,
-        dataExclusao: null,
-        cnhValidade: { not: null, lte: limite30 },
+        data_hora_exclusao: null,
+        cnh_validade: { not: null, lte: limite30 },
       },
-      orderBy: { cnhValidade: 'asc' },
+      orderBy: { cnh_validade: 'asc' },
     });
 
     for (const m of motoristas) {
-      if (!m.cnhValidade) continue;
-      const dataValidade = new Date(m.cnhValidade);
+      if (!m.cnh_validade) continue;
+      const dataValidade = new Date(m.cnh_validade);
       dataValidade.setHours(0, 0, 0, 0);
       const dias = Math.ceil((dataValidade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
       const vencida = dias < 0;
@@ -80,9 +115,10 @@ export class AlertasService {
       });
     }
 
-    // 2. Viagens EM_ANDAMENTO atrasadas (passou da hora fim prevista)
-    const emAndamento = await this.prisma.viagem.findMany({
-      where: { status: 'EM_ANDAMENTO', dataExclusao: null },
+    // 2. Viagens EM_ANDAMENTO atrasadas
+    const statusEmAndamentoId = await this.statusViagemId('EM_ANDAMENTO');
+    const emAndamento = await this.prisma.viagens.findMany({
+      where: { status_id: statusEmAndamentoId, data_hora_exclusao: null },
       include: {
         motorista: { select: { nome: true } },
         veiculo: { select: { placa: true } },
@@ -91,11 +127,8 @@ export class AlertasService {
 
     const agora = new Date();
     for (const v of emAndamento) {
-      // Combina dataViagem (Date) + horaFimPrevista (Date com tempo em UTC) em America/Sao_Paulo
-      const fim = new Date(v.dataViagem);
-      fim.setUTCHours(v.horaFimPrevista.getUTCHours(), v.horaFimPrevista.getUTCMinutes(), 0, 0);
-      // Ajuste de fuso: dataViagem é DATE puro; consideramos hora em Brasília (UTC-3)
-      // fim em UTC equivale a fim + 3h em America/Sao_Paulo no momento do cálculo
+      const fim = new Date(v.data_viagem);
+      fim.setUTCHours(v.hora_fim_prevista.getUTCHours(), v.hora_fim_prevista.getUTCMinutes(), 0, 0);
       const fimEpoch = fim.getTime() + 3 * 60 * 60 * 1000;
       const minutosAtraso = Math.floor((agora.getTime() - fimEpoch) / 60_000);
       if (minutosAtraso <= 0) continue;
@@ -116,22 +149,23 @@ export class AlertasService {
       });
     }
 
-    // 3. Viagens CRIADA cuja dataViagem já passou (não iniciadas no dia)
-    const criadasVencidas = await this.prisma.viagem.findMany({
+    // 3. Viagens CRIADA cuja data_viagem já passou
+    const statusCriadaId = await this.statusViagemId('CRIADA');
+    const criadasVencidas = await this.prisma.viagens.findMany({
       where: {
-        status: 'CRIADA',
-        dataExclusao: null,
-        dataViagem: { lt: hoje },
+        status_id: statusCriadaId,
+        data_hora_exclusao: null,
+        data_viagem: { lt: hoje },
       },
       include: {
         motorista: { select: { nome: true } },
         veiculo: { select: { placa: true } },
       },
-      orderBy: { dataViagem: 'asc' },
+      orderBy: { data_viagem: 'asc' },
     });
 
     for (const v of criadasVencidas) {
-      const diasAtraso = Math.floor((hoje.getTime() - v.dataViagem.getTime()) / (1000 * 60 * 60 * 24));
+      const diasAtraso = Math.floor((hoje.getTime() - v.data_viagem.getTime()) / (1000 * 60 * 60 * 24));
       alertas.push({
         id: `naoiniciada:${v.id}`,
         tipo: 'viagem_sem_inicio',
@@ -144,25 +178,24 @@ export class AlertasService {
       });
     }
 
-    // 4. Multas com dataVencimento ≤ hoje + 7 dias (vencendo) ou < hoje (vencidas)
+    // 4. Multas com data_vencimento <= hoje + 7 dias (vencendo) ou < hoje (vencidas)
     const limite7Multas = new Date(hoje);
     limite7Multas.setDate(limite7Multas.getDate() + 7);
 
-    const multas = await this.prisma.despesaVeiculo.findMany({
+    const multas = await this.prisma.multas.findMany({
       where: {
-        tipo: 'multa',
-        dataExclusao: null,
-        dataVencimento: { not: null, lte: limite7Multas },
+        data_hora_exclusao: null,
+        data_vencimento: { not: null, lte: limite7Multas },
       },
       include: {
         veiculo: { select: { placa: true, marca: true, modelo: true } },
       },
-      orderBy: { dataVencimento: 'asc' },
+      orderBy: { data_vencimento: 'asc' },
     });
 
     for (const m of multas) {
-      if (!m.dataVencimento) continue;
-      const dataVenc = new Date(m.dataVencimento);
+      if (!m.data_vencimento) continue;
+      const dataVenc = new Date(m.data_vencimento);
       dataVenc.setHours(0, 0, 0, 0);
       const dias = Math.ceil((dataVenc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
       const vencida = dias < 0;
@@ -181,43 +214,40 @@ export class AlertasService {
             ? 'Multa vence hoje'
             : `Multa vence em ${dias} ${dias === 1 ? 'dia' : 'dias'}`,
         descricao: `${m.veiculo.placa} · ${m.descricao} · ${valorFormatado}${
-          m.numeroAuto ? ` · Auto ${m.numeroAuto}` : ''
+          m.numero_auto ? ` · Auto ${m.numero_auto}` : ''
         }`,
         alvoId: m.id,
-        alvoTipo: 'despesa',
-        href: `/veiculos/${m.veiculoId}/despesas/${m.id}/editar`,
+        alvoTipo: 'multa',
+        href: `/veiculos/${m.veiculo_id}/multas/${m.id}/editar`,
       });
     }
 
-    // 5. Seguros com vigenciaFim ≤ hoje + 30 dias (vencendo) ou < hoje (vencidos)
+    // 5. Seguros com vigencia_fim <= hoje + 30 dias
     const limite30Seguros = new Date(hoje);
     limite30Seguros.setDate(limite30Seguros.getDate() + 30);
 
-    const seguros = await this.prisma.despesaVeiculo.findMany({
+    const seguros = await this.prisma.seguros.findMany({
       where: {
-        tipo: 'seguro',
-        dataExclusao: null,
-        vigenciaFim: { not: null, lte: limite30Seguros },
+        data_hora_exclusao: null,
+        vigencia_fim: { lte: limite30Seguros },
       },
       include: {
         veiculo: { select: { placa: true, marca: true, modelo: true } },
       },
-      orderBy: { vigenciaFim: 'asc' },
+      orderBy: { vigencia_fim: 'asc' },
     });
 
-    // Mantém apenas o seguro mais recente por veículo (evita ruído quando há
-    // várias apólices antigas registradas)
-    const seguroMaisRecentePorVeiculo = new Map<string, (typeof seguros)[number]>();
+    // Mantém apenas o seguro mais recente por veículo
+    const seguroMaisRecentePorVeiculo = new Map<number, (typeof seguros)[number]>();
     for (const s of seguros) {
-      const existente = seguroMaisRecentePorVeiculo.get(s.veiculoId);
-      if (!existente || (s.vigenciaFim && existente.vigenciaFim && s.vigenciaFim > existente.vigenciaFim)) {
-        seguroMaisRecentePorVeiculo.set(s.veiculoId, s);
+      const existente = seguroMaisRecentePorVeiculo.get(s.veiculo_id);
+      if (!existente || s.vigencia_fim > existente.vigencia_fim) {
+        seguroMaisRecentePorVeiculo.set(s.veiculo_id, s);
       }
     }
 
     for (const s of seguroMaisRecentePorVeiculo.values()) {
-      if (!s.vigenciaFim) continue;
-      const fim = new Date(s.vigenciaFim);
+      const fim = new Date(s.vigencia_fim);
       fim.setHours(0, 0, 0, 0);
       const dias = Math.ceil((fim.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
       const vencido = dias < 0;
@@ -233,47 +263,48 @@ export class AlertasService {
             : `Seguro vence em ${dias} ${dias === 1 ? 'dia' : 'dias'}`,
         descricao: `${s.veiculo.placa} · ${s.veiculo.marca} ${s.veiculo.modelo}${
           s.seguradora ? ` · ${s.seguradora}` : ''
-        }${s.numeroApolice ? ` · Apólice ${s.numeroApolice}` : ''}`,
+        }${s.numero_apolice ? ` · Apólice ${s.numero_apolice}` : ''}`,
         alvoId: s.id,
-        alvoTipo: 'despesa',
-        href: `/veiculos/${s.veiculoId}/despesas/${s.id}/editar`,
+        alvoTipo: 'seguro',
+        href: `/veiculos/${s.veiculo_id}/seguros/${s.id}/editar`,
       });
     }
 
-    // 6. Veículos com manutenção devida (km desde a última preventiva > intervalo padrão)
-    // Antes: 1 query findFirst por veículo (N+1). Agora: 2 queries totais —
-    // 1 pra veículos, 1 pra todas as preventivas; junta em memória.
-    const veiculos = await this.prisma.veiculo.findMany({
-      where: { situacao: 'ativo', dataExclusao: null },
-      select: { id: true, placa: true, marca: true, modelo: true, odometroAtual: true },
+    // 6. Veículos com manutenção preventiva devida
+    const situacaoAtivoId = await this.situacaoVeiculoId('ativo');
+    const tipoPreventivaId = await this.tipoManutencaoId('preventiva');
+
+    const veiculos = await this.prisma.veiculos.findMany({
+      where: { situacao_id: situacaoAtivoId, data_hora_exclusao: null },
+      select: { id: true, placa: true, marca: true, modelo: true, odometro_atual: true },
     });
 
-    const preventivas = await this.prisma.despesaVeiculo.findMany({
-      where: {
-        tipo: 'manutencao',
-        tipoManutencao: 'preventiva',
-        dataExclusao: null,
-        odometro: { not: null },
-        veiculoId: { in: veiculos.map((v) => v.id) },
-      },
-      select: { veiculoId: true, odometro: true, data: true },
-      orderBy: { data: 'desc' },
-    });
+    const preventivas =
+      tipoPreventivaId === null
+        ? []
+        : await this.prisma.manutencoes.findMany({
+            where: {
+              tipo_manutencao_id: tipoPreventivaId,
+              data_hora_exclusao: null,
+              odometro: { not: null },
+              veiculo_id: { in: veiculos.map((v) => v.id) },
+            },
+            select: { veiculo_id: true, odometro: true, data: true },
+            orderBy: { data: 'desc' },
+          });
 
-    // Como o orderBy é desc, o primeiro registro por veículo é o mais recente.
-    const ultimaPreventivaPorVeiculo = new Map<string, number>();
+    const ultimaPreventivaPorVeiculo = new Map<number, number>();
     for (const p of preventivas) {
-      if (p.odometro != null && !ultimaPreventivaPorVeiculo.has(p.veiculoId)) {
-        ultimaPreventivaPorVeiculo.set(p.veiculoId, p.odometro);
+      if (p.odometro != null && !ultimaPreventivaPorVeiculo.has(p.veiculo_id)) {
+        ultimaPreventivaPorVeiculo.set(p.veiculo_id, p.odometro);
       }
     }
 
     for (const v of veiculos) {
       const odometroUltima = ultimaPreventivaPorVeiculo.get(v.id);
-      // Sem histórico: operador decide quando cadastrar a primeira
       if (odometroUltima == null) continue;
 
-      const kmDesdeUltima = v.odometroAtual - odometroUltima;
+      const kmDesdeUltima = v.odometro_atual - odometroUltima;
       if (kmDesdeUltima < INTERVALO_MANUTENCAO_KM) continue;
 
       const excedente = kmDesdeUltima - INTERVALO_MANUTENCAO_KM;
@@ -282,14 +313,13 @@ export class AlertasService {
         tipo: 'manutencao_devida',
         severidade: excedente > 5_000 ? 'alto' : excedente > 1_000 ? 'medio' : 'baixo',
         titulo: `Manutenção preventiva devida há ${kmDesdeUltima.toLocaleString('pt-BR')} km`,
-        descricao: `${v.placa} · ${v.marca} ${v.modelo} · última preventiva em ${odometroUltima.toLocaleString('pt-BR')} km, atual ${v.odometroAtual.toLocaleString('pt-BR')} km`,
+        descricao: `${v.placa} · ${v.marca} ${v.modelo} · última preventiva em ${odometroUltima.toLocaleString('pt-BR')} km, atual ${v.odometro_atual.toLocaleString('pt-BR')} km`,
         alvoId: v.id,
         alvoTipo: 'veiculo',
-        href: `/veiculos/${v.id}/despesas/nova`,
+        href: `/veiculos/${v.id}/manutencoes/nova`,
       });
     }
 
-    // Ordena por severidade (alto > medio > baixo) e mantém estável dentro
     const peso: Record<SeveridadeAlerta, number> = { alto: 0, medio: 1, baixo: 2 };
     return alertas.sort((a, b) => peso[a.severidade] - peso[b.severidade]);
   }
