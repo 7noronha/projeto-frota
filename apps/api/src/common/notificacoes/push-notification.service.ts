@@ -41,33 +41,33 @@ export class PushNotificationService {
    * Retorna true se a chamada à Expo retornou ok, false caso contrário ou
    * se o usuário não tem token.
    */
-  async enviarParaUsuario(usuarioId: string, payload: PushPayload): Promise<boolean> {
-    const usuario = await this.prisma.usuario.findUnique({
+  async enviarParaUsuario(usuarioId: number, payload: PushPayload): Promise<boolean> {
+    const usuario = await this.prisma.usuarios.findUnique({
       where: { id: usuarioId },
-      select: { expoPushToken: true, nome: true },
+      select: { expo_push_token: true, nome: true },
     });
 
-    if (!usuario?.expoPushToken) {
-      this.logger.debug(`Usuário ${usuarioId} sem expoPushToken — push ignorado`);
+    if (!usuario?.expo_push_token) {
+      this.logger.debug(`Usuário ${usuarioId} sem expo_push_token — push ignorado`);
       return false;
     }
 
-    return this.enviarParaToken(usuario.expoPushToken, payload, usuario.nome);
+    return this.enviarParaToken(usuario.expo_push_token, payload, usuario.nome);
   }
 
   /**
    * Envia pra múltiplos usuários numa única chamada (Expo aceita array
    * de até 100 messages). Útil pra alertas em massa (CNH vencendo, etc).
    */
-  async enviarParaUsuarios(usuarioIds: string[], payload: PushPayload): Promise<number> {
+  async enviarParaUsuarios(usuarioIds: number[], payload: PushPayload): Promise<number> {
     if (usuarioIds.length === 0) return 0;
-    const usuarios = await this.prisma.usuario.findMany({
-      where: { id: { in: usuarioIds }, expoPushToken: { not: null } },
-      select: { id: true, expoPushToken: true },
+    const usuarios = await this.prisma.usuarios.findMany({
+      where: { id: { in: usuarioIds }, expo_push_token: { not: null } },
+      select: { id: true, expo_push_token: true },
     });
 
     const mensagens = usuarios.map((u) => ({
-      to: u.expoPushToken,
+      to: u.expo_push_token,
       title: payload.titulo,
       body: payload.corpo,
       data: payload.dados ?? {},

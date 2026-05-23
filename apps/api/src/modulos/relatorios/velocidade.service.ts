@@ -2,57 +2,51 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 export interface VelocidadeMedia {
-  motoristaId: string | null;
-  veiculoId: string | null;
-  /** km/h calculado a partir de viagens FINALIZADAS */
+  motoristaId: number | null;
+  veiculoId: number | null;
   velocidadeMediaKmH: number;
-  /** Número de viagens consideradas no cálculo */
   amostras: number;
 }
 
 const FALLBACK_KM_H = 40;
 const AMOSTRAS_MINIMAS = 3;
 
-/**
- * Calibra a velocidade média a partir do histórico real de viagens
- * FINALIZADAS. Usado pra substituir o 40 km/h fixo do mobile por uma
- * estimativa de chegada baseada na performance real do motorista/veículo.
- *
- * Critério: viagem precisa ter distanciaPercorrida + dataHoraInicioReal +
- * dataHoraFimReal definidos. Mínimo de 3 amostras pra evitar média ruidosa.
- *
- * Cache em memória de 5 min — recálculo é barato (algumas linhas), mas
- * fica caro fazer em toda request.
- */
 @Injectable()
 export class VelocidadeService {
   constructor(private readonly prisma: PrismaService) {}
 
   private cache = new Map<string, { valor: VelocidadeMedia; expiradoEm: number }>();
   private readonly ttlMs = 5 * 60 * 1000;
+  private statusFinalizadaId: number | null = null;
 
-  /**
-   * Velocidade média do motorista — média das suas viagens FINALIZADAS.
-   * Se não tiver amostras suficientes, devolve fallback (40 km/h).
-   */
-  async porMotorista(motoristaId: string): Promise<VelocidadeMedia> {
+  private async getStatusFinalizadaId(): Promise<number> {
+    if (this.statusFinalizadaId != null) return this.statusFinalizadaId;
+    const s = await this.prisma.status_viagem.findUnique({ where: { nome: 'FINALIZADA' } });
+    if (!s) throw new Error('Status FINALIZADA não cadastrado');
+    this.statusFinalizadaId = s.id;
+    return s.id;
+  }
+
+  async porMotorista(motoristaId: number): Promise<VelocidadeMedia> {
     const chave = `motorista:${motoristaId}`;
     const cached = this.cache.get(chave);
     if (cached && cached.expiradoEm > Date.now()) return cached.valor;
 
-    const viagens = await this.prisma.viagem.findMany({
+    const statusFinId = await this.getStatusFinalizadaId();
+
+    const viagens = await this.prisma.viagens.findMany({
       where: {
-        motoristaId,
-        status: 'FINALIZADA',
-        dataExclusao: null,
-        dataHoraInicioReal: { not: null },
-        dataHoraFimReal: { not: null },
-        distanciaPercorrida: { not: null },
+        motorista_id: motoristaId,
+        status_id: statusFinId,
+        data_hora_exclusao: null,
+        data_hora_inicio_real: { not: null },
+        data_hora_fim_real: { not: null },
+        distancia_percorrida: { not: null },
       },
       select: {
-        distanciaPercorrida: true,
-        dataHoraInicioReal: true,
-        dataHoraFimReal: true,
+        distancia_percorrida: true,
+        data_hora_inicio_real: true,
+        data_hora_fim_real: true,
       },
     });
 
@@ -67,30 +61,28 @@ export class VelocidadeService {
     return resultado;
   }
 
-  /**
-   * Velocidade média global da frota — fallback quando o motorista não tem
-   * histórico suficiente. Útil pra novos motoristas.
-   */
   async global(): Promise<VelocidadeMedia> {
     const chave = 'global';
     const cached = this.cache.get(chave);
     if (cached && cached.expiradoEm > Date.now()) return cached.valor;
 
-    const viagens = await this.prisma.viagem.findMany({
+    const statusFinId = await this.getStatusFinalizadaId();
+
+    const viagens = await this.prisma.viagens.findMany({
       where: {
-        status: 'FINALIZADA',
-        dataExclusao: null,
-        dataHoraInicioReal: { not: null },
-        dataHoraFimReal: { not: null },
-        distanciaPercorrida: { not: null },
+        status_id: statusFinId,
+        data_hora_exclusao: null,
+        data_hora_inicio_real: { not: null },
+        data_hora_fim_real: { not: null },
+        distancia_percorrida: { not: null },
       },
       select: {
-        distanciaPercorrida: true,
-        dataHoraInicioReal: true,
-        dataHoraFimReal: true,
+        distancia_percorrida: true,
+        data_hora_inicio_real: true,
+        data_hora_fim_real: true,
       },
-      take: 200, // basta uma amostra recente
-      orderBy: { dataHoraFimReal: 'desc' },
+      take: 200,
+      orderBy: { data_hora_fim_real: 'desc' },
     });
 
     const resultado: VelocidadeMedia = {
@@ -104,24 +96,20 @@ export class VelocidadeService {
     return resultado;
   }
 
-  /**
-   * Invalida o cache (chamar quando uma viagem é finalizada — vai
-   * influenciar futuros cálculos).
-   */
-  invalidar(motoristaId?: string): void {
+  invalidar(motoristaId?: number): void {
     if (motoristaId) this.cache.delete(`motorista:${motoristaId}`);
     this.cache.delete('global');
   }
 
   private calcular(
     viagens: Array<{
-      distanciaPercorrida: number | null;
-      dataHoraInicioReal: Date | null;
-      dataHoraFimReal: Date | null;
+      distancia_percorrida: number | null;
+      data_hora_inicio_real: Date | null;
+      data_hora_fim_real: Date | null;
     }>,
   ): number {
     const validas = viagens.filter(
-      (v) => v.distanciaPercorrida && v.dataHoraInicioReal && v.dataHoraFimReal,
+      (v) => v.distancia_percorrida && v.data_hora_inicio_real && v.data_hora_fim_real,
     );
     if (validas.length < AMOSTRAS_MINIMAS) return FALLBACK_KM_H;
 
@@ -129,15 +117,14 @@ export class VelocidadeService {
     let totalHoras = 0;
     for (const v of validas) {
       const horas =
-        (v.dataHoraFimReal!.getTime() - v.dataHoraInicioReal!.getTime()) / (1000 * 60 * 60);
-      if (horas <= 0 || horas > 24) continue; // protege contra timestamps esquisitos
-      totalKm += v.distanciaPercorrida!;
+        (v.data_hora_fim_real!.getTime() - v.data_hora_inicio_real!.getTime()) / (1000 * 60 * 60);
+      if (horas <= 0 || horas > 24) continue;
+      totalKm += v.distancia_percorrida!;
       totalHoras += horas;
     }
 
     if (totalHoras <= 0) return FALLBACK_KM_H;
     const kmH = totalKm / totalHoras;
-    // Sanidade: trava entre 10 e 120 km/h pra evitar valores absurdos
     return Math.max(10, Math.min(120, kmH));
   }
 }

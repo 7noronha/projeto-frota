@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { agoraBrasilia, formatarDataHoraBrasilia } from '@fleetops/utils/datetime';
-import { StatusViagem, UsuarioJwt, RespostaPaginada } from '@fleetops/types';
+import { UsuarioJwt, RespostaPaginada } from '@fleetops/types';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CriarViagemDto } from './dto/criar-viagem.dto';
 import { AtualizarViagemDto } from './dto/atualizar-viagem.dto';
@@ -21,7 +21,6 @@ import { DirectionsService } from '../../common/geocoding/directions.service';
 import { VelocidadeService } from '../relatorios/velocidade.service';
 import { PushNotificationService } from '../../common/notificacoes/push-notification.service';
 
-// Converte "HH:MM" para Date (data epoch, hora UTC)
 function horaParaDate(hora: string): Date {
   const [horas, minutos] = hora.split(':').map(Number);
   const d = new Date(0);
@@ -29,53 +28,53 @@ function horaParaDate(hora: string): Date {
   return d;
 }
 
-// Converte Date de campo Time para "HH:MM"
 function dateParaHora(d: Date): string {
   return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
 }
 
 type ViagemComRelacoes = {
-  id: string;
+  id: number;
   origem: string;
   destino: string;
-  origemLatitude: Prisma.Decimal | null;
-  origemLongitude: Prisma.Decimal | null;
-  destinoLatitude: Prisma.Decimal | null;
-  destinoLongitude: Prisma.Decimal | null;
-  rotaGeometria: Prisma.JsonValue | null;
-  rotaDistanciaKm: Prisma.Decimal | null;
-  rotaDuracaoMin: number | null;
-  dataViagem: Date;
-  horaInicioPrevista: Date;
-  horaFimPrevista: Date;
-  dataHoraInicioReal: Date | null;
-  dataHoraFimReal: Date | null;
-  odometroInicial: number | null;
-  odometroFinal: number | null;
-  distanciaPercorrida: number | null;
-  motoristaId: string;
-  veiculoId: string;
-  operadorCriadorId: string;
-  solicitadoPor: string;
-  autorizadoPor: string;
+  origem_latitude: Prisma.Decimal | null;
+  origem_longitude: Prisma.Decimal | null;
+  destino_latitude: Prisma.Decimal | null;
+  destino_longitude: Prisma.Decimal | null;
+  rota_geometria: Prisma.JsonValue | null;
+  rota_distancia_km: Prisma.Decimal | null;
+  rota_duracao_min: number | null;
+  data_viagem: Date;
+  hora_inicio_prevista: Date;
+  hora_fim_prevista: Date;
+  data_hora_inicio_real: Date | null;
+  data_hora_fim_real: Date | null;
+  odometro_inicial: number | null;
+  odometro_final: number | null;
+  distancia_percorrida: number | null;
+  motorista_id: number;
+  veiculo_id: number;
+  operador_criador_id: number;
+  solicitado_por: string;
+  autorizado_por: string;
   observacoes: string | null;
-  status: string;
-  dataCriacao: Date;
-  dataAtualizacao: Date;
-  dataExclusao: Date | null;
-  motorista: { id: string; nome: string; matricula: string };
-  veiculo: { id: string; placa: string; marca: string; modelo: string; odometroAtual: number };
+  status_id: number;
+  data_hora_criacao: Date;
+  motorista: { id: number; nome: string; matricula: string };
+  veiculo: { id: number; placa: string; marca: string; modelo: string; odometro_atual: number };
+  status: { id: number; nome: string; descricao: string | null };
 };
 
 const INCLUDE_RELACOES = {
   motorista: { select: { id: true, nome: true, matricula: true } },
-  veiculo: { select: { id: true, placa: true, marca: true, modelo: true, odometroAtual: true } },
+  veiculo: { select: { id: true, placa: true, marca: true, modelo: true, odometro_atual: true } },
+  status: true,
 } as const;
 
 @Injectable()
 export class ViagensService {
   private cacheSede: { valor: string; expiradoEm: number } | null = null;
   private cacheSedeCoords: { endereco: string; coords: CoordenadasGeocode | null } | null = null;
+  private cacheStatus = new Map<string, number>(); // nome → id
 
   constructor(
     private readonly prisma: PrismaService,
@@ -85,42 +84,49 @@ export class ViagensService {
     private readonly push: PushNotificationService,
   ) {}
 
-  /**
-   * Verifica sobreposição de período para um motorista ou veículo numa data.
-   * Regra de overlap entre [a,b] e [c,d]: a < d AND c < b
-   * Status considerados: CRIADA e EM_ANDAMENTO (FINALIZADA não bloqueia)
-   * idExcluir: opcional, usado em "atualizar" para ignorar a própria viagem
-   */
+  /** Resolve id do status pelo nome (cacheado). */
+  private async statusId(nome: string): Promise<number> {
+    if (this.cacheStatus.has(nome)) return this.cacheStatus.get(nome)!;
+    const s = await this.prisma.status_viagem.findUnique({ where: { nome } });
+    if (!s) throw new BadRequestException(`Status '${nome}' não cadastrado`);
+    this.cacheStatus.set(nome, s.id);
+    return s.id;
+  }
+
   private async buscarConflitoDePeriodo(params: {
-    campoFiltro: 'motoristaId' | 'veiculoId';
-    idAlvo: string;
+    campoFiltro: 'motorista_id' | 'veiculo_id';
+    idAlvo: number;
     dataViagem: Date;
     horaInicio: Date;
     horaFim: Date;
-    idExcluir?: string;
-  }): Promise<{ id: string; horaInicioPrevista: Date; horaFimPrevista: Date } | null> {
+    idExcluir?: number;
+  }): Promise<{ id: number; hora_inicio_prevista: Date; hora_fim_prevista: Date } | null> {
     const { campoFiltro, idAlvo, dataViagem, horaInicio, horaFim, idExcluir } = params;
-    return this.prisma.viagem.findFirst({
+    const statusAtivos = await this.prisma.status_viagem.findMany({
+      where: { nome: { in: ['CRIADA', 'EM_ANDAMENTO'] } },
+      select: { id: true },
+    });
+    return this.prisma.viagens.findFirst({
       where: {
         [campoFiltro]: idAlvo,
-        dataViagem,
-        status: { in: ['CRIADA', 'EM_ANDAMENTO'] },
-        dataExclusao: null,
+        data_viagem: dataViagem,
+        status_id: { in: statusAtivos.map((s) => s.id) },
+        data_hora_exclusao: null,
         ...(idExcluir && { NOT: { id: idExcluir } }),
         AND: [
-          { horaInicioPrevista: { lt: horaFim } },
-          { horaFimPrevista: { gt: horaInicio } },
+          { hora_inicio_prevista: { lt: horaFim } },
+          { hora_fim_prevista: { gt: horaInicio } },
         ],
       },
-      select: { id: true, horaInicioPrevista: true, horaFimPrevista: true },
+      select: { id: true, hora_inicio_prevista: true, hora_fim_prevista: true },
     });
   }
 
   private descreverConflito(conflito: {
-    horaInicioPrevista: Date;
-    horaFimPrevista: Date;
+    hora_inicio_prevista: Date;
+    hora_fim_prevista: Date;
   }): string {
-    return `das ${dateParaHora(conflito.horaInicioPrevista)} às ${dateParaHora(conflito.horaFimPrevista)}`;
+    return `das ${dateParaHora(conflito.hora_inicio_prevista)} às ${dateParaHora(conflito.hora_fim_prevista)}`;
   }
 
   private async obterEnderecoSede(): Promise<string> {
@@ -128,9 +134,7 @@ export class ViagensService {
     if (this.cacheSede && this.cacheSede.expiradoEm > agora) {
       return this.cacheSede.valor;
     }
-    const config = await this.prisma.configuracao.findFirst({
-      where: { chave: 'endereco_sede' },
-    });
+    const config = await this.prisma.configuracoes.findFirst({ where: { chave: 'endereco_sede' } });
     if (!config) {
       throw new BadRequestException('Endereço da sede não configurado no sistema');
     }
@@ -138,10 +142,6 @@ export class ViagensService {
     return config.valor;
   }
 
-  /**
-   * Geocoda o endereço da sede uma única vez por endereço — quando ele muda
-   * em `configuracoes`, o cache invalida sozinho e refazemos a chamada.
-   */
   private async obterCoordenadasSede(endereco: string): Promise<CoordenadasGeocode | null> {
     if (this.cacheSedeCoords && this.cacheSedeCoords.endereco === endereco) {
       return this.cacheSedeCoords.coords;
@@ -159,26 +159,23 @@ export class ViagensService {
     const ehMotorista = usuario.perfil === 'motorista';
 
     const where = {
-      dataExclusao: null as null,
-      ...(ehMotorista && { motoristaId: usuario.sub }),
-      ...(filtros.status && { status: filtros.status }),
-      ...(!ehMotorista && filtros.motoristaId && { motoristaId: filtros.motoristaId }),
-      ...(filtros.veiculoId && { veiculoId: filtros.veiculoId }),
+      data_hora_exclusao: null as null,
+      ...(ehMotorista && { motorista_id: usuario.sub }),
+      ...(filtros.status_id && { status_id: filtros.status_id }),
+      ...(!ehMotorista && filtros.motorista_id && { motorista_id: filtros.motorista_id }),
+      ...(filtros.veiculo_id && { veiculo_id: filtros.veiculo_id }),
       ...(filtros.dataInicio && filtros.dataFim && {
-        dataViagem: {
-          gte: new Date(filtros.dataInicio),
-          lte: new Date(filtros.dataFim),
-        },
+        data_viagem: { gte: new Date(filtros.dataInicio), lte: new Date(filtros.dataFim) },
       }),
     };
 
     const [total, viagens] = await Promise.all([
-      this.prisma.viagem.count({ where }),
-      this.prisma.viagem.findMany({
+      this.prisma.viagens.count({ where }),
+      this.prisma.viagens.findMany({
         where,
         skip,
         take: tamanhoPagina,
-        orderBy: { dataViagem: 'desc' },
+        orderBy: { data_viagem: 'desc' },
         include: INCLUDE_RELACOES,
       }),
     ]);
@@ -187,76 +184,63 @@ export class ViagensService {
       dados: viagens.map((v) => this.mapearResposta(v)),
       total,
       pagina,
-      tamanhoPagina,
-      totalPaginas: Math.ceil(total / tamanhoPagina),
+      tamanho_pagina: tamanhoPagina,
+      total_paginas: Math.ceil(total / tamanhoPagina),
     };
   }
 
-  async buscarPorId(id: string, usuario: UsuarioJwt): Promise<ViagemRespostaDto> {
-    const viagem = await this.prisma.viagem.findFirst({
-      where: { id, dataExclusao: null },
+  async buscarPorId(id: number, usuario: UsuarioJwt): Promise<ViagemRespostaDto> {
+    const viagem = await this.prisma.viagens.findFirst({
+      where: { id, data_hora_exclusao: null },
       include: INCLUDE_RELACOES,
     });
-
     if (!viagem) throw new NotFoundException('Viagem não encontrada');
 
-    if (usuario.perfil === 'motorista' && viagem.motoristaId !== usuario.sub) {
+    if (usuario.perfil === 'motorista' && viagem.motorista_id !== usuario.sub) {
       throw new ForbiddenException('Acesso negado a esta viagem');
     }
 
-    // Backfill preguiçoso de coordenadas — viagens criadas antes do GPS ou
-    // quando o MAPBOX_TOKEN ainda não estava setado entram aqui sem lat/lng.
-    // Geocoda na primeira leitura e persiste. Best-effort: se falhar, segue.
-    const precisaOrigem = viagem.origemLatitude == null || viagem.origemLongitude == null;
-    const precisaDestino = viagem.destinoLatitude == null || viagem.destinoLongitude == null;
+    // Backfill preguiçoso de coordenadas
+    const precisaOrigem = viagem.origem_latitude == null || viagem.origem_longitude == null;
+    const precisaDestino = viagem.destino_latitude == null || viagem.destino_longitude == null;
     let viagemAtual = viagem;
     if (precisaOrigem || precisaDestino) {
       viagemAtual = await this.tentarBackfillCoordenadas(viagem, precisaOrigem, precisaDestino);
     }
 
-    // Backfill da rota (Directions API) — só depois das coords existirem
+    // Backfill da rota
     if (
-      viagemAtual.rotaGeometria == null &&
-      viagemAtual.origemLatitude != null &&
-      viagemAtual.origemLongitude != null &&
-      viagemAtual.destinoLatitude != null &&
-      viagemAtual.destinoLongitude != null
+      viagemAtual.rota_geometria == null &&
+      viagemAtual.origem_latitude != null &&
+      viagemAtual.origem_longitude != null &&
+      viagemAtual.destino_latitude != null &&
+      viagemAtual.destino_longitude != null
     ) {
       viagemAtual = await this.tentarBackfillRota(viagemAtual);
     }
 
-    // Velocidade média calibrada pelo histórico do motorista
-    const vel = await this.velocidade.porMotorista(viagemAtual.motoristaId);
+    const vel = await this.velocidade.porMotorista(viagemAtual.motorista_id);
     return this.mapearResposta(viagemAtual, vel.velocidadeMediaKmH);
   }
 
-  /**
-   * Tenta resolver a rota via Mapbox Directions e persistir no banco.
-   * Best-effort: se falhar, devolve a viagem original sem rota.
-   */
   private async tentarBackfillRota(viagem: ViagemComRelacoes): Promise<ViagemComRelacoes> {
     const rota = await this.directions.rotear(
-      { latitude: Number(viagem.origemLatitude), longitude: Number(viagem.origemLongitude) },
-      { latitude: Number(viagem.destinoLatitude), longitude: Number(viagem.destinoLongitude) },
+      { latitude: Number(viagem.origem_latitude), longitude: Number(viagem.origem_longitude) },
+      { latitude: Number(viagem.destino_latitude), longitude: Number(viagem.destino_longitude) },
     );
     if (!rota) return viagem;
 
-    const atualizada = await this.prisma.viagem.update({
+    return this.prisma.viagens.update({
       where: { id: viagem.id },
       data: {
-        rotaGeometria: rota.geometria as Prisma.InputJsonValue,
-        rotaDistanciaKm: rota.distanciaKm,
-        rotaDuracaoMin: Math.round(rota.duracaoMin),
+        rota_geometria: rota.geometria as Prisma.InputJsonValue,
+        rota_distancia_km: rota.distanciaKm,
+        rota_duracao_min: Math.round(rota.duracaoMin),
       },
       include: INCLUDE_RELACOES,
     });
-    return atualizada;
   }
 
-  /**
-   * Tenta resolver coords faltantes via Mapbox e persistir. Retorna a
-   * viagem (atualizada se o geocoding funcionou, ou a original).
-   */
   private async tentarBackfillCoordenadas(
     viagem: ViagemComRelacoes,
     precisaOrigem: boolean,
@@ -266,214 +250,202 @@ export class ViagensService {
       precisaOrigem ? this.geocoding.geocodificar(viagem.origem) : Promise.resolve(null),
       precisaDestino ? this.geocoding.geocodificar(viagem.destino) : Promise.resolve(null),
     ]);
+    if (!coordsOrigem && !coordsDestino) return viagem;
 
-    if (!coordsOrigem && !coordsDestino) {
-      return viagem;
-    }
-
-    const atualizada = await this.prisma.viagem.update({
+    return this.prisma.viagens.update({
       where: { id: viagem.id },
       data: {
         ...(coordsOrigem && {
-          origemLatitude: coordsOrigem.latitude,
-          origemLongitude: coordsOrigem.longitude,
+          origem_latitude: coordsOrigem.latitude,
+          origem_longitude: coordsOrigem.longitude,
         }),
         ...(coordsDestino && {
-          destinoLatitude: coordsDestino.latitude,
-          destinoLongitude: coordsDestino.longitude,
+          destino_latitude: coordsDestino.latitude,
+          destino_longitude: coordsDestino.longitude,
         }),
       },
       include: INCLUDE_RELACOES,
     });
-
-    return atualizada;
   }
 
-  async criar(dto: CriarViagemDto, operadorId: string): Promise<ViagemRespostaDto> {
-    // 1. Endereço da sede (cacheado por 5 min)
+  async criar(dto: CriarViagemDto, operadorId: number): Promise<ViagemRespostaDto> {
     const enderecoSede = await this.obterEnderecoSede();
 
-    // 2. Validar hora (fim > início)
-    if (dto.horaFimPrevista <= dto.horaInicioPrevista) {
+    if (dto.hora_fim_prevista <= dto.hora_inicio_prevista) {
       throw new BadRequestException('Hora de fim deve ser posterior à hora de início');
     }
 
-    // 3. Validar motorista
-    const motorista = await this.prisma.usuario.findFirst({
-      where: { id: dto.motoristaId, perfil: 'motorista', ativo: true, dataExclusao: null },
+    // Motorista — incluir perfil pra checar nome
+    const motorista = await this.prisma.usuarios.findFirst({
+      where: { id: dto.motorista_id, ativo: true, data_hora_exclusao: null },
+      include: { perfil: true },
     });
-    if (!motorista) throw new NotFoundException('Motorista não encontrado ou inativo');
+    if (!motorista || motorista.perfil.nome !== 'motorista') {
+      throw new NotFoundException('Motorista não encontrado ou inativo');
+    }
 
-    // 4. Validar CNH
-    if (!motorista.cnh || !motorista.cnhValidade) {
+    if (!motorista.cnh || !motorista.cnh_validade) {
       throw new BadRequestException('Motorista não possui CNH cadastrada');
     }
     const hoje = agoraBrasilia();
-    if (motorista.cnhValidade < hoje) {
+    if (motorista.cnh_validade < hoje) {
       throw new BadRequestException(
-        `CNH do motorista vencida em ${motorista.cnhValidade.toISOString().split('T')[0]}`,
+        `CNH do motorista vencida em ${motorista.cnh_validade.toISOString().split('T')[0]}`,
       );
     }
 
-    // 5. Validar veículo
-    const veiculo = await this.prisma.veiculo.findFirst({
-      where: { id: dto.veiculoId, situacao: 'ativo', dataExclusao: null },
+    // Veículo — situação ativo
+    const ativo = await this.prisma.situacoes_veiculo.findUnique({ where: { nome: 'ativo' } });
+    const veiculo = await this.prisma.veiculos.findFirst({
+      where: {
+        id: dto.veiculo_id,
+        ...(ativo && { situacao_id: ativo.id }),
+        data_hora_exclusao: null,
+      },
     });
     if (!veiculo) throw new NotFoundException('Veículo não encontrado ou não está ativo');
 
-    const dataViagem = new Date(dto.dataViagem);
-    const horaInicioNova = horaParaDate(dto.horaInicioPrevista);
-    const horaFimNova = horaParaDate(dto.horaFimPrevista);
+    const dataViagem = new Date(dto.data_viagem);
+    const horaInicioNova = horaParaDate(dto.hora_inicio_prevista);
+    const horaFimNova = horaParaDate(dto.hora_fim_prevista);
 
-    // 6. Conflito de período do motorista
-    // (mesma data + sobreposição de horario com viagem CRIADA ou EM_ANDAMENTO)
     const conflitoMotorista = await this.buscarConflitoDePeriodo({
-      campoFiltro: 'motoristaId',
-      idAlvo: dto.motoristaId,
+      campoFiltro: 'motorista_id',
+      idAlvo: dto.motorista_id,
       dataViagem,
       horaInicio: horaInicioNova,
       horaFim: horaFimNova,
     });
     if (conflitoMotorista) {
       throw new BadRequestException(
-        `Motorista já possui viagem ${this.descreverConflito(conflitoMotorista)} ` +
-          'nesta data com horário sobreposto. Ajuste o horário ou escolha outro motorista.',
+        `Motorista já possui viagem ${this.descreverConflito(conflitoMotorista)} nesta data com horário sobreposto.`,
       );
     }
 
-    // 7. Conflito de período do veículo
     const conflitoVeiculo = await this.buscarConflitoDePeriodo({
-      campoFiltro: 'veiculoId',
-      idAlvo: dto.veiculoId,
+      campoFiltro: 'veiculo_id',
+      idAlvo: dto.veiculo_id,
       dataViagem,
       horaInicio: horaInicioNova,
       horaFim: horaFimNova,
     });
     if (conflitoVeiculo) {
       throw new BadRequestException(
-        `Veículo já possui viagem ${this.descreverConflito(conflitoVeiculo)} ` +
-          'nesta data com horário sobreposto. Ajuste o horário ou escolha outro veículo.',
+        `Veículo já possui viagem ${this.descreverConflito(conflitoVeiculo)} nesta data com horário sobreposto.`,
       );
     }
 
-    // 8. Geocoding (best-effort) — origem = sede; destino = endereço informado.
-    // Falhas não bloqueiam: viagem é criada sem coords se a API recusar.
     const [coordsOrigem, coordsDestino] = await Promise.all([
       this.obterCoordenadasSede(enderecoSede),
       this.geocoding.geocodificar(dto.destino),
     ]);
-
-    // 9. Routing (best-effort) — só se os dois pontos foram geocodados
     const rota =
-      coordsOrigem && coordsDestino
-        ? await this.directions.rotear(coordsOrigem, coordsDestino)
-        : null;
+      coordsOrigem && coordsDestino ? await this.directions.rotear(coordsOrigem, coordsDestino) : null;
 
-    const viagem = await this.prisma.viagem.create({
+    const statusCriadaId = await this.statusId('CRIADA');
+
+    const viagem = await this.prisma.viagens.create({
       data: {
         origem: enderecoSede,
         destino: dto.destino,
-        origemLatitude: coordsOrigem?.latitude ?? null,
-        origemLongitude: coordsOrigem?.longitude ?? null,
-        destinoLatitude: coordsDestino?.latitude ?? null,
-        destinoLongitude: coordsDestino?.longitude ?? null,
-        rotaGeometria: (rota?.geometria as Prisma.InputJsonValue) ?? Prisma.JsonNull,
-        rotaDistanciaKm: rota?.distanciaKm ?? null,
-        rotaDuracaoMin: rota ? Math.round(rota.duracaoMin) : null,
-        dataViagem,
-        horaInicioPrevista: horaParaDate(dto.horaInicioPrevista),
-        horaFimPrevista: horaParaDate(dto.horaFimPrevista),
-        motoristaId: dto.motoristaId,
-        veiculoId: dto.veiculoId,
-        operadorCriadorId: operadorId,
-        solicitadoPor: dto.solicitadoPor,
-        autorizadoPor: dto.autorizadoPor,
+        origem_latitude: coordsOrigem?.latitude ?? null,
+        origem_longitude: coordsOrigem?.longitude ?? null,
+        destino_latitude: coordsDestino?.latitude ?? null,
+        destino_longitude: coordsDestino?.longitude ?? null,
+        rota_geometria: (rota?.geometria as Prisma.InputJsonValue) ?? Prisma.JsonNull,
+        rota_distancia_km: rota?.distanciaKm ?? null,
+        rota_duracao_min: rota ? Math.round(rota.duracaoMin) : null,
+        data_viagem: dataViagem,
+        hora_inicio_prevista: horaInicioNova,
+        hora_fim_prevista: horaFimNova,
+        motorista_id: dto.motorista_id,
+        veiculo_id: dto.veiculo_id,
+        operador_criador_id: operadorId,
+        solicitado_por: dto.solicitado_por,
+        autorizado_por: dto.autorizado_por,
         observacoes: dto.observacoes ?? null,
-        status: 'CRIADA',
+        status_id: statusCriadaId,
       },
       include: INCLUDE_RELACOES,
     });
 
-    // Notifica o motorista — fire-and-forget pra não bloquear a resposta.
-    // O dataViagem vem em UTC, formatamos pra dd/MM em Brasília.
+    // Push fire-and-forget
     const dataFmt = dataViagem.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       timeZone: 'America/Sao_Paulo',
     });
     this.push
-      .enviarParaUsuario(dto.motoristaId, {
+      .enviarParaUsuario(dto.motorista_id, {
         titulo: 'Nova viagem atribuída',
-        corpo: `${dto.destino} · ${dataFmt} às ${dto.horaInicioPrevista}`,
+        corpo: `${dto.destino} · ${dataFmt} às ${dto.hora_inicio_prevista}`,
         dados: { tela: 'viagem', viagemId: viagem.id },
       })
-      .catch(() => {
-        /* já loga internamente; ignora pra não derrubar a request */
-      });
+      .catch(() => {});
 
     return this.mapearResposta(viagem);
   }
 
-  async atualizar(
-    id: string,
-    dto: AtualizarViagemDto,
-  ): Promise<ViagemRespostaDto> {
-    const viagem = await this.prisma.viagem.findFirst({
-      where: { id, dataExclusao: null },
+  async atualizar(id: number, dto: AtualizarViagemDto): Promise<ViagemRespostaDto> {
+    const viagem = await this.prisma.viagens.findFirst({
+      where: { id, data_hora_exclusao: null },
+      include: { status: true },
     });
     if (!viagem) throw new NotFoundException('Viagem não encontrada');
 
-    if (viagem.status !== 'CRIADA') {
+    if (viagem.status.nome !== 'CRIADA') {
       throw new BadRequestException(
-        `Não é possível editar viagem com status "${viagem.status}". ` +
-          'Apenas viagens com status CRIADA podem ser editadas.',
+        `Não é possível editar viagem com status "${viagem.status.nome}". Apenas CRIADA pode ser editada.`,
       );
     }
 
-    // Resolve campos finais (dto sobrescreve, mantém os atuais quando não informado)
-    const dataViagem = dto.dataViagem ? new Date(dto.dataViagem) : viagem.dataViagem;
-    const horaInicio = dto.horaInicioPrevista
-      ? horaParaDate(dto.horaInicioPrevista)
-      : viagem.horaInicioPrevista;
-    const horaFim = dto.horaFimPrevista
-      ? horaParaDate(dto.horaFimPrevista)
-      : viagem.horaFimPrevista;
-    const motoristaId = dto.motoristaId ?? viagem.motoristaId;
-    const veiculoId = dto.veiculoId ?? viagem.veiculoId;
+    const dataViagem = dto.data_viagem ? new Date(dto.data_viagem) : viagem.data_viagem;
+    const horaInicio = dto.hora_inicio_prevista
+      ? horaParaDate(dto.hora_inicio_prevista)
+      : viagem.hora_inicio_prevista;
+    const horaFim = dto.hora_fim_prevista
+      ? horaParaDate(dto.hora_fim_prevista)
+      : viagem.hora_fim_prevista;
+    const motoristaId = dto.motorista_id ?? viagem.motorista_id;
+    const veiculoId = dto.veiculo_id ?? viagem.veiculo_id;
 
-    // Valida hora fim > hora início
     if (horaFim <= horaInicio) {
       throw new BadRequestException('Hora de fim deve ser posterior à hora de início');
     }
 
-    // Se mudou motorista, valida ativo + CNH
-    if (dto.motoristaId && dto.motoristaId !== viagem.motoristaId) {
-      const motorista = await this.prisma.usuario.findFirst({
-        where: { id: motoristaId, perfil: 'motorista', ativo: true, dataExclusao: null },
+    if (dto.motorista_id && dto.motorista_id !== viagem.motorista_id) {
+      const motorista = await this.prisma.usuarios.findFirst({
+        where: { id: motoristaId, ativo: true, data_hora_exclusao: null },
+        include: { perfil: true },
       });
-      if (!motorista) throw new NotFoundException('Motorista não encontrado ou inativo');
-      if (!motorista.cnh || !motorista.cnhValidade) {
+      if (!motorista || motorista.perfil.nome !== 'motorista') {
+        throw new NotFoundException('Motorista não encontrado ou inativo');
+      }
+      if (!motorista.cnh || !motorista.cnh_validade) {
         throw new BadRequestException('Motorista não possui CNH cadastrada');
       }
       const hoje = agoraBrasilia();
-      if (motorista.cnhValidade < hoje) {
+      if (motorista.cnh_validade < hoje) {
         throw new BadRequestException(
-          `CNH do motorista vencida em ${motorista.cnhValidade.toISOString().split('T')[0]}`,
+          `CNH do motorista vencida em ${motorista.cnh_validade.toISOString().split('T')[0]}`,
         );
       }
     }
 
-    // Se mudou veículo, valida ativo
-    if (dto.veiculoId && dto.veiculoId !== viagem.veiculoId) {
-      const veiculo = await this.prisma.veiculo.findFirst({
-        where: { id: veiculoId, situacao: 'ativo', dataExclusao: null },
+    if (dto.veiculo_id && dto.veiculo_id !== viagem.veiculo_id) {
+      const ativo = await this.prisma.situacoes_veiculo.findUnique({ where: { nome: 'ativo' } });
+      const veiculo = await this.prisma.veiculos.findFirst({
+        where: {
+          id: veiculoId,
+          ...(ativo && { situacao_id: ativo.id }),
+          data_hora_exclusao: null,
+        },
       });
       if (!veiculo) throw new NotFoundException('Veículo não encontrado ou não está ativo');
     }
 
-    // Revalida conflito de período (excluindo a própria viagem)
     const conflitoMotorista = await this.buscarConflitoDePeriodo({
-      campoFiltro: 'motoristaId',
+      campoFiltro: 'motorista_id',
       idAlvo: motoristaId,
       dataViagem,
       horaInicio,
@@ -482,12 +454,11 @@ export class ViagensService {
     });
     if (conflitoMotorista) {
       throw new BadRequestException(
-        `Motorista já possui viagem ${this.descreverConflito(conflitoMotorista)} ` +
-          'nesta data com horário sobreposto.',
+        `Motorista já possui viagem ${this.descreverConflito(conflitoMotorista)} nesta data.`,
       );
     }
     const conflitoVeiculo = await this.buscarConflitoDePeriodo({
-      campoFiltro: 'veiculoId',
+      campoFiltro: 'veiculo_id',
       idAlvo: veiculoId,
       dataViagem,
       horaInicio,
@@ -496,37 +467,33 @@ export class ViagensService {
     });
     if (conflitoVeiculo) {
       throw new BadRequestException(
-        `Veículo já possui viagem ${this.descreverConflito(conflitoVeiculo)} ` +
-          'nesta data com horário sobreposto.',
+        `Veículo já possui viagem ${this.descreverConflito(conflitoVeiculo)} nesta data.`,
       );
     }
 
-    // Se o destino mudou, re-geocoda (best-effort) e invalida o cache da rota.
-    // O backfill de rota em buscarPorId vai recalcular na próxima leitura.
     const destinoMudou = dto.destino !== undefined && dto.destino !== viagem.destino;
     const coordsDestinoNovas = destinoMudou
       ? await this.geocoding.geocodificar(dto.destino as string)
       : null;
 
-    const atualizada = await this.prisma.viagem.update({
+    const atualizada = await this.prisma.viagens.update({
       where: { id },
       data: {
         ...(dto.destino !== undefined && { destino: dto.destino }),
-        ...(dto.dataViagem !== undefined && { dataViagem }),
-        ...(dto.horaInicioPrevista !== undefined && { horaInicioPrevista: horaInicio }),
-        ...(dto.horaFimPrevista !== undefined && { horaFimPrevista: horaFim }),
-        ...(dto.motoristaId !== undefined && { motoristaId }),
-        ...(dto.veiculoId !== undefined && { veiculoId }),
-        ...(dto.solicitadoPor !== undefined && { solicitadoPor: dto.solicitadoPor }),
-        ...(dto.autorizadoPor !== undefined && { autorizadoPor: dto.autorizadoPor }),
+        ...(dto.data_viagem !== undefined && { data_viagem: dataViagem }),
+        ...(dto.hora_inicio_prevista !== undefined && { hora_inicio_prevista: horaInicio }),
+        ...(dto.hora_fim_prevista !== undefined && { hora_fim_prevista: horaFim }),
+        ...(dto.motorista_id !== undefined && { motorista_id: motoristaId }),
+        ...(dto.veiculo_id !== undefined && { veiculo_id: veiculoId }),
+        ...(dto.solicitado_por !== undefined && { solicitado_por: dto.solicitado_por }),
+        ...(dto.autorizado_por !== undefined && { autorizado_por: dto.autorizado_por }),
         ...(dto.observacoes !== undefined && { observacoes: dto.observacoes ?? null }),
         ...(destinoMudou && {
-          destinoLatitude: coordsDestinoNovas?.latitude ?? null,
-          destinoLongitude: coordsDestinoNovas?.longitude ?? null,
-          // Invalida a rota cacheada — buscarPorId vai recalcular no próximo GET.
-          rotaGeometria: Prisma.JsonNull,
-          rotaDistanciaKm: null,
-          rotaDuracaoMin: null,
+          destino_latitude: coordsDestinoNovas?.latitude ?? null,
+          destino_longitude: coordsDestinoNovas?.longitude ?? null,
+          rota_geometria: Prisma.JsonNull,
+          rota_distancia_km: null,
+          rota_duracao_min: null,
         }),
       },
       include: INCLUDE_RELACOES,
@@ -536,233 +503,215 @@ export class ViagensService {
   }
 
   async iniciar(
-    id: string,
+    id: number,
     dto: IniciarViagemDto,
     usuario: UsuarioJwt,
   ): Promise<ViagemRespostaDto> {
-    const viagem = await this.prisma.viagem.findFirst({
-      where: { id, dataExclusao: null },
+    const viagem = await this.prisma.viagens.findFirst({
+      where: { id, data_hora_exclusao: null },
       include: INCLUDE_RELACOES,
     });
-
     if (!viagem) throw new NotFoundException('Viagem não encontrada');
 
-    if (viagem.status !== 'CRIADA') {
+    if (viagem.status.nome !== 'CRIADA') {
       throw new BadRequestException(
-        `Não é possível iniciar viagem com status "${viagem.status}". Apenas viagens com status CRIADA podem ser iniciadas.`,
+        `Não é possível iniciar viagem com status "${viagem.status.nome}".`,
       );
     }
-
-    if (usuario.perfil === 'motorista' && viagem.motoristaId !== usuario.sub) {
+    if (usuario.perfil === 'motorista' && viagem.motorista_id !== usuario.sub) {
       throw new ForbiddenException('Motorista só pode iniciar suas próprias viagens');
     }
-
-    if (dto.odometroInicial < viagem.veiculo.odometroAtual) {
+    if (dto.odometro_inicial < viagem.veiculo.odometro_atual) {
       throw new BadRequestException(
-        `Odômetro inicial (${dto.odometroInicial} km) não pode ser menor que o odômetro atual do veículo (${viagem.veiculo.odometroAtual} km)`,
+        `Odômetro inicial (${dto.odometro_inicial} km) menor que o odômetro atual do veículo (${viagem.veiculo.odometro_atual} km)`,
       );
     }
 
-    const atualizada = await this.prisma.viagem.update({
+    const statusEmAndId = await this.statusId('EM_ANDAMENTO');
+    const atualizada = await this.prisma.viagens.update({
       where: { id },
       data: {
-        status: 'EM_ANDAMENTO',
-        odometroInicial: dto.odometroInicial,
-        dataHoraInicioReal: agoraBrasilia(),
+        status_id: statusEmAndId,
+        odometro_inicial: dto.odometro_inicial,
+        data_hora_inicio_real: agoraBrasilia(),
       },
       include: INCLUDE_RELACOES,
     });
-
     return this.mapearResposta(atualizada);
   }
 
   async finalizar(
-    id: string,
+    id: number,
     dto: FinalizarViagemDto,
     usuario: UsuarioJwt,
   ): Promise<ViagemRespostaDto> {
-    const viagem = await this.prisma.viagem.findFirst({
-      where: { id, dataExclusao: null },
+    const viagem = await this.prisma.viagens.findFirst({
+      where: { id, data_hora_exclusao: null },
       include: INCLUDE_RELACOES,
     });
-
     if (!viagem) throw new NotFoundException('Viagem não encontrada');
 
-    if (viagem.status !== 'EM_ANDAMENTO') {
+    if (viagem.status.nome !== 'EM_ANDAMENTO') {
       throw new BadRequestException(
-        `Não é possível finalizar viagem com status "${viagem.status}". Apenas viagens EM_ANDAMENTO podem ser finalizadas.`,
+        `Não é possível finalizar viagem com status "${viagem.status.nome}".`,
       );
     }
-
-    if (usuario.perfil === 'motorista' && viagem.motoristaId !== usuario.sub) {
+    if (usuario.perfil === 'motorista' && viagem.motorista_id !== usuario.sub) {
       throw new ForbiddenException('Motorista só pode finalizar suas próprias viagens');
     }
 
-    const odometroInicial = viagem.odometroInicial ?? 0;
-    if (dto.odometroFinal <= odometroInicial) {
+    const odometroInicial = viagem.odometro_inicial ?? 0;
+    if (dto.odometro_final <= odometroInicial) {
       throw new BadRequestException(
-        `Odômetro final (${dto.odometroFinal} km) deve ser maior que o odômetro inicial (${odometroInicial} km)`,
+        `Odômetro final (${dto.odometro_final} km) deve ser maior que o inicial (${odometroInicial} km)`,
       );
     }
 
-    const distanciaPercorrida = dto.odometroFinal - odometroInicial;
+    const distanciaPercorrida = dto.odometro_final - odometroInicial;
+    const statusFinalId = await this.statusId('FINALIZADA');
 
     const [atualizada] = await this.prisma.$transaction([
-      this.prisma.viagem.update({
+      this.prisma.viagens.update({
         where: { id },
         data: {
-          status: 'FINALIZADA',
-          odometroFinal: dto.odometroFinal,
-          distanciaPercorrida,
-          dataHoraFimReal: agoraBrasilia(),
+          status_id: statusFinalId,
+          odometro_final: dto.odometro_final,
+          distancia_percorrida: distanciaPercorrida,
+          data_hora_fim_real: agoraBrasilia(),
         },
         include: INCLUDE_RELACOES,
       }),
-      this.prisma.veiculo.update({
-        where: { id: viagem.veiculoId },
-        data: { odometroAtual: dto.odometroFinal },
+      this.prisma.veiculos.update({
+        where: { id: viagem.veiculo_id },
+        data: { odometro_atual: dto.odometro_final },
       }),
     ]);
 
-    // Esta viagem agora entra no cálculo de velocidade média — invalida o
-    // cache do motorista pra recálculo na próxima leitura
-    this.velocidade.invalidar(viagem.motoristaId);
-
+    this.velocidade.invalidar(viagem.motorista_id);
     return this.mapearResposta(atualizada);
   }
 
-  /**
-   * Registra uma posição GPS na viagem. Só o motorista atribuído pode
-   * registrar, e só enquanto a viagem está EM_ANDAMENTO.
-   */
   async registrarPosicao(
-    viagemId: string,
+    viagemId: number,
     usuario: UsuarioJwt,
     dto: CriarPosicaoDto,
   ): Promise<PosicaoRespostaDto> {
-    const viagem = await this.prisma.viagem.findFirst({
-      where: { id: viagemId, dataExclusao: null },
-      select: { id: true, motoristaId: true, status: true },
+    const viagem = await this.prisma.viagens.findFirst({
+      where: { id: viagemId, data_hora_exclusao: null },
+      select: { id: true, motorista_id: true, status: { select: { nome: true } } },
     });
     if (!viagem) throw new NotFoundException('Viagem não encontrada');
 
-    // Só o motorista da viagem pode reportar posição
-    if (usuario.perfil === 'motorista' && viagem.motoristaId !== usuario.sub) {
+    if (usuario.perfil === 'motorista' && viagem.motorista_id !== usuario.sub) {
       throw new ForbiddenException('Motorista só pode reportar posição em suas próprias viagens');
     }
-    // Operador/admin não tem por que enviar — bloqueia
     if (usuario.perfil !== 'motorista') {
       throw new ForbiddenException('Apenas motoristas podem reportar posição');
     }
-
-    if (viagem.status !== 'EM_ANDAMENTO') {
+    if (viagem.status.nome !== 'EM_ANDAMENTO') {
       throw new BadRequestException(
-        `Posição só pode ser registrada em viagens EM_ANDAMENTO (status atual: ${viagem.status})`,
+        `Posição só pode ser registrada em viagens EM_ANDAMENTO (status atual: ${viagem.status.nome})`,
       );
     }
 
     const capturadoEm = dto.capturadoEm ? new Date(dto.capturadoEm) : agoraBrasilia();
 
-    const criada = await this.prisma.posicaoViagem.create({
+    const criada = await this.prisma.posicoes_viagem.create({
       data: {
-        viagemId,
+        viagem_id: viagemId,
         latitude: dto.latitude,
         longitude: dto.longitude,
-        precisaoM: dto.precisaoM ?? null,
-        capturadoEm,
+        precisao_m: dto.precisaoM ?? null,
+        capturado_em: capturadoEm,
       },
     });
 
     return {
       id: criada.id,
-      viagemId: criada.viagemId,
+      viagem_id: criada.viagem_id,
       latitude: Number(criada.latitude),
       longitude: Number(criada.longitude),
-      precisaoM: criada.precisaoM != null ? Number(criada.precisaoM) : null,
-      capturadoEm: formatarDataHoraBrasilia(criada.capturadoEm),
+      precisao_m: criada.precisao_m != null ? Number(criada.precisao_m) : null,
+      capturado_em: formatarDataHoraBrasilia(criada.capturado_em),
     };
   }
 
-  /**
-   * Últimas N posições de uma viagem (operador acompanhando + motorista
-   * conferindo). Ordenadas da mais recente pra mais antiga.
-   */
   async listarPosicoes(
-    viagemId: string,
+    viagemId: number,
     usuario: UsuarioJwt,
     limite = 50,
   ): Promise<PosicaoRespostaDto[]> {
-    const viagem = await this.prisma.viagem.findFirst({
-      where: { id: viagemId, dataExclusao: null },
-      select: { motoristaId: true },
+    const viagem = await this.prisma.viagens.findFirst({
+      where: { id: viagemId, data_hora_exclusao: null },
+      select: { motorista_id: true },
     });
     if (!viagem) throw new NotFoundException('Viagem não encontrada');
 
-    // Motorista só vê posições das próprias viagens
-    if (usuario.perfil === 'motorista' && viagem.motoristaId !== usuario.sub) {
+    if (usuario.perfil === 'motorista' && viagem.motorista_id !== usuario.sub) {
       throw new ForbiddenException('Acesso negado a esta viagem');
     }
 
-    const posicoes = await this.prisma.posicaoViagem.findMany({
-      where: { viagemId },
-      orderBy: { capturadoEm: 'desc' },
+    const posicoes = await this.prisma.posicoes_viagem.findMany({
+      where: { viagem_id: viagemId },
+      orderBy: { capturado_em: 'desc' },
       take: Math.min(Math.max(limite, 1), 500),
     });
 
     return posicoes.map((p) => ({
       id: p.id,
-      viagemId: p.viagemId,
+      viagem_id: p.viagem_id,
       latitude: Number(p.latitude),
       longitude: Number(p.longitude),
-      precisaoM: p.precisaoM != null ? Number(p.precisaoM) : null,
-      capturadoEm: formatarDataHoraBrasilia(p.capturadoEm),
+      precisao_m: p.precisao_m != null ? Number(p.precisao_m) : null,
+      capturado_em: formatarDataHoraBrasilia(p.capturado_em),
     }));
   }
 
   private mapearResposta(
-    viagem: ViagemComRelacoes,
+    v: ViagemComRelacoes,
     velocidadeMediaKmH: number | null = null,
   ): ViagemRespostaDto {
     return {
-      id: viagem.id,
-      origem: viagem.origem,
-      destino: viagem.destino,
-      origemLatitude: viagem.origemLatitude != null ? Number(viagem.origemLatitude) : null,
-      origemLongitude: viagem.origemLongitude != null ? Number(viagem.origemLongitude) : null,
-      destinoLatitude: viagem.destinoLatitude != null ? Number(viagem.destinoLatitude) : null,
-      destinoLongitude: viagem.destinoLongitude != null ? Number(viagem.destinoLongitude) : null,
-      rotaGeometria: viagem.rotaGeometria,
-      rotaDistanciaKm: viagem.rotaDistanciaKm != null ? Number(viagem.rotaDistanciaKm) : null,
-      rotaDuracaoMin: viagem.rotaDuracaoMin,
-      velocidadeMediaKmH,
-      dataViagem: viagem.dataViagem.toISOString().split('T')[0] ?? '',
-      horaInicioPrevista: dateParaHora(viagem.horaInicioPrevista),
-      horaFimPrevista: dateParaHora(viagem.horaFimPrevista),
-      dataHoraInicioReal: viagem.dataHoraInicioReal
-        ? formatarDataHoraBrasilia(viagem.dataHoraInicioReal)
+      id: v.id,
+      origem: v.origem,
+      destino: v.destino,
+      origem_latitude: v.origem_latitude != null ? Number(v.origem_latitude) : null,
+      origem_longitude: v.origem_longitude != null ? Number(v.origem_longitude) : null,
+      destino_latitude: v.destino_latitude != null ? Number(v.destino_latitude) : null,
+      destino_longitude: v.destino_longitude != null ? Number(v.destino_longitude) : null,
+      rota_geometria: v.rota_geometria,
+      rota_distancia_km: v.rota_distancia_km != null ? Number(v.rota_distancia_km) : null,
+      rota_duracao_min: v.rota_duracao_min,
+      velocidade_media_km_h: velocidadeMediaKmH,
+      data_viagem: v.data_viagem.toISOString().split('T')[0] ?? '',
+      hora_inicio_prevista: dateParaHora(v.hora_inicio_prevista),
+      hora_fim_prevista: dateParaHora(v.hora_fim_prevista),
+      data_hora_inicio_real: v.data_hora_inicio_real
+        ? formatarDataHoraBrasilia(v.data_hora_inicio_real)
         : null,
-      dataHoraFimReal: viagem.dataHoraFimReal
-        ? formatarDataHoraBrasilia(viagem.dataHoraFimReal)
+      data_hora_fim_real: v.data_hora_fim_real
+        ? formatarDataHoraBrasilia(v.data_hora_fim_real)
         : null,
-      odometroInicial: viagem.odometroInicial,
-      odometroFinal: viagem.odometroFinal,
-      distanciaPercorrida: viagem.distanciaPercorrida,
-      motoristaId: viagem.motoristaId,
-      motorista: viagem.motorista,
-      veiculoId: viagem.veiculoId,
+      odometro_inicial: v.odometro_inicial,
+      odometro_final: v.odometro_final,
+      distancia_percorrida: v.distancia_percorrida,
+      motorista_id: v.motorista_id,
+      motorista: v.motorista,
+      veiculo_id: v.veiculo_id,
       veiculo: {
-        id: viagem.veiculo.id,
-        placa: viagem.veiculo.placa,
-        marca: viagem.veiculo.marca,
-        modelo: viagem.veiculo.modelo,
-        odometroAtual: viagem.veiculo.odometroAtual,
+        id: v.veiculo.id,
+        placa: v.veiculo.placa,
+        marca: v.veiculo.marca,
+        modelo: v.veiculo.modelo,
+        odometro_atual: v.veiculo.odometro_atual,
       },
-      operadorCriadorId: viagem.operadorCriadorId,
-      solicitadoPor: viagem.solicitadoPor,
-      autorizadoPor: viagem.autorizadoPor,
-      observacoes: viagem.observacoes,
-      status: viagem.status as StatusViagem,
-      dataCriacao: formatarDataHoraBrasilia(viagem.dataCriacao),
+      operador_criador_id: v.operador_criador_id,
+      solicitado_por: v.solicitado_por,
+      autorizado_por: v.autorizado_por,
+      observacoes: v.observacoes,
+      status_id: v.status_id,
+      status: { id: v.status.id, nome: v.status.nome, descricao: v.status.descricao },
+      data_hora_criacao: formatarDataHoraBrasilia(v.data_hora_criacao),
     };
   }
 }
