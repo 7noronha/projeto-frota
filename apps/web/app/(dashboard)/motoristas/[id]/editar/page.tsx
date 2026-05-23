@@ -7,7 +7,8 @@ interface Props {
 }
 
 export default async function PaginaEditarMotorista({ params }: Props) {
-  const { id } = await params;
+  const { id: idStr } = await params;
+  const id = Number(idStr);
 
   let motorista;
   try {

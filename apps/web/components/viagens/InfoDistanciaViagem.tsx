@@ -4,17 +4,17 @@ import { Card, HStack, Text, Icon } from '@lojascem/components-react';
 import { distanciaKm, formatarDistancia, formatarTempo, type PontoGeo } from '@fleetops/utils';
 
 interface InfoDistanciaViagemProps {
-  origemLatitude: number | null;
-  origemLongitude: number | null;
-  destinoLatitude: number | null;
-  destinoLongitude: number | null;
+  origem_latitude: number | null;
+  origem_longitude: number | null;
+  destino_latitude: number | null;
+  destino_longitude: number | null;
   /** Em km. Quando informado, exibimos lado a lado com a linha reta. */
-  distanciaPercorrida?: number | null;
+  distancia_percorrida?: number | null;
   /** Distância real por estradas (Mapbox Directions). Quando presente,
    * substitui a linha reta como métrica primária. */
-  rotaDistanciaKm?: number | null;
+  rota_distancia_km?: number | null;
   /** Duração estimada da rota em minutos (Mapbox Directions). */
-  rotaDuracaoMin?: number | null;
+  rota_duracao_min?: number | null;
 }
 
 function asPonto(lat: number | null, lng: number | null): PontoGeo | null {
@@ -28,22 +28,22 @@ function asPonto(lat: number | null, lng: number | null): PontoGeo | null {
  * ambas pra comparação ("linha reta" vs "rodada").
  */
 export function InfoDistanciaViagem({
-  origemLatitude,
-  origemLongitude,
-  destinoLatitude,
-  destinoLongitude,
-  distanciaPercorrida,
-  rotaDistanciaKm,
-  rotaDuracaoMin,
+  origem_latitude,
+  origem_longitude,
+  destino_latitude,
+  destino_longitude,
+  distancia_percorrida,
+  rota_distancia_km,
+  rota_duracao_min,
 }: InfoDistanciaViagemProps) {
-  const origem = asPonto(origemLatitude, origemLongitude);
-  const destino = asPonto(destinoLatitude, destinoLongitude);
+  const origem = asPonto(origem_latitude, origem_longitude);
+  const destino = asPonto(destino_latitude, destino_longitude);
   const linhaRetaKm = origem && destino ? distanciaKm(origem, destino) : null;
   const semCoords = !origem || !destino;
   // Preferimos a distância da rota Mapbox (real) sobre a linha reta quando
   // disponível. Linha reta vira fallback.
-  const distanciaPrincipal = rotaDistanciaKm ?? linhaRetaKm;
-  const usandoRotaReal = rotaDistanciaKm != null;
+  const distanciaPrincipal = rota_distancia_km ?? linhaRetaKm;
+  const usandoRotaReal = rota_distancia_km != null;
 
   return (
     <Card>
@@ -72,7 +72,7 @@ export function InfoDistanciaViagem({
             )}
           </div>
 
-          {rotaDuracaoMin != null && (
+          {rota_duracao_min != null && (
             <>
               <div style={{ width: 1, height: 56, background: '#e2e8f0' }} />
               <div style={{ flex: 1 }}>
@@ -80,7 +80,7 @@ export function InfoDistanciaViagem({
                   Tempo estimado
                 </Text>
                 <Text size="lg" className="mt-1 font-bold" style={{ color: '#0A2540' }}>
-                  {formatarTempo(rotaDuracaoMin)}
+                  {formatarTempo(rota_duracao_min)}
                 </Text>
                 <Text size="xs" style={{ color: '#94a3b8' }}>
                   rota direta (sem trânsito)
@@ -89,7 +89,7 @@ export function InfoDistanciaViagem({
             </>
           )}
 
-          {distanciaPercorrida != null && (
+          {distancia_percorrida != null && (
             <>
               <div style={{ width: 1, height: 56, background: '#e2e8f0' }} />
               <div style={{ flex: 1 }}>
@@ -97,7 +97,7 @@ export function InfoDistanciaViagem({
                   Distância percorrida
                 </Text>
                 <Text size="lg" className="mt-1 font-bold" style={{ color: '#0A2540' }}>
-                  {distanciaPercorrida.toLocaleString('pt-BR')} km
+                  {distancia_percorrida.toLocaleString('pt-BR')} km
                 </Text>
                 <Text size="xs" style={{ color: '#94a3b8' }}>
                   registro do odômetro

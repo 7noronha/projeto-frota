@@ -19,10 +19,10 @@ export function FormIniciarViagem({ acao, odometroAtualVeiculo }: FormIniciarVia
 
   return (
     <form action={acaoForm} className="flex flex-col gap-4">
-      <input type="hidden" name="odometroInicial" value={odometro} />
+      <input type="hidden" name="odometro_inicial" value={odometro} />
 
       <NumberField
-        id="odometroInicial"
+        id="odometro_inicial"
         label="Odômetro inicial (km)"
         isRequired
         value={odometro}

@@ -7,32 +7,32 @@ import type { ViagemDetalhada, RespostaPaginada, UsuarioResposta, VeiculoRespost
 
 export async function buscarViagens(
   pagina = 1,
-  filtros: { status?: string; motoristaId?: string; veiculoId?: string; dataInicio?: string; dataFim?: string } = {},
+  filtros: { status?: string; motorista_id?: string; veiculo_id?: string; dataInicio?: string; dataFim?: string } = {},
 ): Promise<RespostaPaginada<ViagemDetalhada>> {
-  const params = new URLSearchParams({ pagina: String(pagina), tamanhoPagina: '20' });
+  const params = new URLSearchParams({ pagina: String(pagina), tamanho_pagina: '20' });
   if (filtros.status) params.set('status', filtros.status);
-  if (filtros.motoristaId) params.set('motoristaId', filtros.motoristaId);
-  if (filtros.veiculoId) params.set('veiculoId', filtros.veiculoId);
+  if (filtros.motorista_id) params.set('motorista_id', filtros.motorista_id);
+  if (filtros.veiculo_id) params.set('veiculo_id', filtros.veiculo_id);
   if (filtros.dataInicio) params.set('dataInicio', filtros.dataInicio);
   if (filtros.dataFim) params.set('dataFim', filtros.dataFim);
 
   return fetchServidor<RespostaPaginada<ViagemDetalhada>>(`/viagens?${params}`);
 }
 
-export async function buscarViagemPorId(id: string): Promise<ViagemDetalhada> {
+export async function buscarViagemPorId(id: number): Promise<ViagemDetalhada> {
   return fetchServidor<ViagemDetalhada>(`/viagens/${id}`);
 }
 
 export async function buscarMotoristas(): Promise<UsuarioResposta[]> {
   const resultado = await fetchServidor<RespostaPaginada<UsuarioResposta>>(
-    '/usuarios?perfil=motorista&tamanhoPagina=100',
+    '/usuarios?perfil=motorista&tamanho_pagina=100',
   );
   return resultado.dados;
 }
 
 export async function buscarVeiculosAtivos(): Promise<VeiculoResposta[]> {
   const resultado = await fetchServidor<RespostaPaginada<VeiculoResposta>>(
-    '/veiculos?situacao=ativo&tamanhoPagina=100',
+    '/veiculos?situacao=ativo&tamanho_pagina=100',
   );
   return resultado.dados;
 }
@@ -43,13 +43,13 @@ export async function acaoCriarViagem(
 ): Promise<{ erro?: string } | null> {
   const corpo = {
     destino: formData.get('destino'),
-    dataViagem: formData.get('dataViagem'),
-    horaInicioPrevista: formData.get('horaInicioPrevista'),
-    horaFimPrevista: formData.get('horaFimPrevista'),
-    motoristaId: formData.get('motoristaId'),
-    veiculoId: formData.get('veiculoId'),
-    solicitadoPor: formData.get('solicitadoPor'),
-    autorizadoPor: formData.get('autorizadoPor'),
+    data_viagem: formData.get('data_viagem'),
+    hora_inicio_prevista: formData.get('hora_inicio_prevista'),
+    hora_fim_prevista: formData.get('hora_fim_prevista'),
+    motorista_id: formData.get('motorista_id'),
+    veiculo_id: formData.get('veiculo_id'),
+    solicitado_por: formData.get('solicitado_por'),
+    autorizado_por: formData.get('autorizado_por'),
     observacoes: formData.get('observacoes') || undefined,
   };
 
@@ -64,19 +64,19 @@ export async function acaoCriarViagem(
 }
 
 export async function acaoAtualizarViagem(
-  id: string,
+  id: number,
   _estadoAnterior: { erro?: string } | null,
   formData: FormData,
 ): Promise<{ erro?: string } | null> {
   const corpo = {
     destino: formData.get('destino'),
-    dataViagem: formData.get('dataViagem'),
-    horaInicioPrevista: formData.get('horaInicioPrevista'),
-    horaFimPrevista: formData.get('horaFimPrevista'),
-    motoristaId: formData.get('motoristaId'),
-    veiculoId: formData.get('veiculoId'),
-    solicitadoPor: formData.get('solicitadoPor'),
-    autorizadoPor: formData.get('autorizadoPor'),
+    data_viagem: formData.get('data_viagem'),
+    hora_inicio_prevista: formData.get('hora_inicio_prevista'),
+    hora_fim_prevista: formData.get('hora_fim_prevista'),
+    motorista_id: formData.get('motorista_id'),
+    veiculo_id: formData.get('veiculo_id'),
+    solicitado_por: formData.get('solicitado_por'),
+    autorizado_por: formData.get('autorizado_por'),
     observacoes: formData.get('observacoes') || undefined,
   };
 
@@ -92,16 +92,16 @@ export async function acaoAtualizarViagem(
 }
 
 export async function acaoIniciarViagem(
-  id: string,
+  id: number,
   _estadoAnterior: { erro?: string } | null,
   formData: FormData,
 ): Promise<{ erro?: string } | null> {
-  const odometroInicial = Number(formData.get('odometroInicial'));
+  const odometro_inicial = Number(formData.get('odometro_inicial'));
 
   try {
     await fetchServidor(`/viagens/${id}/iniciar`, {
       method: 'PATCH',
-      body: JSON.stringify({ odometroInicial }),
+      body: JSON.stringify({ odometro_inicial }),
     });
   } catch (erro) {
     return { erro: erro instanceof Error ? erro.message : 'Erro ao iniciar viagem' };
@@ -113,16 +113,16 @@ export async function acaoIniciarViagem(
 }
 
 export async function acaoFinalizarViagem(
-  id: string,
+  id: number,
   _estadoAnterior: { erro?: string } | null,
   formData: FormData,
 ): Promise<{ erro?: string } | null> {
-  const odometroFinal = Number(formData.get('odometroFinal'));
+  const odometro_final = Number(formData.get('odometro_final'));
 
   try {
     await fetchServidor(`/viagens/${id}/finalizar`, {
       method: 'PATCH',
-      body: JSON.stringify({ odometroFinal }),
+      body: JSON.stringify({ odometro_final }),
     });
   } catch (erro) {
     return { erro: erro instanceof Error ? erro.message : 'Erro ao finalizar viagem' };

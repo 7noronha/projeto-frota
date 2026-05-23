@@ -16,9 +16,9 @@ interface AtrasoCalc {
 }
 
 function calcularAtraso(v: ViagemDetalhada): AtrasoCalc {
-  if (v.status !== 'EM_ANDAMENTO') return { estaAtrasada: false, minutosAtraso: 0 };
-  // dataViagem (YYYY-MM-DD) + horaFimPrevista (HH:MM)
-  const fimPrevisto = new Date(`${v.dataViagem}T${v.horaFimPrevista}:00-03:00`);
+  if (v.status.nome !== 'EM_ANDAMENTO') return { estaAtrasada: false, minutosAtraso: 0 };
+  // data_viagem (YYYY-MM-DD) + hora_fim_prevista (HH:MM)
+  const fimPrevisto = new Date(`${v.data_viagem}T${v.hora_fim_prevista}:00-03:00`);
   const agora = agoraBrasilia();
   if (agora <= fimPrevisto) return { estaAtrasada: false, minutosAtraso: 0 };
   const minutos = Math.floor((agora.getTime() - fimPrevisto.getTime()) / 60_000);
@@ -223,7 +223,7 @@ export default async function PaginaDashboard(): Promise<React.ReactElement> {
           >
             <VStack className="gap-2">
               {cnhVencendo.proximos.map((m) => {
-                const validade = m.cnhValidade ? new Date(m.cnhValidade + 'T00:00:00') : null;
+                const validade = m.cnh_validade ? new Date(m.cnh_validade + 'T00:00:00') : null;
                 const hoje = agoraBrasilia();
                 hoje.setHours(0, 0, 0, 0);
                 const dias = validade

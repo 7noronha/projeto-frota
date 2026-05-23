@@ -6,13 +6,13 @@ import Map, { Layer, Marker, NavigationControl, Source, type MapRef } from 'reac
 import type { Feature, LineString } from 'geojson';
 
 interface MapaViagemProps {
-  origemLatitude: number | null;
-  origemLongitude: number | null;
-  destinoLatitude: number | null;
-  destinoLongitude: number | null;
+  origem_latitude: number | null;
+  origem_longitude: number | null;
+  destino_latitude: number | null;
+  destino_longitude: number | null;
   /** Rota cacheada pelo servidor (Mapbox Directions). Quando presente,
    * o componente NÃO faz nova chamada — apenas renderiza. */
-  rotaGeometria?: unknown | null;
+  rota_geometria?: unknown | null;
   /** Posição atual do motorista (vinda do polling de /viagens/:id/posicoes).
    * Quando presente, renderiza um pin laranja com a posição. */
   motoristaLatitude?: number | null;
@@ -40,11 +40,11 @@ interface DirectionsResponse {
  * reta tracejada — assim o trajeto sempre aparece de algum jeito.
  */
 export function MapaViagem({
-  origemLatitude,
-  origemLongitude,
-  destinoLatitude,
-  destinoLongitude,
-  rotaGeometria,
+  origem_latitude,
+  origem_longitude,
+  destino_latitude,
+  destino_longitude,
+  rota_geometria,
   motoristaLatitude,
   motoristaLongitude,
   altura = 350,
@@ -54,17 +54,17 @@ export function MapaViagem({
 
   const origem = useMemo(
     () =>
-      origemLatitude != null && origemLongitude != null
-        ? { latitude: origemLatitude, longitude: origemLongitude }
+      origem_latitude != null && origem_longitude != null
+        ? { latitude: origem_latitude, longitude: origem_longitude }
         : null,
-    [origemLatitude, origemLongitude],
+    [origem_latitude, origem_longitude],
   );
   const destino = useMemo(
     () =>
-      destinoLatitude != null && destinoLongitude != null
-        ? { latitude: destinoLatitude, longitude: destinoLongitude }
+      destino_latitude != null && destino_longitude != null
+        ? { latitude: destino_latitude, longitude: destino_longitude }
         : null,
-    [destinoLatitude, destinoLongitude],
+    [destino_latitude, destino_longitude],
   );
   const motorista = useMemo(
     () =>
@@ -77,12 +77,12 @@ export function MapaViagem({
   // 1. Se a rota já veio cacheada do servidor, usa direto (zero chamada à API).
   // 2. Senão, busca pela Mapbox Directions (fallback pra viagens antigas).
   useEffect(() => {
-    if (rotaGeometria) {
+    if (rota_geometria) {
       // O backend já cuidou da rota — usa a geometria persistida
       setRota({
         type: 'Feature',
         properties: {},
-        geometry: rotaGeometria as LineString,
+        geometry: rota_geometria as LineString,
       });
       return;
     }
@@ -137,7 +137,7 @@ export function MapaViagem({
     return () => {
       cancelado = true;
     };
-  }, [origem, destino, rotaGeometria]);
+  }, [origem, destino, rota_geometria]);
 
   // Auto-enquadra o mapa para mostrar a rota toda (origem + destino + traçado)
   useEffect(() => {

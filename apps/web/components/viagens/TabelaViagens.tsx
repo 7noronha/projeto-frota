@@ -28,7 +28,7 @@ export function TabelaViagens({ viagens, temFiltrosAtivos = false }: TabelaViage
   const router = useRouter();
 
   function corpoData(rowData: ViagemDetalhada) {
-    return formatarDataIso(rowData.dataViagem);
+    return formatarDataIso(rowData.data_viagem);
   }
 
   function corpoMotorista(rowData: ViagemDetalhada) {
@@ -40,11 +40,11 @@ export function TabelaViagens({ viagens, temFiltrosAtivos = false }: TabelaViage
   }
 
   function corpoHorario(rowData: ViagemDetalhada) {
-    return `${rowData.horaInicioPrevista} – ${rowData.horaFimPrevista}`;
+    return `${rowData.hora_inicio_prevista} – ${rowData.hora_fim_prevista}`;
   }
 
   function corpoStatus(rowData: ViagemDetalhada) {
-    const cfg = statusConfig[rowData.status] ?? { color: 'default' as BadgeColor, rotulo: rowData.status };
+    const cfg = statusConfig[rowData.status.nome] ?? { color: 'default' as BadgeColor, rotulo: rowData.status.nome };
     return (
       <span className="inline-block whitespace-nowrap">
         <Badge color={cfg.color} variant="light">{cfg.rotulo}</Badge>
@@ -83,7 +83,7 @@ export function TabelaViagens({ viagens, temFiltrosAtivos = false }: TabelaViage
       className="w-full tabela-compacta"
       style={{ borderRadius: 12, overflow: 'hidden' }}
     >
-      <Column field="dataViagem" header="Data" body={corpoData} sortable style={{ width: 100 }} />
+      <Column field="data_viagem" header="Data" body={corpoData} sortable style={{ width: 100 }} />
       <Column field="destino" header="Destino" sortable />
       <Column field="motorista.nome" header="Motorista" body={corpoMotorista} sortable />
       <Column field="veiculo.placa" header="Veículo" body={corpoVeiculo} sortable style={{ width: 110 }} />

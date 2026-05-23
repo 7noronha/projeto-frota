@@ -20,9 +20,9 @@ export function TabelaMotoristas({ motoristas }: TabelaMotoristasProps) {
   const [erro, setErro] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   type DialogTipo = 'inativar' | 'excluir';
-  const [dialog, setDialog] = useState<{ id: string; nome: string; tipo: DialogTipo } | null>(null);
+  const [dialog, setDialog] = useState<{ id: number; nome: string; tipo: DialogTipo } | null>(null);
 
-  function abrirDialog(id: string, nome: string, tipo: DialogTipo) {
+  function abrirDialog(id: number, nome: string, tipo: DialogTipo) {
     setErro(null);
     setDialog({ id, nome, tipo });
   }
@@ -51,7 +51,7 @@ export function TabelaMotoristas({ motoristas }: TabelaMotoristasProps) {
     });
   }
 
-  function reativar(id: string, nome: string) {
+  function reativar(id: number, nome: string) {
     setErro(null);
     startTransition(async () => {
       const resultado = await acaoReativarMotorista(id);
@@ -77,9 +77,9 @@ export function TabelaMotoristas({ motoristas }: TabelaMotoristasProps) {
     return (
       <span className="flex flex-col leading-tight">
         <span>{row.cnh}</span>
-        {row.cnhValidade && (
+        {row.cnh_validade && (
           <span className="text-xs text-gray-500">
-            Válida até {formatarDataIso(row.cnhValidade)}
+            Válida até {formatarDataIso(row.cnh_validade)}
           </span>
         )}
       </span>
@@ -172,7 +172,7 @@ export function TabelaMotoristas({ motoristas }: TabelaMotoristasProps) {
         <Column field="matricula" header="Matrícula" body={corpoMatricula} sortable />
         <Column field="nome" header="Nome" body={corpoNome} sortable />
         <Column field="telefone" header="Telefone" body={(row: UsuarioResposta) => row.telefone ?? <span className="text-gray-400 text-xs">—</span>} sortable />
-        <Column field="cnhValidade" header="CNH" body={corpoCnh} sortable />
+        <Column field="cnh_validade" header="CNH" body={corpoCnh} sortable />
         <Column field="ativo" header="Status" body={corpoStatus} sortable />
         <Column header="Ações" body={corpoAcoes} style={{ width: 200 }} />
       </DataTable>

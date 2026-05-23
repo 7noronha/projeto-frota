@@ -26,12 +26,12 @@ function iniciais(nome: string): string {
 }
 
 export function CardResumoPerfil({ usuario }: CardResumoPerfilProps): React.ReactElement {
-  const meta = ROTULO_PERFIL[usuario.perfil] ?? {
+  const meta = ROTULO_PERFIL[usuario.perfil.nome] ?? {
     texto: usuario.perfil,
     color: 'default' as const,
   };
 
-  const dataMembro = new Date(usuario.dataCriacao).toLocaleDateString('pt-BR', {
+  const dataMembro = new Date(usuario.data_hora_criacao).toLocaleDateString('pt-BR', {
     month: 'long',
     year: 'numeric',
   });
@@ -77,7 +77,7 @@ export function CardResumoPerfil({ usuario }: CardResumoPerfilProps): React.Reac
           </VStack>
 
           {/* CNH se motorista */}
-          {usuario.perfil === 'motorista' && usuario.cnh && (
+          {usuario.perfil.nome === 'motorista' && usuario.cnh && (
             <div
               className="rounded-lg p-3"
               style={{ background: '#EFF6FF', minWidth: 200 }}
@@ -92,10 +92,10 @@ export function CardResumoPerfil({ usuario }: CardResumoPerfilProps): React.Reac
               <Text size="sm" className="font-mono font-semibold mt-1" style={{ color: '#0A2540' }}>
                 {usuario.cnh}
               </Text>
-              {usuario.cnhValidade && (
+              {usuario.cnh_validade && (
                 <Text size="xs" className="mt-0.5" style={{ color: '#64748b' }}>
                   Válida até{' '}
-                  {formatarDataIso(usuario.cnhValidade)}
+                  {formatarDataIso(usuario.cnh_validade)}
                 </Text>
               )}
             </div>

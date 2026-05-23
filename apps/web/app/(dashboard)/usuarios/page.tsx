@@ -17,7 +17,7 @@ export default async function PaginaUsuarios({ searchParams }: PaginaUsuariosPro
   const params = await searchParams;
   const pagina = Number(params.pagina ?? 1);
 
-  const { dados, total, totalPaginas } = await buscarUsuarios(pagina, {
+  const { dados, total, total_paginas } = await buscarUsuarios(pagina, {
     nome: params.nome,
     perfil: params.perfil,
     ativo: params.ativo,
@@ -50,7 +50,7 @@ export default async function PaginaUsuarios({ searchParams }: PaginaUsuariosPro
       <TabelaUsuarios usuarios={dados} />
 
       <Paginacao
-        totalPaginas={totalPaginas}
+        total_paginas={total_paginas}
         paginaAtual={pagina}
         baseHref="/usuarios"
         params={{ nome: params.nome, perfil: params.perfil, ativo: params.ativo }}

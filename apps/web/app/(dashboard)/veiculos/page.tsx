@@ -16,7 +16,7 @@ export default async function PaginaVeiculos({ searchParams }: PaginaVeiculosPro
   const params = await searchParams;
   const pagina = Number(params.pagina ?? 1);
 
-  const { dados, total, totalPaginas } = await buscarVeiculos(pagina, {
+  const { dados, total, total_paginas } = await buscarVeiculos(pagina, {
     placa: params.placa,
     modelo: params.modelo,
     situacao: params.situacao,
@@ -43,7 +43,7 @@ export default async function PaginaVeiculos({ searchParams }: PaginaVeiculosPro
       <TabelaVeiculos veiculos={dados} />
 
       <Paginacao
-        totalPaginas={totalPaginas}
+        total_paginas={total_paginas}
         paginaAtual={pagina}
         baseHref="/veiculos"
         params={{ placa: params.placa, modelo: params.modelo, situacao: params.situacao }}

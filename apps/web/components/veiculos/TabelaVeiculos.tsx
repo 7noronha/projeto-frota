@@ -28,11 +28,11 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
   const [erro, setErro] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [veiculoParaExcluir, setVeiculoParaExcluir] = useState<{
-    id: string;
+    id: number;
     placa: string;
   } | null>(null);
 
-  function abrirDialogExclusao(id: string, placa: string) {
+  function abrirDialogExclusao(id: number, placa: string) {
     setErro(null);
     setVeiculoParaExcluir({ id, placa });
   }
@@ -61,11 +61,11 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
   }
 
   function corpoOdometro(rowData: VeiculoResposta) {
-    return `${rowData.odometroAtual.toLocaleString('pt-BR')} km`;
+    return `${rowData.odometro_atual.toLocaleString('pt-BR')} km`;
   }
 
   function corpoSituacao(rowData: VeiculoResposta) {
-    const cfg = situacaoConfig[rowData.situacao] ?? { color: 'default' as BadgeColor, rotulo: rowData.situacao };
+    const cfg = situacaoConfig[rowData.situacao.nome] ?? { color: 'default' as BadgeColor, rotulo: rowData.situacao.nome };
     return (
       <span className="inline-block whitespace-nowrap">
         <Badge color={cfg.color} variant="light">{cfg.rotulo}</Badge>
@@ -128,10 +128,10 @@ export function TabelaVeiculos({ veiculos }: TabelaVeiculosProps) {
       >
         <Column field="placa" header="Placa" body={corpoPlaca} sortable />
         <Column field="marca" header="Marca / Modelo" body={corpoMarcaModelo} sortable />
-        <Column field="anoFabricacao" header="Ano Fab." sortable />
-        <Column field="anoModelo" header="Ano Mod." sortable />
+        <Column field="ano_fabricacao" header="Ano Fab." sortable />
+        <Column field="ano_modelo" header="Ano Mod." sortable />
         <Column field="cor" header="Cor" sortable />
-        <Column field="odometroAtual" header="Odômetro" body={corpoOdometro} sortable />
+        <Column field="odometro_atual" header="Odômetro" body={corpoOdometro} sortable />
         <Column field="situacao" header="Situação" body={corpoSituacao} sortable />
         <Column header="Ações" body={corpoAcoes} style={{ width: 280 }} />
       </DataTable>

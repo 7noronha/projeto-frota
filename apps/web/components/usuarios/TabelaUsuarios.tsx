@@ -31,9 +31,9 @@ export function TabelaUsuarios({ usuarios }: TabelaUsuariosProps) {
   const [erro, setErro] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   type DialogTipo = 'inativar' | 'excluir';
-  const [dialog, setDialog] = useState<{ id: string; nome: string; tipo: DialogTipo } | null>(null);
+  const [dialog, setDialog] = useState<{ id: number; nome: string; tipo: DialogTipo } | null>(null);
 
-  function abrirDialog(id: string, nome: string, tipo: DialogTipo) {
+  function abrirDialog(id: number, nome: string, tipo: DialogTipo) {
     setErro(null);
     setDialog({ id, nome, tipo });
   }
@@ -62,7 +62,7 @@ export function TabelaUsuarios({ usuarios }: TabelaUsuariosProps) {
     });
   }
 
-  function reativar(id: string, nome: string) {
+  function reativar(id: number, nome: string) {
     setErro(null);
     startTransition(async () => {
       const resultado = await acaoReativarUsuario(id);
@@ -84,7 +84,7 @@ export function TabelaUsuarios({ usuarios }: TabelaUsuariosProps) {
   }
 
   function corpoPerfil(row: UsuarioResposta) {
-    const meta = ROTULOS_PERFIL[row.perfil] ?? { texto: row.perfil, color: 'default' as const };
+    const meta = ROTULOS_PERFIL[row.perfil.nome] ?? { texto: row.perfil.nome, color: 'default' as const };
     return (
       <span className="inline-block whitespace-nowrap">
         <Badge color={meta.color} variant="light">

@@ -11,7 +11,7 @@ export interface PosicaoMotorista {
 
 interface Opcoes {
   /** ID da viagem; quando null/undefined o hook fica inativo. */
-  viagemId: string | null | undefined;
+  viagemId: number | null | undefined;
   /** Polling ativo (ex.: só EM_ANDAMENTO). False = no-op. */
   ativo: boolean;
   /** Intervalo de polling em ms. Default 30s. */

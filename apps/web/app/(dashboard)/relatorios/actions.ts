@@ -3,7 +3,7 @@
 import { fetchServidor } from '@/lib/api-servidor';
 
 export interface AgregadoMotorista {
-  motoristaId: string;
+  motorista_id: string;
   nome: string;
   matricula: string;
   totalViagens: number;
@@ -11,7 +11,7 @@ export interface AgregadoMotorista {
 }
 
 export interface AgregadoVeiculo {
-  veiculoId: string;
+  veiculo_id: string;
   placa: string;
   marca: string;
   modelo: string;

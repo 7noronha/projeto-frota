@@ -17,7 +17,7 @@ export default async function PaginaMotoristas({ searchParams }: PaginaMotorista
   const params = await searchParams;
   const pagina = Number(params.pagina ?? 1);
 
-  const { dados, total, totalPaginas } = await buscarMotoristas(pagina, {
+  const { dados, total, total_paginas } = await buscarMotoristas(pagina, {
     nome: params.nome,
     ativo: params.ativo,
   });
@@ -47,7 +47,7 @@ export default async function PaginaMotoristas({ searchParams }: PaginaMotorista
 
       {/* Paginação */}
       <Paginacao
-        totalPaginas={totalPaginas}
+        total_paginas={total_paginas}
         paginaAtual={pagina}
         baseHref="/motoristas"
         params={{ nome: params.nome, ativo: params.ativo }}

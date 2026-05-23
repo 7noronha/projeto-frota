@@ -52,15 +52,15 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
   const [modelo, setModelo] = useState(veiculoInicial?.modelo ?? '');
   const [cor, setCor] = useState(veiculoInicial?.cor ?? '');
   const [renavam, setRenavam] = useState(veiculoInicial?.renavam ?? '');
-  const [dataAquisicao, setDataAquisicao] = useState(veiculoInicial?.dataAquisicao ?? '');
+  const [data_aquisicao, setDataAquisicao] = useState(veiculoInicial?.data_aquisicao ?? '');
   const [observacoes, setObservacoes] = useState(veiculoInicial?.observacoes ?? '');
 
   const [situacao, setSituacao] = useState<'ativo' | 'em_manutencao' | 'inativo' | 'baixado'>(
-    (veiculoInicial?.situacao as 'ativo' | 'em_manutencao' | 'inativo' | 'baixado') ?? 'ativo',
+    (veiculoInicial?.situacao?.nome as 'ativo' | 'em_manutencao' | 'inativo' | 'baixado') ?? 'ativo',
   );
-  const [anoFabricacao, setAnoFabricacao] = useState<number>(veiculoInicial?.anoFabricacao ?? anoAtual);
-  const [anoModelo, setAnoModelo] = useState<number>(veiculoInicial?.anoModelo ?? anoAtual);
-  const [odometro, setOdometro] = useState<number>(veiculoInicial?.odometroAtual ?? 0);
+  const [ano_fabricacao, setAnoFabricacao] = useState<number>(veiculoInicial?.ano_fabricacao ?? anoAtual);
+  const [ano_modelo, setAnoModelo] = useState<number>(veiculoInicial?.ano_modelo ?? anoAtual);
+  const [odometro, setOdometro] = useState<number>(veiculoInicial?.odometro_atual ?? 0);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -70,12 +70,12 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
     formData.set('placa', placa);
     formData.set('marca', marca);
     formData.set('modelo', modelo);
-    formData.set('anoFabricacao', String(anoFabricacao));
-    formData.set('anoModelo', String(anoModelo));
+    formData.set('ano_fabricacao', String(ano_fabricacao));
+    formData.set('ano_modelo', String(ano_modelo));
     formData.set('cor', cor);
     formData.set('renavam', renavam);
-    formData.set('odometroAtual', String(odometro));
-    formData.set('dataAquisicao', dataAquisicao);
+    formData.set('odometro_atual', String(odometro));
+    formData.set('data_aquisicao', data_aquisicao);
     formData.set('situacao', situacao);
     if (observacoes) formData.set('observacoes', observacoes);
     const resultado = await acao(null, formData);
@@ -175,10 +175,10 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <NumberField
-                  id="anoFabricacao"
+                  id="ano_fabricacao"
                   label="Ano de fabricação"
                   isRequired
-                  value={anoFabricacao}
+                  value={ano_fabricacao}
                   onChange={(v) => setAnoFabricacao(v ?? anoAtual)}
                   minValue={ANO_MINIMO}
                   maxValue={anoAtual + 1}
@@ -186,10 +186,10 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
               </div>
               <div>
                 <NumberField
-                  id="anoModelo"
+                  id="ano_modelo"
                   label="Ano do modelo"
                   isRequired
-                  value={anoModelo}
+                  value={ano_modelo}
                   onChange={(v) => setAnoModelo(v ?? anoAtual)}
                   minValue={ANO_MINIMO}
                   maxValue={anoAtual + 2}
@@ -235,7 +235,7 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <NumberField
-                  id="odometroAtual"
+                  id="odometro_atual"
                   label="Odômetro atual (km)"
                   isRequired
                   value={odometro}
@@ -245,10 +245,10 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
               </div>
               <div>
                 <TextField
-                  id="dataAquisicao"
+                  id="data_aquisicao"
                   label="Data de aquisição"
                   type="date"
-                  value={dataAquisicao}
+                  value={data_aquisicao}
                   onChange={(v) => setDataAquisicao(v)}
                   isRequired
                   aria-required="true"
