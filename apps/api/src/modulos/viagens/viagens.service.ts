@@ -59,6 +59,8 @@ type ViagemComRelacoes = {
   observacoes: string | null;
   status_id: number;
   data_hora_criacao: Date;
+  data_hora_atualizacao: Date;
+  data_hora_exclusao: Date | null;
   motorista: { id: number; nome: string; matricula: string };
   veiculo: { id: number; placa: string; marca: string; modelo: string; odometro_atual: number };
   status: { id: number; nome: string; descricao: string | null };
