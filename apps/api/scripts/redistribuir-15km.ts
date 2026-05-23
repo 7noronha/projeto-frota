@@ -33,13 +33,19 @@ interface Feature {
 }
 
 async function reverseGeocode(lat: number, lng: number): Promise<Feature | null> {
+  // types=address força endereço de rua específico (não "Goiânia, Goiás" genérico).
+  // limit=5 pra escolhermos um que tenha pelo menos número/nome de rua.
   const url =
     `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json` +
-    `?access_token=${TOKEN}&country=BR&limit=1&language=pt&types=address,place,neighborhood`;
+    `?access_token=${TOKEN}&country=BR&limit=5&language=pt&types=address`;
   const r = await fetch(url);
   if (!r.ok) return null;
   const j = (await r.json()) as { features?: Feature[] };
-  return j.features?.[0] ?? null;
+  if (!j.features?.length) return null;
+  // Prefere features com rua específica (mais de 2 vírgulas no place_name
+  // = "Rua X, número, Bairro, Cidade, CEP, País")
+  const especifica = j.features.find((f) => (f.place_name.match(/,/g) ?? []).length >= 3);
+  return especifica ?? j.features[0];
 }
 
 async function geocodarTexto(endereco: string): Promise<Feature | null> {
