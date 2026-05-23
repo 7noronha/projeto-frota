@@ -1,7 +1,13 @@
 # Refactor: schema snake_case + INT IDs + tipos como FK
 
 **Branch:** `refactor/schema-snake-case-reset`
-**Status:** Sessões 1-8 concluídas. Typecheck verde em API + web + mobile. Falta apenas Sessão 9 (deploy prod) e pendências menores.
+**Status:** Sessões 1-8 concluídas. Typecheck + jest verdes em API + web + mobile. Despesas com 6 forms criar/editar funcionais. DEPLOY_CHECKLIST.md pronto. Falta apenas a execução manual do Sessão 9 (deploy prod).
+
+**Como mergear:**
+1. Ler `DEPLOY_CHECKLIST.md` e fazer backup do Supabase prod
+2. Executar reset destrutivo + envs + redeploy conforme checklist
+3. Smoke test em prod
+4. `git checkout main && git merge refactor/schema-snake-case-reset --no-ff && git push`
 **Motivação:** Normalizar schema (extrair impostos + outras subcategorias de despesas, transformar tipo-strings em FKs pra tabelas auxiliares), padronizar nomenclatura.
 
 ---
@@ -78,9 +84,11 @@
 - [ ] Merge da branch `refactor/schema-snake-case-reset` em `main`
 
 #### Pendências pós-merge (menores)
-- [ ] Specs `.OLD-specs-uuid-snapshot/` — ~1800 linhas de testes a reescrever
-- [ ] Despesas web (`apps/web/.OLD-despesas-uuid-snapshot/`) — rewrite em 6 telas separadas (multas, abastecimentos, manutenções, impostos, seguros, documentações)
-- [ ] Scripts de data-fix (`apps/api/scripts/.OLD-uuid-snapshot/`) — rewrite se forem reutilizados
+- [x] ~~Despesas web~~ — feito: 1 tela com tabs + 6 forms criar/editar
+- [x] ~~Specs (skeleton)~~ — feito: 8 spec files novos (auth, usuarios, veiculos, viagens, configuracoes, alertas, relatorios, velocidade) passando jest. Cobertura ampla original arquivada em `.OLD-specs-uuid-snapshot/` para reescrever incrementalmente.
+- [x] ~~Endpoint /lookups~~ — feito: GET /lookups/:nome
+- [ ] **Cobertura de specs** — skeleton só verifica construção. Expandir conforme prioridade (auth → viagens → usuarios é a ordem recomendada). Originais em `.OLD-specs-uuid-snapshot/` servem como inspiração.
+- [ ] **Scripts data-fix** (`apps/api/scripts/.OLD-uuid-snapshot/`) — rewrite se forem reutilizados
 
 ---
 
