@@ -1,129 +1,176 @@
-// ─── Perfis de Usuário ───────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────
+// FleetOps — Tipos compartilhados (schema snake_case + INT IDs).
+// ────────────────────────────────────────────────────────────────────────────
 
-export type Perfil = 'admin' | 'gerente' | 'encarregado' | 'operador' | 'motorista';
-
-// ─── Status de Viagem ────────────────────────────────────────────────────────
-
-export type StatusViagem = 'CRIADA' | 'EM_ANDAMENTO' | 'FINALIZADA';
-
-// ─── Situação de Veículo ─────────────────────────────────────────────────────
-
-export type SituacaoVeiculo = 'ativo' | 'em_manutencao' | 'inativo' | 'baixado';
-
-// ─── Payload do JWT ──────────────────────────────────────────────────────────
+// ─── Payload do JWT ─────────────────────────────────────────────────────────
 
 export interface UsuarioJwt {
-  sub: string;
+  sub: number; // INT ID
   matricula: string;
   nome: string;
-  perfil: Perfil;
+  perfil: string; // nome do perfil ("admin", "motorista", etc.)
   iat: number;
   exp: number;
 }
 
-// ─── Resposta de Autenticação ─────────────────────────────────────────────────
+// ─── Resposta de Autenticação ────────────────────────────────────────────────
 
 export interface RespostaLogin {
   token: string;
   usuario: {
-    id: string;
+    id: number;
     matricula: string;
     nome: string;
-    perfil: Perfil;
+    perfil: string;
   };
 }
 
-// ─── Paginação ────────────────────────────────────────────────────────────────
+// ─── Paginação ───────────────────────────────────────────────────────────────
 
 export interface RespostaPaginada<T> {
   dados: T[];
   total: number;
   pagina: number;
-  tamanhoPagina: number;
-  totalPaginas: number;
+  tamanho_pagina: number;
+  total_paginas: number;
 }
 
-// ─── Respostas de Usuário ─────────────────────────────────────────────────────
+// ─── Lookups (tipos auxiliares) ──────────────────────────────────────────────
+
+export interface ItemLookup {
+  id: number;
+  nome: string;
+  descricao: string | null;
+}
+
+// ─── Usuários ────────────────────────────────────────────────────────────────
 
 export interface UsuarioResposta {
-  id: string;
+  id: number;
   matricula: string;
   nome: string;
-  perfil: Perfil;
+  perfil_id: number;
+  perfil: ItemLookup;
   email: string | null;
   telefone: string | null;
   cnh: string | null;
-  cnhValidade: string | null;
+  cnh_validade: string | null;
   ativo: boolean;
-  dataCriacao: string;
+  data_hora_criacao: string;
 }
 
-// ─── Respostas de Veículo ─────────────────────────────────────────────────────
+// ─── Veículos ────────────────────────────────────────────────────────────────
 
 export interface VeiculoResposta {
-  id: string;
+  id: number;
   placa: string;
   marca: string;
   modelo: string;
-  anoFabricacao: number;
-  anoModelo: number;
+  ano_fabricacao: number;
+  ano_modelo: number;
   cor: string;
   renavam: string;
-  odometroAtual: number;
-  dataAquisicao: string;
-  situacao: SituacaoVeiculo;
+  odometro_atual: number;
+  data_aquisicao: string;
+  situacao_id: number;
+  situacao: ItemLookup;
   observacoes: string | null;
-  dataCriacao: string;
+  data_hora_criacao: string;
 }
 
-// ─── Respostas de Viagem ──────────────────────────────────────────────────────
+// ─── Viagens ─────────────────────────────────────────────────────────────────
 
 export interface ViagemResposta {
-  id: string;
+  id: number;
   origem: string;
   destino: string;
-  // GPS — coordenadas opcionais
-  origemLatitude: number | null;
-  origemLongitude: number | null;
-  destinoLatitude: number | null;
-  destinoLongitude: number | null;
-  // Cache da rota Mapbox Directions: GeoJSON LineString + distância/duração real
-  rotaGeometria: unknown | null;
-  rotaDistanciaKm: number | null;
-  rotaDuracaoMin: number | null;
-  /** Velocidade média histórica do motorista desta viagem (km/h).
-   * Calibrada a partir de viagens FINALIZADAS dele. 40 km/h se sem amostras. */
-  velocidadeMediaKmH: number | null;
-  dataViagem: string;
-  horaInicioPrevista: string;
-  horaFimPrevista: string;
-  dataHoraInicioReal: string | null;
-  dataHoraFimReal: string | null;
-  odometroInicial: number | null;
-  odometroFinal: number | null;
-  distanciaPercorrida: number | null;
-  motoristaId: string;
-  veiculoId: string;
-  operadorCriadorId: string;
-  solicitadoPor: string;
-  autorizadoPor: string;
+  origem_latitude: number | null;
+  origem_longitude: number | null;
+  destino_latitude: number | null;
+  destino_longitude: number | null;
+  rota_geometria: unknown | null;
+  rota_distancia_km: number | null;
+  rota_duracao_min: number | null;
+  velocidade_media_km_h: number | null;
+  data_viagem: string;
+  hora_inicio_prevista: string;
+  hora_fim_prevista: string;
+  data_hora_inicio_real: string | null;
+  data_hora_fim_real: string | null;
+  odometro_inicial: number | null;
+  odometro_final: number | null;
+  distancia_percorrida: number | null;
+  motorista_id: number;
+  veiculo_id: number;
+  operador_criador_id: number;
+  solicitado_por: string;
+  autorizado_por: string;
   observacoes: string | null;
-  status: StatusViagem;
-  dataCriacao: string;
+  status_id: number;
+  data_hora_criacao: string;
 }
 
-// ViagemDetalhada inclui dados de motorista e veículo (retornado pela API via include)
 export interface ViagemDetalhada extends ViagemResposta {
-  motorista: {
-    id: string;
-    nome: string;
-    matricula: string;
-  };
-  veiculo: {
-    id: string;
-    placa: string;
-    marca: string;
-    modelo: string;
-    odometroAtual: number;
-  };
+  motorista: { id: number; nome: string; matricula: string };
+  veiculo: { id: number; placa: string; marca: string; modelo: string; odometro_atual: number };
+  status: ItemLookup;
+}
+
+// ─── Despesas (1 tipo por subtabela) ─────────────────────────────────────────
+
+interface DespesaBase {
+  id: number;
+  veiculo_id: number;
+  data: string;
+  valor: number;
+  descricao: string;
+  observacoes: string | null;
+  data_hora_criacao: string;
+}
+
+export interface MultaResposta extends DespesaBase {
+  gravidade_multa_id: number;
+  gravidade: ItemLookup;
+  numero_auto: string | null;
+  pontos_cnh: number | null;
+  data_vencimento: string | null;
+}
+
+export interface AbastecimentoResposta extends DespesaBase {
+  tipo_combustivel_id: number;
+  tipo_combustivel: ItemLookup;
+  litros: number;
+  preco_litro: number;
+  odometro: number | null;
+}
+
+export interface ManutencaoResposta extends DespesaBase {
+  tipo_manutencao_id: number;
+  tipo_manutencao: ItemLookup;
+  oficina: string | null;
+  odometro: number | null;
+}
+
+export interface ImpostoResposta extends DespesaBase {
+  tipo_imposto_id: number;
+  tipo_imposto: ItemLookup;
+  ano_exercicio: number;
+  numero_parcela: number | null;
+  total_parcelas: number | null;
+  data_vencimento: string | null;
+}
+
+export interface SeguroResposta extends DespesaBase {
+  tipo_cobertura_seguro_id: number;
+  tipo_cobertura: ItemLookup;
+  seguradora: string;
+  numero_apolice: string | null;
+  vigencia_inicio: string;
+  vigencia_fim: string;
+}
+
+export interface DocumentacaoResposta extends DespesaBase {
+  tipo_documento_veiculo_id: number;
+  tipo_documento: ItemLookup;
+  data_vencimento: string | null;
 }

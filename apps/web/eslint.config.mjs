@@ -19,6 +19,7 @@ export default tseslint.config(
       'e2e/**',
       'playwright-report/**',
       'test-results/**',
+      '.OLD-despesas-uuid-snapshot/**',
     ],
   },
   eslint.configs.recommended,

@@ -6,7 +6,8 @@ import { DetalheViagem } from '@/components/viagens/DetalheViagem';
 type Params = Promise<{ id: string }>;
 
 export default async function PaginaDetalheViagem(props: { params: Params }) {
-  const { id } = await props.params;
+  const { id: idStr } = await props.params;
+  const id = Number(idStr);
 
   let viagem;
   try {

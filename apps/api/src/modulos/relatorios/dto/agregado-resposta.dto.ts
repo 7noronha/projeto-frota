@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class AgregadoMotoristaDto {
   @ApiProperty()
-  motoristaId: string;
+  motorista_id: number;
 
   @ApiProperty()
   nome: string;
@@ -11,15 +11,15 @@ export class AgregadoMotoristaDto {
   matricula: string;
 
   @ApiProperty({ description: 'Quantidade de viagens FINALIZADAS no período' })
-  totalViagens: number;
+  total_viagens: number;
 
-  @ApiProperty({ description: 'Soma da distancia percorrida em km' })
-  totalKm: number;
+  @ApiProperty({ description: 'Soma da distância percorrida em km' })
+  total_km: number;
 }
 
 export class AgregadoVeiculoDto {
   @ApiProperty()
-  veiculoId: string;
+  veiculo_id: number;
 
   @ApiProperty()
   placa: string;
@@ -31,8 +31,8 @@ export class AgregadoVeiculoDto {
   modelo: string;
 
   @ApiProperty({ description: 'Quantidade de viagens FINALIZADAS no período' })
-  totalViagens: number;
+  total_viagens: number;
 
-  @ApiProperty({ description: 'Soma da distancia percorrida em km' })
-  totalKm: number;
+  @ApiProperty({ description: 'Soma da distância percorrida em km' })
+  total_km: number;
 }

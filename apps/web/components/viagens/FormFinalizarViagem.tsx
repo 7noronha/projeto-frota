@@ -10,27 +10,27 @@ type AcaoFormulario = (
 
 interface FormFinalizarViagemProps {
   acao: AcaoFormulario;
-  odometroInicial: number;
+  odometro_inicial: number;
 }
 
-export function FormFinalizarViagem({ acao, odometroInicial }: FormFinalizarViagemProps) {
+export function FormFinalizarViagem({ acao, odometro_inicial }: FormFinalizarViagemProps) {
   const [estado, acaoForm, pendente] = useActionState(acao, null);
-  const [odometro, setOdometro] = useState<number>(odometroInicial + 1);
+  const [odometro, setOdometro] = useState<number>(odometro_inicial + 1);
 
   return (
     <form action={acaoForm} className="flex flex-col gap-4">
-      <input type="hidden" name="odometroFinal" value={odometro} />
+      <input type="hidden" name="odometro_final" value={odometro} />
 
       <NumberField
-        id="odometroFinal"
+        id="odometro_final"
         label="Odômetro final (km)"
         isRequired
         value={odometro}
-        onChange={(v) => setOdometro(v ?? odometroInicial + 1)}
-        minValue={odometroInicial + 1}
+        onChange={(v) => setOdometro(v ?? odometro_inicial + 1)}
+        minValue={odometro_inicial + 1}
         step={1}
         control
-        description={`Odômetro na saída: ${odometroInicial.toLocaleString('pt-BR')} km`}
+        description={`Odômetro na saída: ${odometro_inicial.toLocaleString('pt-BR')} km`}
       />
 
       {estado?.erro && (

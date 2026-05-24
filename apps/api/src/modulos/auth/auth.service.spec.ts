@@ -1,131 +1,152 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
-const mockUsuario = {
-  id: 'uuid-admin',
-  matricula: '0000000001',
-  nome: 'Administrador',
-  senhaHash: '',
-  perfil: 'admin',
-  email: null,
-  telefone: null,
-  cnh: null,
-  cnhValidade: null,
-  ativo: true,
-  dataCriacao: new Date(),
-  dataAtualizacao: new Date(),
-  dataExclusao: null,
-};
-
 describe('AuthService', () => {
   let service: AuthService;
-  let prisma: { usuario: { findFirst: jest.Mock } };
-  let jwtService: { sign: jest.Mock };
+  let prisma: {
+    usuarios: { findFirst: jest.Mock; update: jest.Mock };
+  };
+  let jwt: { sign: jest.Mock };
+
+  const usuarioFake = (overrides: Partial<Record<string, unknown>> = {}): Record<string, unknown> => ({
+    id: 1,
+    matricula: '0000000001',
+    nome: 'Admin Teste',
+    senha_hash: bcrypt.hashSync('Senha@123', 10),
+    perfil_id: 1,
+    perfil: { id: 1, nome: 'admin', descricao: null },
+    email: 'admin@fleetops.local',
+    telefone: null,
+    cnh: null,
+    cnh_validade: null,
+    ativo: true,
+    data_hora_criacao: new Date('2026-01-01T12:00:00Z'),
+    ...overrides,
+  });
 
   beforeEach(async () => {
-    prisma = { usuario: { findFirst: jest.fn() } };
-    jwtService = { sign: jest.fn().mockReturnValue('token-jwt-mock') };
+    prisma = { usuarios: { findFirst: jest.fn(), update: jest.fn() } };
+    jwt = { sign: jest.fn().mockReturnValue('jwt.fake.token') };
 
     const modulo: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: PrismaService, useValue: prisma },
-        { provide: JwtService, useValue: jwtService },
+        { provide: JwtService, useValue: jwt },
       ],
     }).compile();
-
-    service = modulo.get<AuthService>(AuthService);
+    service = modulo.get(AuthService);
   });
 
   describe('login', () => {
-    it('deve retornar token e dados do usuário com credenciais válidas', async () => {
-      // Arrange
-      const senhaHash = await bcrypt.hash('MinhaS3nha!', 10);
-      prisma.usuario.findFirst.mockResolvedValue({ ...mockUsuario, senhaHash });
+    it('deve retornar token + dados do usuário com credenciais válidas', async () => {
+      prisma.usuarios.findFirst.mockResolvedValue(usuarioFake());
 
-      // Act
-      const resultado = await service.login({
+      const r = await service.login({ matricula: '0000000001', senha: 'Senha@123' });
+
+      expect(r.token).toBe('jwt.fake.token');
+      expect(r.usuario).toEqual({
+        id: 1,
         matricula: '0000000001',
-        senha: 'MinhaS3nha!',
+        nome: 'Admin Teste',
+        perfil: 'admin',
       });
-
-      // Assert
-      expect(resultado.token).toBe('token-jwt-mock');
-      expect(resultado.usuario.matricula).toBe('0000000001');
-      expect(resultado.usuario).not.toHaveProperty('senhaHash');
+      expect(jwt.sign).toHaveBeenCalledWith({
+        sub: 1,
+        matricula: '0000000001',
+        nome: 'Admin Teste',
+        perfil: 'admin',
+      });
     });
 
-    it('deve lançar UnauthorizedException para matrícula inexistente', async () => {
-      // Arrange
-      prisma.usuario.findFirst.mockResolvedValue(null);
-
-      // Act & Assert
-      await expect(
-        service.login({ matricula: '9999999999', senha: 'qualquer123' }),
-      ).rejects.toThrow(UnauthorizedException);
+    it('deve lançar Unauthorized quando matrícula não existir', async () => {
+      prisma.usuarios.findFirst.mockResolvedValue(null);
+      await expect(service.login({ matricula: '0000000099', senha: 'qualquer' })).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
-    it('deve lançar UnauthorizedException para senha incorreta', async () => {
-      // Arrange
-      const senhaHash = await bcrypt.hash('SenhaCorreta1', 10);
-      prisma.usuario.findFirst.mockResolvedValue({ ...mockUsuario, senhaHash });
-
-      // Act & Assert
-      await expect(
-        service.login({ matricula: '0000000001', senha: 'SenhaErrada1' }),
-      ).rejects.toThrow(UnauthorizedException);
+    it('deve lançar Unauthorized quando senha está incorreta', async () => {
+      prisma.usuarios.findFirst.mockResolvedValue(usuarioFake());
+      await expect(service.login({ matricula: '0000000001', senha: 'errada' })).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
-    it('deve lançar UnauthorizedException para usuário inativo', async () => {
-      // Arrange
-      const senhaHash = await bcrypt.hash('MinhaS3nha!', 10);
-      prisma.usuario.findFirst.mockResolvedValue({ ...mockUsuario, senhaHash, ativo: false });
+    it('deve lançar Unauthorized quando usuário está inativo', async () => {
+      prisma.usuarios.findFirst.mockResolvedValue(usuarioFake({ ativo: false }));
+      await expect(service.login({ matricula: '0000000001', senha: 'Senha@123' })).rejects.toThrow(
+        /inativo/i,
+      );
+    });
 
-      // Act & Assert
-      await expect(
-        service.login({ matricula: '0000000001', senha: 'MinhaS3nha!' }),
-      ).rejects.toThrow(UnauthorizedException);
+    it('deve ignorar usuários com data_hora_exclusao definida (filtro no where)', async () => {
+      prisma.usuarios.findFirst.mockResolvedValue(null);
+      await service.login({ matricula: '0000000001', senha: 'x' }).catch(() => undefined);
+      expect(prisma.usuarios.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ data_hora_exclusao: null }),
+        }),
+      );
     });
   });
 
-  describe('perfil', () => {
-    it('deve retornar o payload JWT quando o usuário existe e está ativo', async () => {
-      // Arrange
-      prisma.usuario.findFirst.mockResolvedValue(mockUsuario);
-      const payload = {
-        sub: 'uuid-admin',
-        matricula: '0000000001',
-        nome: 'Administrador',
-        perfil: 'admin' as const,
-        iat: 0,
-        exp: 0,
-      };
+  describe('atualizarMeuPerfil', () => {
+    const jwtFake = { sub: 1, matricula: '0000000001', nome: 'Admin', perfil: 'admin', iat: 0, exp: 0 };
 
-      // Act
-      const resultado = await service.perfil(payload);
+    it('deve atualizar email e telefone sem senha', async () => {
+      prisma.usuarios.findFirst.mockResolvedValue(usuarioFake());
+      prisma.usuarios.update.mockResolvedValue(usuarioFake({ email: 'novo@x.com', telefone: '11999998888' }));
 
-      // Assert
-      expect(resultado).toEqual(payload);
+      const r = await service.atualizarMeuPerfil(jwtFake, {
+        email: 'novo@x.com',
+        telefone: '11999998888',
+      });
+
+      expect(r.email).toBe('novo@x.com');
+      expect(r.telefone).toBe('11999998888');
+      expect(prisma.usuarios.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.not.objectContaining({ senha_hash: expect.anything() }),
+        }),
+      );
     });
 
-    it('deve lançar UnauthorizedException quando usuário não existe mais', async () => {
-      // Arrange
-      prisma.usuario.findFirst.mockResolvedValue(null);
-      const payload = {
-        sub: 'uuid-inexistente',
-        matricula: '9999999999',
-        nome: 'Inexistente',
-        perfil: 'admin' as const,
-        iat: 0,
-        exp: 0,
-      };
+    it('deve exigir senha atual ao trocar senha', async () => {
+      prisma.usuarios.findFirst.mockResolvedValue(usuarioFake());
+      await expect(
+        service.atualizarMeuPerfil(jwtFake, { novaSenha: 'NovaSenha@456' }),
+      ).rejects.toThrow(BadRequestException);
+    });
 
-      // Act & Assert
-      await expect(service.perfil(payload)).rejects.toThrow(UnauthorizedException);
+    it('deve rejeitar troca de senha com senha atual incorreta', async () => {
+      prisma.usuarios.findFirst.mockResolvedValue(usuarioFake());
+      await expect(
+        service.atualizarMeuPerfil(jwtFake, {
+          senhaAtual: 'errada',
+          novaSenha: 'NovaSenha@456',
+        }),
+      ).rejects.toThrow(/senha atual incorreta/i);
+    });
+
+    it('deve trocar senha quando atual está correta', async () => {
+      prisma.usuarios.findFirst.mockResolvedValue(usuarioFake());
+      prisma.usuarios.update.mockResolvedValue(usuarioFake());
+
+      await service.atualizarMeuPerfil(jwtFake, {
+        senhaAtual: 'Senha@123',
+        novaSenha: 'NovaSenha@456',
+      });
+
+      expect(prisma.usuarios.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ senha_hash: expect.any(String) }),
+        }),
+      );
     });
   });
 });

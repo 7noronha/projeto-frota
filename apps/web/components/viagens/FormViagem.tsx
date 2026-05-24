@@ -35,11 +35,11 @@ interface FormViagemProps {
 
 interface ErrosCampos {
   destino?: string;
-  dataViagem?: string;
-  motoristaId?: string;
-  veiculoId?: string;
-  solicitadoPor?: string;
-  autorizadoPor?: string;
+  data_viagem?: string;
+  motorista_id?: string;
+  veiculo_id?: string;
+  solicitado_por?: string;
+  autorizado_por?: string;
 }
 
 function naoVazio(valor: string, rotulo: string): string {
@@ -64,15 +64,15 @@ export function FormViagem({
   const [tocados, setTocados] = useState<Record<string, boolean>>({});
 
   const [destino, setDestino] = useState(viagemInicial?.destino ?? '');
-  const [dataViagem, setDataViagem] = useState(viagemInicial?.dataViagem ?? '');
-  const [horaInicioPrevista, setHoraInicioPrevista] = useState(
-    viagemInicial?.horaInicioPrevista ?? '',
+  const [data_viagem, setDataViagem] = useState(viagemInicial?.data_viagem ?? '');
+  const [hora_inicio_prevista, setHoraInicioPrevista] = useState(
+    viagemInicial?.hora_inicio_prevista ?? '',
   );
-  const [horaFimPrevista, setHoraFimPrevista] = useState(viagemInicial?.horaFimPrevista ?? '');
-  const [motoristaId, setMotoristaId] = useState(viagemInicial?.motoristaId ?? '');
-  const [veiculoId, setVeiculoId] = useState(viagemInicial?.veiculoId ?? '');
-  const [solicitadoPor, setSolicitadoPor] = useState(viagemInicial?.solicitadoPor ?? '');
-  const [autorizadoPor, setAutorizadoPor] = useState(viagemInicial?.autorizadoPor ?? '');
+  const [hora_fim_prevista, setHoraFimPrevista] = useState(viagemInicial?.hora_fim_prevista ?? '');
+  const [motorista_id, setMotoristaId] = useState(viagemInicial?.motorista_id ?? '');
+  const [veiculo_id, setVeiculoId] = useState(viagemInicial?.veiculo_id ?? '');
+  const [solicitado_por, setSolicitadoPor] = useState(viagemInicial?.solicitado_por ?? '');
+  const [autorizado_por, setAutorizadoPor] = useState(viagemInicial?.autorizado_por ?? '');
   const [observacoes, setObservacoes] = useState(viagemInicial?.observacoes ?? '');
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -83,13 +83,13 @@ export function FormViagem({
     // ida ao servidor se algum campo for inválido
     const resultadoValidacao = validar(schemaCriarViagem, {
       destino,
-      dataViagem,
-      horaInicioPrevista,
-      horaFimPrevista,
-      motoristaId,
-      veiculoId,
-      solicitadoPor,
-      autorizadoPor,
+      data_viagem,
+      hora_inicio_prevista,
+      hora_fim_prevista,
+      motorista_id,
+      veiculo_id,
+      solicitado_por,
+      autorizado_por,
       observacoes: observacoes || undefined,
     });
 
@@ -97,7 +97,7 @@ export function FormViagem({
       const novosErros: ErrosCampos = {};
       const novosTocados: Record<string, boolean> = {};
       for (const [campo, msg] of Object.entries(resultadoValidacao.erros)) {
-        if (campo in ({} as ErrosCampos) || ['destino', 'dataViagem', 'motoristaId', 'veiculoId', 'solicitadoPor', 'autorizadoPor'].includes(campo)) {
+        if (campo in ({} as ErrosCampos) || ['destino', 'data_viagem', 'motorista_id', 'veiculo_id', 'solicitado_por', 'autorizado_por'].includes(campo)) {
           (novosErros as Record<string, string>)[campo] = msg;
           novosTocados[campo] = true;
         }
@@ -108,22 +108,22 @@ export function FormViagem({
       return;
     }
 
-    if (dataViagem && dataViagem < hoje) {
-      setErros((p) => ({ ...p, dataViagem: 'A data da viagem não pode estar no passado' }));
-      setTocados((p) => ({ ...p, dataViagem: true }));
+    if (data_viagem && data_viagem < hoje) {
+      setErros((p) => ({ ...p, data_viagem: 'A data da viagem não pode estar no passado' }));
+      setTocados((p) => ({ ...p, data_viagem: true }));
       return;
     }
 
     setPendente(true);
     const formData = new FormData();
     formData.set('destino', destino);
-    formData.set('dataViagem', dataViagem);
-    formData.set('horaInicioPrevista', horaInicioPrevista);
-    formData.set('horaFimPrevista', horaFimPrevista);
-    formData.set('motoristaId', motoristaId);
-    formData.set('veiculoId', veiculoId);
-    formData.set('solicitadoPor', solicitadoPor);
-    formData.set('autorizadoPor', autorizadoPor);
+    formData.set('data_viagem', data_viagem);
+    formData.set('hora_inicio_prevista', hora_inicio_prevista);
+    formData.set('hora_fim_prevista', hora_fim_prevista);
+    formData.set('motorista_id', String(motorista_id));
+    formData.set('veiculo_id', String(veiculo_id));
+    formData.set('solicitado_por', solicitado_por);
+    formData.set('autorizado_por', autorizado_por);
     if (observacoes) formData.set('observacoes', observacoes);
     const resultado = await acao(null, formData);
     setPendente(false);
@@ -179,31 +179,31 @@ export function FormViagem({
             {/* Data + Horários */}
             <div className="grid grid-cols-3 gap-4">
               <TextField
-                id="dataViagem"
+                id="data_viagem"
                 label="Data da viagem"
                 type="date"
-                value={dataViagem}
+                value={data_viagem}
                 onChange={setDataViagem}
                 isRequired
-                isInvalid={Boolean(erroCampo('dataViagem'))}
-                errorMessage={erroCampo('dataViagem')}
+                isInvalid={Boolean(erroCampo('data_viagem'))}
+                errorMessage={erroCampo('data_viagem')}
                 aria-required="true"
-                onBlur={() => erroBlur('dataViagem', dataViagem, 'a data')}
+                onBlur={() => erroBlur('data_viagem', data_viagem, 'a data')}
               />
               <TextField
-                id="horaInicioPrevista"
+                id="hora_inicio_prevista"
                 label="Hora início"
                 type="time"
-                value={horaInicioPrevista}
+                value={hora_inicio_prevista}
                 onChange={setHoraInicioPrevista}
                 isRequired
                 aria-required="true"
               />
               <TextField
-                id="horaFimPrevista"
+                id="hora_fim_prevista"
                 label="Hora fim"
                 type="time"
-                value={horaFimPrevista}
+                value={hora_fim_prevista}
                 onChange={setHoraFimPrevista}
                 isRequired
                 aria-required="true"
@@ -218,14 +218,14 @@ export function FormViagem({
                 isBlock
                 isRequired
                 aria-required="true"
-                value={motoristaId || null}
+                value={motorista_id || null}
                 onChange={(valor) => {
                   const escolha = typeof valor === 'string' ? valor : '';
                   setMotoristaId(escolha);
-                  erroSelect('motoristaId', escolha, 'um motorista');
+                  erroSelect('motorista_id', escolha, 'um motorista');
                 }}
-                isInvalid={Boolean(erroCampo('motoristaId'))}
-                errorMessage={erroCampo('motoristaId')}
+                isInvalid={Boolean(erroCampo('motorista_id'))}
+                errorMessage={erroCampo('motorista_id')}
               >
                 {motoristas.map((m) => (
                   <ListBox.Item key={m.id}>
@@ -248,14 +248,14 @@ export function FormViagem({
                 isBlock
                 isRequired
                 aria-required="true"
-                value={veiculoId || null}
+                value={veiculo_id || null}
                 onChange={(valor) => {
                   const escolha = typeof valor === 'string' ? valor : '';
                   setVeiculoId(escolha);
-                  erroSelect('veiculoId', escolha, 'um veículo');
+                  erroSelect('veiculo_id', escolha, 'um veículo');
                 }}
-                isInvalid={Boolean(erroCampo('veiculoId'))}
-                errorMessage={erroCampo('veiculoId')}
+                isInvalid={Boolean(erroCampo('veiculo_id'))}
+                errorMessage={erroCampo('veiculo_id')}
               >
                 {veiculos.map((v) => (
                   <ListBox.Item key={v.id}>
@@ -273,28 +273,28 @@ export function FormViagem({
             {/* Solicitado + Autorizado */}
             <div className="grid grid-cols-2 gap-4">
               <TextField
-                id="solicitadoPor"
+                id="solicitado_por"
                 label="Solicitado por"
                 placeholder="Nome do solicitante"
-                value={solicitadoPor}
+                value={solicitado_por}
                 onChange={(v) => setSolicitadoPor(v)}
                 isRequired
-                isInvalid={Boolean(erroCampo('solicitadoPor'))}
-                errorMessage={erroCampo('solicitadoPor')}
+                isInvalid={Boolean(erroCampo('solicitado_por'))}
+                errorMessage={erroCampo('solicitado_por')}
                 aria-required="true"
-                onBlur={() => erroBlur('solicitadoPor', solicitadoPor, 'o solicitante')}
+                onBlur={() => erroBlur('solicitado_por', solicitado_por, 'o solicitante')}
               />
               <TextField
-                id="autorizadoPor"
+                id="autorizado_por"
                 label="Autorizado por"
                 placeholder="Nome do autorizador"
-                value={autorizadoPor}
+                value={autorizado_por}
                 onChange={(v) => setAutorizadoPor(v)}
                 isRequired
-                isInvalid={Boolean(erroCampo('autorizadoPor'))}
-                errorMessage={erroCampo('autorizadoPor')}
+                isInvalid={Boolean(erroCampo('autorizado_por'))}
+                errorMessage={erroCampo('autorizado_por')}
                 aria-required="true"
-                onBlur={() => erroBlur('autorizadoPor', autorizadoPor, 'o autorizador')}
+                onBlur={() => erroBlur('autorizado_por', autorizado_por, 'o autorizador')}
               />
             </div>
 

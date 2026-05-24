@@ -1,14 +1,10 @@
 /**
- * Seed de TESTE — cria 1 motorista de teste + 1 veículo + 3 viagens
- * (CRIADA, EM_ANDAMENTO, FINALIZADA) atribuídas a ele, para exercitar
- * o fluxo no app mobile.
+ * Seed de TESTE — cria 1 motorista de teste + 2 veículos + 4 viagens
+ * (CRIADA, EM_ANDAMENTO, FINALIZADA + 1 extra no segundo veículo).
  *
  * Uso: cd apps/api && bunx tsx prisma/seed-motorista-teste.ts
  *
- * Idempotente: usa upsert por matrícula/placa e só cria viagens se o
- * motorista de teste ainda não tiver nenhuma.
- *
- * Credenciais geradas:
+ * Credenciais:
  *   matrícula: 0000001234
  *   senha:     12341234
  */
@@ -32,68 +28,91 @@ function hora(h: number): Date {
 }
 
 async function main(): Promise<void> {
-  const admin = await prisma.usuario.findUnique({
+  const admin = await prisma.usuarios.findUnique({
     where: { matricula: '0000000001' },
   });
   if (!admin) {
     throw new Error(
-      'Usuário admin (0000000001) não encontrado. Rode o seed base antes (npx prisma db seed).',
+      'Usuário admin (0000000001) não encontrado. Rode o seed base antes (bunx prisma db seed).',
     );
   }
 
-  const senhaHash = await bcrypt.hash(SENHA_MOTORISTA, 10);
-  const validadeCnh = dataDia(365 * 3); // CNH válida por ~3 anos
+  const perfilMotorista = await prisma.perfis_usuario.findUnique({
+    where: { nome: 'motorista' },
+  });
+  const situacaoAtivo = await prisma.situacoes_veiculo.findUnique({
+    where: { nome: 'ativo' },
+  });
+  const statusCriada = await prisma.status_viagem.findUnique({ where: { nome: 'CRIADA' } });
+  const statusEmAndamento = await prisma.status_viagem.findUnique({
+    where: { nome: 'EM_ANDAMENTO' },
+  });
+  const statusFinalizada = await prisma.status_viagem.findUnique({
+    where: { nome: 'FINALIZADA' },
+  });
 
-  const motorista = await prisma.usuario.upsert({
+  if (!perfilMotorista || !situacaoAtivo || !statusCriada || !statusEmAndamento || !statusFinalizada) {
+    throw new Error('Lookups base não encontrados — rode o seed principal primeiro.');
+  }
+
+  const senhaHash = await bcrypt.hash(SENHA_MOTORISTA, 10);
+  const validadeCnh = dataDia(365 * 3);
+
+  const motorista = await prisma.usuarios.upsert({
     where: { matricula: MATRICULA_MOTORISTA },
-    update: { senhaHash, perfil: 'motorista', ativo: true, cnhValidade: validadeCnh },
+    update: {
+      senha_hash: senhaHash,
+      perfil_id: perfilMotorista.id,
+      ativo: true,
+      cnh_validade: validadeCnh,
+    },
     create: {
       matricula: MATRICULA_MOTORISTA,
       nome: 'Motorista Teste',
-      senhaHash,
-      perfil: 'motorista',
+      senha_hash: senhaHash,
+      perfil_id: perfilMotorista.id,
       email: 'motorista.teste@fleetops.local',
       telefone: '62999990000',
       cnh: '12345678901',
-      cnhValidade: validadeCnh,
+      cnh_validade: validadeCnh,
       ativo: true,
     },
   });
   console.log(`Motorista de teste: ${motorista.matricula} (${motorista.nome})`);
 
-  const veiculo = await prisma.veiculo.upsert({
+  const veiculo = await prisma.veiculos.upsert({
     where: { placa: 'TST1A23' },
-    update: { situacao: 'ativo' },
+    update: { situacao_id: situacaoAtivo.id },
     create: {
       placa: 'TST1A23',
       marca: 'CHEVROLET',
       modelo: 'ONIX',
-      anoFabricacao: 2024,
-      anoModelo: 2025,
+      ano_fabricacao: 2024,
+      ano_modelo: 2025,
       cor: 'BRANCO',
       renavam: '99887766554',
-      odometroAtual: 15000,
-      dataAquisicao: dataDia(-400),
-      situacao: 'ativo',
+      odometro_atual: 15000,
+      data_aquisicao: dataDia(-400),
+      situacao_id: situacaoAtivo.id,
       observacoes: 'VEÍCULO DE TESTE — SEED MOTORISTA',
     },
   });
   console.log(`Veículo de teste: ${veiculo.placa}`);
 
-  const veiculo2 = await prisma.veiculo.upsert({
+  const veiculo2 = await prisma.veiculos.upsert({
     where: { placa: 'TST2B34' },
-    update: { situacao: 'ativo' },
+    update: { situacao_id: situacaoAtivo.id },
     create: {
       placa: 'TST2B34',
       marca: 'VOLKSWAGEN',
       modelo: 'SAVEIRO',
-      anoFabricacao: 2023,
-      anoModelo: 2024,
+      ano_fabricacao: 2023,
+      ano_modelo: 2024,
       cor: 'PRATA',
       renavam: '11223344556',
-      odometroAtual: 42000,
-      dataAquisicao: dataDia(-600),
-      situacao: 'ativo',
+      odometro_atual: 42000,
+      data_aquisicao: dataDia(-600),
+      situacao_id: situacaoAtivo.id,
       observacoes: 'VEÍCULO DE TESTE 2 — SEED MOTORISTA',
     },
   });
@@ -101,56 +120,55 @@ async function main(): Promise<void> {
 
   const base = {
     origem: 'SEDE — GOIÂNIA, GO',
-    motoristaId: motorista.id,
-    operadorCriadorId: admin.id,
-    solicitadoPor: 'João da Silva (RH)',
-    autorizadoPor: 'Maria Souza (Gerência)',
+    motorista_id: motorista.id,
+    operador_criador_id: admin.id,
+    solicitado_por: 'João da Silva (RH)',
+    autorizado_por: 'Maria Souza (Gerência)',
     observacoes: null as string | null,
   };
 
-  // Viagens do veículo 1 — idempotente por motorista+veículo
-  const temV1 = await prisma.viagem.count({
-    where: { motoristaId: motorista.id, veiculoId: veiculo.id, dataExclusao: null },
+  const temV1 = await prisma.viagens.count({
+    where: { motorista_id: motorista.id, veiculo_id: veiculo.id, data_hora_exclusao: null },
   });
   if (temV1 === 0) {
-    await prisma.viagem.create({
+    await prisma.viagens.create({
       data: {
         ...base,
-        veiculoId: veiculo.id,
+        veiculo_id: veiculo.id,
         destino: 'AEROPORTO SANTA GENOVEVA — GOIÂNIA, GO',
-        dataViagem: dataDia(0),
-        horaInicioPrevista: hora(14),
-        horaFimPrevista: hora(18),
-        status: 'CRIADA',
+        data_viagem: dataDia(0),
+        hora_inicio_prevista: hora(14),
+        hora_fim_prevista: hora(18),
+        status_id: statusCriada.id,
       },
     });
-    await prisma.viagem.create({
+    await prisma.viagens.create({
       data: {
         ...base,
-        veiculoId: veiculo.id,
+        veiculo_id: veiculo.id,
         destino: 'CENTRO ADMINISTRATIVO — GOIÂNIA, GO',
-        dataViagem: dataDia(0),
-        horaInicioPrevista: hora(8),
-        horaFimPrevista: hora(12),
-        status: 'EM_ANDAMENTO',
-        dataHoraInicioReal: new Date(),
-        odometroInicial: veiculo.odometroAtual,
+        data_viagem: dataDia(0),
+        hora_inicio_prevista: hora(8),
+        hora_fim_prevista: hora(12),
+        status_id: statusEmAndamento.id,
+        data_hora_inicio_real: new Date(),
+        odometro_inicial: veiculo.odometro_atual,
       },
     });
-    await prisma.viagem.create({
+    await prisma.viagens.create({
       data: {
         ...base,
-        veiculoId: veiculo.id,
+        veiculo_id: veiculo.id,
         destino: 'PORTO SECO — ANÁPOLIS, GO',
-        dataViagem: dataDia(-1),
-        horaInicioPrevista: hora(9),
-        horaFimPrevista: hora(15),
-        status: 'FINALIZADA',
-        dataHoraInicioReal: new Date(),
-        dataHoraFimReal: new Date(),
-        odometroInicial: veiculo.odometroAtual - 300,
-        odometroFinal: veiculo.odometroAtual,
-        distanciaPercorrida: 300,
+        data_viagem: dataDia(-1),
+        hora_inicio_prevista: hora(9),
+        hora_fim_prevista: hora(15),
+        status_id: statusFinalizada.id,
+        data_hora_inicio_real: new Date(),
+        data_hora_fim_real: new Date(),
+        odometro_inicial: veiculo.odometro_atual - 300,
+        odometro_final: veiculo.odometro_atual,
+        distancia_percorrida: 300,
       },
     });
     console.log('Veículo 1: 3 viagens criadas (CRIADA, EM_ANDAMENTO, FINALIZADA).');
@@ -158,20 +176,19 @@ async function main(): Promise<void> {
     console.log(`Veículo 1 já tem ${temV1} viagem(ns) — pulado.`);
   }
 
-  // Viagem do veículo 2 — para o motorista ter 2 placas selecionáveis
-  const temV2 = await prisma.viagem.count({
-    where: { motoristaId: motorista.id, veiculoId: veiculo2.id, dataExclusao: null },
+  const temV2 = await prisma.viagens.count({
+    where: { motorista_id: motorista.id, veiculo_id: veiculo2.id, data_hora_exclusao: null },
   });
   if (temV2 === 0) {
-    await prisma.viagem.create({
+    await prisma.viagens.create({
       data: {
         ...base,
-        veiculoId: veiculo2.id,
+        veiculo_id: veiculo2.id,
         destino: 'TERMINAL RODOVIÁRIO — APARECIDA DE GOIÂNIA, GO',
-        dataViagem: dataDia(1),
-        horaInicioPrevista: hora(7),
-        horaFimPrevista: hora(11),
-        status: 'CRIADA',
+        data_viagem: dataDia(1),
+        hora_inicio_prevista: hora(7),
+        hora_fim_prevista: hora(11),
+        status_id: statusCriada.id,
       },
     });
     console.log('Veículo 2: 1 viagem criada.');

@@ -31,7 +31,7 @@ interface ErrosCampos {
   senha?: string;
   perfil?: string;
   cnh?: string;
-  cnhValidade?: string;
+  cnh_validade?: string;
 }
 
 const PERFIS = [
@@ -57,11 +57,11 @@ export function FormUsuario({ acao, usuarioInicial, titulo }: FormUsuarioProps) 
   const [matricula, setMatricula] = useState(usuarioInicial?.matricula ?? '');
   const [nome, setNome] = useState(usuarioInicial?.nome ?? '');
   const [senha, setSenha] = useState('');
-  const [perfil, setPerfil] = useState<string>(usuarioInicial?.perfil ?? 'operador');
+  const [perfil, setPerfil] = useState<string>(usuarioInicial?.perfil?.nome ?? 'operador');
   const [email, setEmail] = useState(usuarioInicial?.email ?? '');
   const [telefone, setTelefone] = useState(usuarioInicial?.telefone ?? '');
   const [cnh, setCnh] = useState(usuarioInicial?.cnh ?? '');
-  const [cnhValidade, setCnhValidade] = useState(usuarioInicial?.cnhValidade ?? '');
+  const [cnh_validade, setCnhValidade] = useState(usuarioInicial?.cnh_validade ?? '');
   const [ativo, setAtivo] = useState<boolean>(usuarioInicial?.ativo ?? true);
 
   const ehMotorista = perfil === 'motorista';
@@ -79,7 +79,7 @@ export function FormUsuario({ acao, usuarioInicial, titulo }: FormUsuarioProps) 
     if (email.trim()) formData.set('email', email);
     if (telefone.trim()) formData.set('telefone', telefone);
     if (cnh.trim()) formData.set('cnh', cnh);
-    if (cnhValidade.trim()) formData.set('cnhValidade', cnhValidade);
+    if (cnh_validade.trim()) formData.set('cnh_validade', cnh_validade);
     if (ehEdicao) formData.set('ativo', String(ativo));
 
     const resultado = await acao(null, formData);
@@ -219,17 +219,17 @@ export function FormUsuario({ acao, usuarioInicial, titulo }: FormUsuarioProps) 
                     onBlur={() => ehMotorista && erroBlur('cnh', cnh, 'a CNH')}
                   />
                   <TextField
-                    id="cnhValidade"
+                    id="cnh_validade"
                     label="Validade da CNH"
                     type="date"
-                    value={cnhValidade}
+                    value={cnh_validade}
                     onChange={setCnhValidade}
                     isRequired={ehMotorista}
-                    isInvalid={Boolean(erroCampo('cnhValidade'))}
-                    errorMessage={erroCampo('cnhValidade')}
+                    isInvalid={Boolean(erroCampo('cnh_validade'))}
+                    errorMessage={erroCampo('cnh_validade')}
                     aria-required={ehMotorista ? 'true' : 'false'}
                     onBlur={() =>
-                      ehMotorista && erroBlur('cnhValidade', cnhValidade, 'a validade da CNH')
+                      ehMotorista && erroBlur('cnh_validade', cnh_validade, 'a validade da CNH')
                     }
                   />
                 </div>

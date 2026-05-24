@@ -11,7 +11,7 @@ export async function buscarMotoristas(
 ): Promise<RespostaPaginada<UsuarioResposta>> {
   const params = new URLSearchParams({
     pagina: String(pagina),
-    tamanhoPagina: '20',
+    tamanho_pagina: '20',
     perfil: 'motorista',
   });
   if (filtros.nome) params.set('nome', filtros.nome);
@@ -20,7 +20,7 @@ export async function buscarMotoristas(
   return fetchServidor<RespostaPaginada<UsuarioResposta>>(`/usuarios?${params}`);
 }
 
-export async function buscarMotoristaPorId(id: string): Promise<UsuarioResposta> {
+export async function buscarMotoristaPorId(id: number): Promise<UsuarioResposta> {
   return fetchServidor<UsuarioResposta>(`/usuarios/${id}`);
 }
 
@@ -35,7 +35,7 @@ export async function acaoCriarMotorista(
     perfil: 'motorista',
     telefone: formData.get('telefone') || undefined,
     cnh: formData.get('cnh'),
-    cnhValidade: formData.get('cnhValidade'),
+    cnh_validade: formData.get('cnh_validade'),
     ativo: true,
   };
 
@@ -54,7 +54,7 @@ export async function acaoCriarMotorista(
 }
 
 export async function acaoAtualizarMotorista(
-  id: string,
+  id: number,
   _estadoAnterior: { erro?: string } | null,
   formData: FormData,
 ): Promise<{ erro?: string } | null> {
@@ -64,7 +64,7 @@ export async function acaoAtualizarMotorista(
     nome: formData.get('nome'),
     telefone: formData.get('telefone') || undefined,
     cnh: formData.get('cnh'),
-    cnhValidade: formData.get('cnhValidade'),
+    cnh_validade: formData.get('cnh_validade'),
     ativo: formData.get('ativo') === 'true',
   };
 
@@ -86,7 +86,7 @@ export async function acaoAtualizarMotorista(
   redirect('/motoristas');
 }
 
-export async function acaoInativarMotorista(id: string): Promise<{ erro?: string } | void> {
+export async function acaoInativarMotorista(id: number): Promise<{ erro?: string } | void> {
   try {
     await fetchServidor(`/usuarios/${id}/inativar`, { method: 'PATCH' });
   } catch (erro) {
@@ -97,7 +97,7 @@ export async function acaoInativarMotorista(id: string): Promise<{ erro?: string
   revalidatePath('/motoristas');
 }
 
-export async function acaoReativarMotorista(id: string): Promise<{ erro?: string } | void> {
+export async function acaoReativarMotorista(id: number): Promise<{ erro?: string } | void> {
   try {
     await fetchServidor(`/usuarios/${id}/reativar`, { method: 'PATCH' });
   } catch (erro) {
@@ -108,7 +108,7 @@ export async function acaoReativarMotorista(id: string): Promise<{ erro?: string
   revalidatePath('/motoristas');
 }
 
-export async function acaoExcluirMotorista(id: string): Promise<{ erro?: string } | void> {
+export async function acaoExcluirMotorista(id: number): Promise<{ erro?: string } | void> {
   try {
     await fetchServidor(`/usuarios/${id}`, { method: 'DELETE' });
   } catch (erro) {

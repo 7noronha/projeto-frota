@@ -1,223 +1,354 @@
+// ════════════════════════════════════════════════════════════════════════════
+// FleetOps — Schema (snake_case, INT IDs, FK p/ tipos, soft delete via flag)
+// ════════════════════════════════════════════════════════════════════════════
+// Convenções:
+//  - Models em snake_case plural (igual ao nome da tabela)
+//  - IDs Int autoincrement
+//  - Timestamps: data_hora_criacao, data_hora_atualizacao, data_hora_exclusao
+//  - Categorização (tipo/status/situação/perfil) sempre via FK → tabela auxiliar
+//  - Despesas extraídas em 6 tabelas (multas, abastecimentos, manutencoes,
+//    impostos, seguros, documentacoes)
+// ════════════════════════════════════════════════════════════════════════════
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  // Prod (Supabase): Session pooler, porta 5432 — serve runtime + migrations.
-  // Local: Postgres do docker-compose.
   url      = env("DATABASE_URL")
 }
 
-// ─── Usuários ─────────────────────────────────────────────────────────────────
+// ─── Tabelas auxiliares de tipo/status (lookup) ─────────────────────────────
 
-model Usuario {
-  id              String    @id @default(uuid())
-  matricula       String    @unique @db.VarChar(10)
-  nome            String    @db.VarChar(200)
-  senhaHash       String    @map("senha_hash") @db.VarChar(255)
-  perfil          String    @db.VarChar(20)
-  email           String?   @db.VarChar(200)
-  telefone        String?   @db.VarChar(20)
-  cnh             String?   @db.VarChar(20)
-  cnhValidade     DateTime? @map("cnh_validade") @db.Date
-  ativo           Boolean   @default(true)
-  // Token Expo Push para notificações no app mobile (registrado no login).
-  // Null quando o usuário nunca abriu o app ou negou permissão.
-  expoPushToken   String?   @map("expo_push_token") @db.VarChar(200)
-
-  dataCriacao     DateTime  @default(now()) @map("data_criacao") @db.Timestamp(6)
-  dataAtualizacao DateTime  @updatedAt @map("data_atualizacao") @db.Timestamp(6)
-  dataExclusao    DateTime? @map("data_exclusao") @db.Timestamp(6)
-
-  viagensComoMotorista Viagem[] @relation("MotoristaViagens")
-  viagensCriadas       Viagem[] @relation("OperadorCriadorViagens")
-
-  @@index([perfil], map: "idx_usuarios_perfil")
-  // Acelera o alerta de CNH vencida/vencendo (filtro perfil + ativo + cnhValidade <= limite)
-  @@index([cnhValidade], map: "idx_usuarios_cnh_validade")
-  @@map("usuarios")
+model perfis_usuario {
+  id        Int        @id @default(autoincrement())
+  nome      String     @unique @db.VarChar(40)
+  descricao String?    @db.VarChar(200)
+  usuarios  usuarios[]
 }
 
-// ─── Veículos ─────────────────────────────────────────────────────────────────
-
-model Veiculo {
-  id              String    @id @default(uuid())
-  placa           String    @unique @db.VarChar(10)
-  marca           String    @db.VarChar(80)
-  modelo          String    @db.VarChar(100)
-  anoFabricacao   Int       @map("ano_fabricacao")
-  anoModelo       Int       @map("ano_modelo")
-  cor             String    @db.VarChar(50)
-  renavam         String    @unique @db.VarChar(11)
-  odometroAtual   Int       @map("odometro_atual")
-  dataAquisicao   DateTime  @map("data_aquisicao") @db.Date
-  situacao        String    @db.VarChar(20)
-  observacoes     String?   @db.Text
-
-  dataCriacao     DateTime  @default(now()) @map("data_criacao") @db.Timestamp(6)
-  dataAtualizacao DateTime  @updatedAt @map("data_atualizacao") @db.Timestamp(6)
-  dataExclusao    DateTime? @map("data_exclusao") @db.Timestamp(6)
-
-  viagens         Viagem[]
-  despesas        DespesaVeiculo[]
-
-  @@index([placa], map: "idx_veiculos_placa")
-  @@map("veiculos")
+model situacoes_veiculo {
+  id        Int        @id @default(autoincrement())
+  nome      String     @unique @db.VarChar(40)
+  descricao String?    @db.VarChar(200)
+  veiculos  veiculos[]
 }
 
-// ─── Despesas de Veículo ──────────────────────────────────────────────────────
-
-model DespesaVeiculo {
-  id              String   @id @default(uuid())
-  veiculoId       String   @map("veiculo_id")
-
-  // 'multa' | 'abastecimento' | 'manutencao'
-  tipo            String   @db.VarChar(20)
-  data            DateTime @db.Date
-  valor           Decimal  @db.Decimal(10, 2)
-  descricao       String   @db.VarChar(500)
-  observacoes     String?  @db.Text
-
-  // Odômetro do veículo no momento da despesa (útil em abastecimentos/manutenção)
-  odometro        Int?
-
-  // ─── Específicos de abastecimento ───────────────────────────────────────────
-  litros          Decimal? @db.Decimal(8, 3)
-  precoLitro      Decimal? @map("preco_litro") @db.Decimal(8, 3)
-  // 'gasolina' | 'etanol' | 'diesel' | 'gnv' | 'flex'
-  tipoCombustivel String?  @map("tipo_combustivel") @db.VarChar(20)
-
-  // ─── Específicos de manutenção ──────────────────────────────────────────────
-  // 'preventiva' | 'corretiva'
-  tipoManutencao  String?  @map("tipo_manutencao") @db.VarChar(20)
-  oficina         String?  @db.VarChar(200)
-
-  // ─── Específicos de multa ───────────────────────────────────────────────────
-  numeroAuto      String?  @map("numero_auto") @db.VarChar(50)
-  // 'leve' | 'media' | 'grave' | 'gravissima'
-  gravidade       String?  @db.VarChar(20)
-  pontosCnh       Int?     @map("pontos_cnh")
-  // Também usada por imposto, documentação (qualquer despesa com prazo)
-  dataVencimento  DateTime? @map("data_vencimento") @db.Date
-
-  // ─── Específicos de imposto ─────────────────────────────────────────────────
-  // 'ipva' | 'licenciamento' | 'dpvat' | 'outro'
-  tipoImposto     String?  @map("tipo_imposto") @db.VarChar(30)
-  anoExercicio    Int?     @map("ano_exercicio")
-  numeroParcela   Int?     @map("numero_parcela")
-  totalParcelas   Int?     @map("total_parcelas")
-
-  // ─── Específicos de seguro ──────────────────────────────────────────────────
-  seguradora      String?  @db.VarChar(200)
-  numeroApolice   String?  @map("numero_apolice") @db.VarChar(100)
-  vigenciaInicio  DateTime? @map("vigencia_inicio") @db.Date
-  vigenciaFim     DateTime? @map("vigencia_fim") @db.Date
-  // 'total' | 'terceiros' | 'compreensiva'
-  coberturaTipo   String?  @map("cobertura_tipo") @db.VarChar(30)
-
-  // ─── Específicos de documentação ────────────────────────────────────────────
-  // 'crlv' | 'transferencia' | 'vistoria' | 'emplacamento' | 'outro'
-  tipoDocumento   String?  @map("tipo_documento") @db.VarChar(30)
-
-  dataCriacao     DateTime  @default(now()) @map("data_criacao") @db.Timestamp(6)
-  dataAtualizacao DateTime  @updatedAt @map("data_atualizacao") @db.Timestamp(6)
-  dataExclusao    DateTime? @map("data_exclusao") @db.Timestamp(6)
-
-  veiculo         Veiculo  @relation(fields: [veiculoId], references: [id])
-
-  @@index([veiculoId, tipo], map: "idx_despesas_veiculo_tipo")
-  @@index([data], map: "idx_despesas_data")
-  @@index([vigenciaFim], map: "idx_despesas_vigencia_fim")
-  @@index([dataVencimento], map: "idx_despesas_data_vencimento")
-  // Cobre o alerta de manutenção preventiva (find batch por veiculoId+tipo+tipoManutencao)
-  @@index([tipo, tipoManutencao, data], map: "idx_despesas_tipo_manutencao_data")
-  // Cobre filtros gerais por tipo + data de criação (listagens, relatórios)
-  @@index([tipo, data], map: "idx_despesas_tipo_data")
-  @@map("despesas_veiculos")
+model status_viagem {
+  id        Int        @id @default(autoincrement())
+  nome      String     @unique @db.VarChar(40)
+  descricao String?    @db.VarChar(200)
+  viagens   viagens[]
 }
 
-// ─── Viagens ──────────────────────────────────────────────────────────────────
-
-model Viagem {
-  id                  String    @id @default(uuid())
-  origem              String    @db.VarChar(500)
-  destino             String    @db.VarChar(500)
-  // GPS — coordenadas de origem/destino (opcionais; Fase 1 do GPS).
-  // Precisão: 7 casas decimais ~ 1,11 cm (suficiente para roteamento urbano).
-  origemLatitude      Decimal?  @map("origem_latitude")   @db.Decimal(10, 7)
-  origemLongitude     Decimal?  @map("origem_longitude")  @db.Decimal(10, 7)
-  destinoLatitude     Decimal?  @map("destino_latitude")  @db.Decimal(10, 7)
-  destinoLongitude    Decimal?  @map("destino_longitude") @db.Decimal(10, 7)
-  // Rota planejada (Mapbox Directions API), persistida na criação da viagem.
-  // GeoJSON LineString como JSONB. Distância em km e duração em minutos.
-  // null se a Directions API não tiver coberto os pontos.
-  rotaGeometria       Json?     @map("rota_geometria")    @db.JsonB
-  rotaDistanciaKm     Decimal?  @map("rota_distancia_km") @db.Decimal(10, 2)
-  rotaDuracaoMin      Int?      @map("rota_duracao_min")
-  dataViagem          DateTime  @map("data_viagem") @db.Date
-  horaInicioPrevista  DateTime  @map("hora_inicio_prevista") @db.Time(0)
-  horaFimPrevista     DateTime  @map("hora_fim_prevista") @db.Time(0)
-  dataHoraInicioReal  DateTime? @map("data_hora_inicio_real") @db.Timestamp(6)
-  dataHoraFimReal     DateTime? @map("data_hora_fim_real") @db.Timestamp(6)
-  odometroInicial     Int?      @map("odometro_inicial")
-  odometroFinal       Int?      @map("odometro_final")
-  distanciaPercorrida Int?      @map("distancia_percorrida")
-  motoristaId         String    @map("motorista_id")
-  veiculoId           String    @map("veiculo_id")
-  operadorCriadorId   String    @map("operador_criador_id")
-  solicitadoPor       String    @map("solicitado_por") @db.VarChar(200)
-  autorizadoPor       String    @map("autorizado_por") @db.VarChar(200)
-  observacoes         String?   @db.Text
-  status              String    @db.VarChar(20)
-
-  dataCriacao     DateTime  @default(now()) @map("data_criacao") @db.Timestamp(6)
-  dataAtualizacao DateTime  @updatedAt @map("data_atualizacao") @db.Timestamp(6)
-  dataExclusao    DateTime? @map("data_exclusao") @db.Timestamp(6)
-
-  motorista       Usuario   @relation("MotoristaViagens", fields: [motoristaId], references: [id])
-  operadorCriador Usuario   @relation("OperadorCriadorViagens", fields: [operadorCriadorId], references: [id])
-  veiculo         Veiculo   @relation(fields: [veiculoId], references: [id])
-  posicoes        PosicaoViagem[]
-
-  @@index([motoristaId, status], map: "idx_viagens_motorista_status")
-  @@index([veiculoId, status], map: "idx_viagens_veiculo_status")
-  @@index([dataViagem], map: "idx_viagens_data")
-  // Alertas de viagem (EM_ANDAMENTO atrasadas / CRIADA vencida) varrem por status
-  // sem necessariamente passar pelo motorista ou veículo — esse índice cobre.
-  @@index([status, dataViagem], map: "idx_viagens_status_data")
-  @@map("viagens")
+model tipos_combustivel {
+  id             Int              @id @default(autoincrement())
+  nome           String           @unique @db.VarChar(40)
+  descricao      String?          @db.VarChar(200)
+  abastecimentos abastecimentos[]
 }
 
-// ─── Posições da viagem (rastreamento em tempo real) ──────────────────────────
-
-model PosicaoViagem {
-  id           String   @id @default(uuid())
-  viagemId     String   @map("viagem_id")
-  latitude     Decimal  @db.Decimal(10, 7)
-  longitude    Decimal  @db.Decimal(10, 7)
-  // Precisão do GPS reportada pelo dispositivo (metros). Quando ausente,
-  // o app não informou — nem todos os devices entregam isso.
-  precisaoM    Decimal? @map("precisao_m")  @db.Decimal(8, 2)
-  // Quando o GPS capturou a posição (timestamp do device). Pode estar
-  // levemente atrasado em relação a dataCriacao se a rede engasgar.
-  capturadoEm  DateTime @map("capturado_em") @db.Timestamp(6)
-  dataCriacao  DateTime @default(now()) @map("data_criacao") @db.Timestamp(6)
-
-  viagem       Viagem   @relation(fields: [viagemId], references: [id], onDelete: Cascade)
-
-  // Query mais frequente: "últimas posições de uma viagem" → ordenado desc
-  @@index([viagemId, capturadoEm(sort: Desc)], map: "idx_posicoes_viagem_tempo")
-  @@map("posicoes_viagem")
+model tipos_manutencao {
+  id          Int           @id @default(autoincrement())
+  nome        String        @unique @db.VarChar(40)
+  descricao   String?       @db.VarChar(200)
+  manutencoes manutencoes[]
 }
 
-// ─── Configurações do Sistema ─────────────────────────────────────────────────
+model gravidades_multa {
+  id            Int      @id @default(autoincrement())
+  nome          String   @unique @db.VarChar(40)
+  descricao     String?  @db.VarChar(200)
+  pontos_padrao Int      @default(0)
+  multas        multas[]
+}
 
-model Configuracao {
-  id              String   @id @default(uuid())
-  chave           String   @unique @db.VarChar(100)
-  valor           String   @db.Text
-  dataAtualizacao DateTime @updatedAt @map("data_atualizacao") @db.Timestamp(6)
+model tipos_imposto {
+  id        Int        @id @default(autoincrement())
+  nome      String     @unique @db.VarChar(40)
+  descricao String?    @db.VarChar(200)
+  impostos  impostos[]
+}
 
-  @@map("configuracoes")
+model tipos_cobertura_seguro {
+  id        Int       @id @default(autoincrement())
+  nome      String    @unique @db.VarChar(40)
+  descricao String?   @db.VarChar(200)
+  seguros   seguros[]
+}
+
+model tipos_documento_veiculo {
+  id            Int             @id @default(autoincrement())
+  nome          String          @unique @db.VarChar(40)
+  descricao     String?         @db.VarChar(200)
+  documentacoes documentacoes[]
+}
+
+// ─── Entidades principais ───────────────────────────────────────────────────
+
+model usuarios {
+  id                    Int       @id @default(autoincrement())
+  matricula             String    @unique @db.VarChar(10)
+  nome                  String    @db.VarChar(200)
+  senha_hash            String    @db.VarChar(255)
+  perfil_id             Int
+  email                 String?   @db.VarChar(200)
+  telefone              String?   @db.VarChar(20)
+  cnh                   String?   @db.VarChar(20)
+  cnh_validade          DateTime? @db.Date
+  ativo                 Boolean   @default(true)
+  expo_push_token       String?   @db.VarChar(200)
+  data_hora_criacao     DateTime  @default(now()) @db.Timestamp(6)
+  data_hora_atualizacao DateTime  @updatedAt @db.Timestamp(6)
+  data_hora_exclusao    DateTime? @db.Timestamp(6)
+
+  perfil                  perfis_usuario @relation(fields: [perfil_id], references: [id])
+  viagens_como_motorista  viagens[]      @relation("MotoristaViagens")
+  viagens_criadas         viagens[]      @relation("OperadorCriadorViagens")
+
+  @@index([perfil_id])
+  @@index([cnh_validade])
+}
+
+model veiculos {
+  id                    Int       @id @default(autoincrement())
+  placa                 String    @unique @db.VarChar(10)
+  marca                 String    @db.VarChar(80)
+  modelo                String    @db.VarChar(100)
+  ano_fabricacao        Int
+  ano_modelo            Int
+  cor                   String    @db.VarChar(50)
+  renavam               String    @unique @db.VarChar(11)
+  odometro_atual        Int
+  data_aquisicao        DateTime  @db.Date
+  situacao_id           Int
+  observacoes           String?   @db.Text
+  data_hora_criacao     DateTime  @default(now()) @db.Timestamp(6)
+  data_hora_atualizacao DateTime  @updatedAt @db.Timestamp(6)
+  data_hora_exclusao    DateTime? @db.Timestamp(6)
+
+  situacao       situacoes_veiculo @relation(fields: [situacao_id], references: [id])
+  viagens        viagens[]
+  multas         multas[]
+  abastecimentos abastecimentos[]
+  manutencoes    manutencoes[]
+  impostos       impostos[]
+  seguros        seguros[]
+  documentacoes  documentacoes[]
+
+  @@index([placa])
+  @@index([situacao_id])
+}
+
+model viagens {
+  id                       Int       @id @default(autoincrement())
+  origem                   String    @db.VarChar(500)
+  destino                  String    @db.VarChar(500)
+  origem_latitude          Decimal?  @db.Decimal(10, 7)
+  origem_longitude         Decimal?  @db.Decimal(10, 7)
+  destino_latitude         Decimal?  @db.Decimal(10, 7)
+  destino_longitude        Decimal?  @db.Decimal(10, 7)
+  rota_geometria           Json?     @db.JsonB
+  rota_distancia_km        Decimal?  @db.Decimal(10, 2)
+  rota_duracao_min         Int?
+  data_viagem              DateTime  @db.Date
+  hora_inicio_prevista     DateTime  @db.Time(0)
+  hora_fim_prevista        DateTime  @db.Time(0)
+  data_hora_inicio_real    DateTime? @db.Timestamp(6)
+  data_hora_fim_real       DateTime? @db.Timestamp(6)
+  odometro_inicial         Int?
+  odometro_final           Int?
+  distancia_percorrida     Int?
+  motorista_id             Int
+  veiculo_id               Int
+  operador_criador_id      Int
+  solicitado_por           String    @db.VarChar(200)
+  autorizado_por           String    @db.VarChar(200)
+  observacoes              String?   @db.Text
+  status_id                Int
+  data_hora_criacao        DateTime  @default(now()) @db.Timestamp(6)
+  data_hora_atualizacao    DateTime  @updatedAt @db.Timestamp(6)
+  data_hora_exclusao       DateTime? @db.Timestamp(6)
+
+  motorista        usuarios          @relation("MotoristaViagens", fields: [motorista_id], references: [id])
+  operador_criador usuarios          @relation("OperadorCriadorViagens", fields: [operador_criador_id], references: [id])
+  veiculo          veiculos          @relation(fields: [veiculo_id], references: [id])
+  status           status_viagem     @relation(fields: [status_id], references: [id])
+  posicoes         posicoes_viagem[]
+
+  @@index([motorista_id, status_id])
+  @@index([veiculo_id, status_id])
+  @@index([data_viagem])
+  @@index([status_id, data_viagem])
+}
+
+model posicoes_viagem {
+  id                Int      @id @default(autoincrement())
+  viagem_id         Int
+  latitude          Decimal  @db.Decimal(10, 7)
+  longitude         Decimal  @db.Decimal(10, 7)
+  precisao_m        Decimal? @db.Decimal(8, 2)
+  capturado_em      DateTime @db.Timestamp(6)
+  data_hora_criacao DateTime @default(now()) @db.Timestamp(6)
+
+  viagem viagens @relation(fields: [viagem_id], references: [id], onDelete: Cascade)
+
+  @@index([viagem_id, capturado_em(sort: Desc)])
+}
+
+// ─── Despesas (uma tabela por subtipo) ──────────────────────────────────────
+
+model multas {
+  id                    Int       @id @default(autoincrement())
+  veiculo_id            Int
+  gravidade_multa_id    Int
+  data                  DateTime  @db.Date
+  valor                 Decimal   @db.Decimal(10, 2)
+  descricao             String    @db.VarChar(500)
+  numero_auto           String?   @db.VarChar(50)
+  pontos_cnh            Int?
+  data_vencimento       DateTime? @db.Date
+  observacoes           String?   @db.Text
+  data_hora_criacao     DateTime  @default(now()) @db.Timestamp(6)
+  data_hora_atualizacao DateTime  @updatedAt @db.Timestamp(6)
+  data_hora_exclusao    DateTime? @db.Timestamp(6)
+
+  veiculo   veiculos         @relation(fields: [veiculo_id], references: [id])
+  gravidade gravidades_multa @relation(fields: [gravidade_multa_id], references: [id])
+
+  @@index([veiculo_id, data])
+  @@index([data_vencimento])
+}
+
+model abastecimentos {
+  id                    Int      @id @default(autoincrement())
+  veiculo_id            Int
+  tipo_combustivel_id   Int
+  data                  DateTime @db.Date
+  valor                 Decimal  @db.Decimal(10, 2)
+  descricao             String   @db.VarChar(500)
+  litros                Decimal  @db.Decimal(8, 3)
+  preco_litro           Decimal  @db.Decimal(8, 3)
+  odometro              Int?
+  observacoes           String?  @db.Text
+  data_hora_criacao     DateTime @default(now()) @db.Timestamp(6)
+  data_hora_atualizacao DateTime @updatedAt @db.Timestamp(6)
+  data_hora_exclusao    DateTime? @db.Timestamp(6)
+
+  veiculo          veiculos          @relation(fields: [veiculo_id], references: [id])
+  tipo_combustivel tipos_combustivel @relation(fields: [tipo_combustivel_id], references: [id])
+
+  @@index([veiculo_id, data])
+}
+
+model manutencoes {
+  id                    Int       @id @default(autoincrement())
+  veiculo_id            Int
+  tipo_manutencao_id    Int
+  data                  DateTime  @db.Date
+  valor                 Decimal   @db.Decimal(10, 2)
+  descricao             String    @db.VarChar(500)
+  oficina               String?   @db.VarChar(200)
+  odometro              Int?
+  observacoes           String?   @db.Text
+  data_hora_criacao     DateTime  @default(now()) @db.Timestamp(6)
+  data_hora_atualizacao DateTime  @updatedAt @db.Timestamp(6)
+  data_hora_exclusao    DateTime? @db.Timestamp(6)
+
+  veiculo         veiculos         @relation(fields: [veiculo_id], references: [id])
+  tipo_manutencao tipos_manutencao @relation(fields: [tipo_manutencao_id], references: [id])
+
+  @@index([veiculo_id, data])
+}
+
+model impostos {
+  id                    Int       @id @default(autoincrement())
+  veiculo_id            Int
+  tipo_imposto_id       Int
+  data                  DateTime  @db.Date
+  valor                 Decimal   @db.Decimal(10, 2)
+  descricao             String    @db.VarChar(500)
+  ano_exercicio         Int
+  numero_parcela        Int?
+  total_parcelas        Int?
+  data_vencimento       DateTime? @db.Date
+  observacoes           String?   @db.Text
+  data_hora_criacao     DateTime  @default(now()) @db.Timestamp(6)
+  data_hora_atualizacao DateTime  @updatedAt @db.Timestamp(6)
+  data_hora_exclusao    DateTime? @db.Timestamp(6)
+
+  veiculo      veiculos      @relation(fields: [veiculo_id], references: [id])
+  tipo_imposto tipos_imposto @relation(fields: [tipo_imposto_id], references: [id])
+
+  historicos impostos_historicos[]
+
+  @@index([veiculo_id, data])
+  @@index([data_vencimento])
+  @@index([ano_exercicio])
+}
+
+model impostos_historicos {
+  id                 Int      @id @default(autoincrement())
+  imposto_id         Int
+  campo              String   @db.VarChar(40)
+  valor_anterior     String?  @db.Text
+  valor_novo         String?  @db.Text
+  alterado_por       Int?
+  data_hora_alteracao DateTime @default(now()) @db.Timestamp(6)
+
+  imposto impostos @relation(fields: [imposto_id], references: [id], onDelete: Cascade)
+
+  @@index([imposto_id, data_hora_alteracao(sort: Desc)])
+}
+
+model seguros {
+  id                          Int       @id @default(autoincrement())
+  veiculo_id                  Int
+  tipo_cobertura_seguro_id    Int
+  data                        DateTime  @db.Date
+  valor                       Decimal   @db.Decimal(10, 2)
+  descricao                   String    @db.VarChar(500)
+  seguradora                  String    @db.VarChar(200)
+  numero_apolice              String?   @db.VarChar(100)
+  vigencia_inicio             DateTime  @db.Date
+  vigencia_fim                DateTime  @db.Date
+  observacoes                 String?   @db.Text
+  data_hora_criacao           DateTime  @default(now()) @db.Timestamp(6)
+  data_hora_atualizacao       DateTime  @updatedAt @db.Timestamp(6)
+  data_hora_exclusao          DateTime? @db.Timestamp(6)
+
+  veiculo          veiculos               @relation(fields: [veiculo_id], references: [id])
+  tipo_cobertura   tipos_cobertura_seguro @relation(fields: [tipo_cobertura_seguro_id], references: [id])
+
+  @@index([veiculo_id, vigencia_fim])
+}
+
+model documentacoes {
+  id                          Int       @id @default(autoincrement())
+  veiculo_id                  Int
+  tipo_documento_veiculo_id   Int
+  data                        DateTime  @db.Date
+  valor                       Decimal   @db.Decimal(10, 2)
+  descricao                   String    @db.VarChar(500)
+  data_vencimento             DateTime? @db.Date
+  observacoes                 String?   @db.Text
+  data_hora_criacao           DateTime  @default(now()) @db.Timestamp(6)
+  data_hora_atualizacao       DateTime  @updatedAt @db.Timestamp(6)
+  data_hora_exclusao          DateTime? @db.Timestamp(6)
+
+  veiculo        veiculos                 @relation(fields: [veiculo_id], references: [id])
+  tipo_documento tipos_documento_veiculo  @relation(fields: [tipo_documento_veiculo_id], references: [id])
+
+  @@index([veiculo_id, data])
+  @@index([data_vencimento])
+}
+
+// ─── Configurações ──────────────────────────────────────────────────────────
+
+model configuracoes {
+  id                    Int      @id @default(autoincrement())
+  chave                 String   @unique @db.VarChar(100)
+  valor                 String   @db.Text
+  data_hora_atualizacao DateTime @updatedAt @db.Timestamp(6)
 }

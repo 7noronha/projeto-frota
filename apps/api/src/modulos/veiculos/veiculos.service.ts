@@ -11,46 +11,33 @@ import {
   formatarDataBrasilia,
   formatarDataHoraBrasilia,
 } from '@fleetops/utils/datetime';
-import { SituacaoVeiculo, RespostaPaginada, UsuarioJwt } from '@fleetops/types';
+import { RespostaPaginada, UsuarioJwt } from '@fleetops/types';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { CriarVeiculoDto, SituacaoVeiculoEnum } from './dto/criar-veiculo.dto';
+import { CriarVeiculoDto } from './dto/criar-veiculo.dto';
 import { AtualizarVeiculoDto } from './dto/atualizar-veiculo.dto';
 import { VeiculoRespostaDto } from './dto/veiculo-resposta.dto';
 import { FiltrosListarVeiculosDto } from './dto/filtros-listar-veiculos.dto';
 import { CriarAbastecimentoDto } from './dto/criar-abastecimento.dto';
 import { AbastecimentoRespostaDto } from './dto/abastecimento-resposta.dto';
 
-type VeiculoPrisma = {
-  id: string;
+type VeiculoComSituacao = {
+  id: number;
   placa: string;
   marca: string;
   modelo: string;
-  anoFabricacao: number;
-  anoModelo: number;
+  ano_fabricacao: number;
+  ano_modelo: number;
   cor: string;
   renavam: string;
-  odometroAtual: number;
-  dataAquisicao: Date;
-  situacao: string;
+  odometro_atual: number;
+  data_aquisicao: Date;
+  situacao_id: number;
+  situacao: { id: number; nome: string; descricao: string | null };
   observacoes: string | null;
-  dataCriacao: Date;
+  data_hora_criacao: Date;
 };
 
-const SELECT_VEICULO = {
-  id: true,
-  placa: true,
-  marca: true,
-  modelo: true,
-  anoFabricacao: true,
-  anoModelo: true,
-  cor: true,
-  renavam: true,
-  odometroAtual: true,
-  dataAquisicao: true,
-  situacao: true,
-  observacoes: true,
-  dataCriacao: true,
-} as const;
+const INCLUDE_SITUACAO = { situacao: true } as const;
 
 @Injectable()
 export class VeiculosService {
@@ -60,20 +47,20 @@ export class VeiculosService {
     const { pagina, tamanhoPagina, skip } = calcularPaginacao(filtros);
 
     const where = {
-      dataExclusao: null as null,
-      ...(filtros.situacao && { situacao: filtros.situacao }),
+      data_hora_exclusao: null as null,
+      ...(filtros.situacao_id && { situacao_id: filtros.situacao_id }),
       ...(filtros.placa && { placa: { contains: filtros.placa, mode: 'insensitive' as const } }),
       ...(filtros.modelo && { modelo: { contains: filtros.modelo, mode: 'insensitive' as const } }),
     };
 
     const [total, veiculos] = await Promise.all([
-      this.prisma.veiculo.count({ where }),
-      this.prisma.veiculo.findMany({
+      this.prisma.veiculos.count({ where }),
+      this.prisma.veiculos.findMany({
         where,
         skip,
         take: tamanhoPagina,
-        orderBy: { dataCriacao: 'desc' },
-        select: SELECT_VEICULO,
+        orderBy: { data_hora_criacao: 'desc' },
+        include: INCLUDE_SITUACAO,
       }),
     ]);
 
@@ -81,201 +68,211 @@ export class VeiculosService {
       dados: veiculos.map((v) => this.mapearResposta(v)),
       total,
       pagina,
-      tamanhoPagina,
-      totalPaginas: Math.ceil(total / tamanhoPagina),
+      tamanho_pagina: tamanhoPagina,
+      total_paginas: Math.ceil(total / tamanhoPagina),
     };
   }
 
-  async buscarPorId(id: string): Promise<VeiculoRespostaDto> {
-    const veiculo = await this.prisma.veiculo.findFirst({
-      where: { id, dataExclusao: null },
-      select: SELECT_VEICULO,
+  async buscarPorId(id: number): Promise<VeiculoRespostaDto> {
+    const veiculo = await this.prisma.veiculos.findFirst({
+      where: { id, data_hora_exclusao: null },
+      include: INCLUDE_SITUACAO,
     });
-
     if (!veiculo) throw new NotFoundException('Veículo não encontrado');
     return this.mapearResposta(veiculo);
   }
 
   async criar(dto: CriarVeiculoDto): Promise<VeiculoRespostaDto> {
-    const [placaExistente, renavamExistente] = await Promise.all([
-      this.prisma.veiculo.findFirst({ where: { placa: dto.placa, dataExclusao: null } }),
-      this.prisma.veiculo.findFirst({ where: { renavam: dto.renavam, dataExclusao: null } }),
-    ]);
+    const situacao = await this.prisma.situacoes_veiculo.findUnique({ where: { id: dto.situacao_id } });
+    if (!situacao) throw new ConflictException('Situação inválida');
 
+    const [placaExistente, renavamExistente] = await Promise.all([
+      this.prisma.veiculos.findFirst({ where: { placa: dto.placa, data_hora_exclusao: null } }),
+      this.prisma.veiculos.findFirst({ where: { renavam: dto.renavam, data_hora_exclusao: null } }),
+    ]);
     if (placaExistente) throw new ConflictException('Placa já está cadastrada');
     if (renavamExistente) throw new ConflictException('RENAVAM já está cadastrado');
 
-    const veiculo = await this.prisma.veiculo.create({
+    const veiculo = await this.prisma.veiculos.create({
       data: {
         placa: dto.placa.toUpperCase(),
         marca: dto.marca,
         modelo: dto.modelo,
-        anoFabricacao: dto.anoFabricacao,
-        anoModelo: dto.anoModelo,
+        ano_fabricacao: dto.ano_fabricacao,
+        ano_modelo: dto.ano_modelo,
         cor: dto.cor,
         renavam: dto.renavam,
-        odometroAtual: dto.odometroAtual,
-        dataAquisicao: new Date(dto.dataAquisicao),
-        situacao: dto.situacao,
+        odometro_atual: dto.odometro_atual,
+        data_aquisicao: new Date(dto.data_aquisicao),
+        situacao_id: dto.situacao_id,
         observacoes: dto.observacoes ?? null,
       },
-      select: SELECT_VEICULO,
+      include: INCLUDE_SITUACAO,
     });
-
     return this.mapearResposta(veiculo);
   }
 
-  async atualizar(id: string, dto: AtualizarVeiculoDto): Promise<VeiculoRespostaDto> {
-    const veiculo = await this.prisma.veiculo.findFirst({
-      where: { id, dataExclusao: null },
+  async atualizar(id: number, dto: AtualizarVeiculoDto): Promise<VeiculoRespostaDto> {
+    const veiculo = await this.prisma.veiculos.findFirst({
+      where: { id, data_hora_exclusao: null },
     });
     if (!veiculo) throw new NotFoundException('Veículo não encontrado');
 
-    const atualizado = await this.prisma.veiculo.update({
+    const atualizado = await this.prisma.veiculos.update({
       where: { id },
       data: {
         ...(dto.marca && { marca: dto.marca }),
         ...(dto.modelo && { modelo: dto.modelo }),
-        ...(dto.anoFabricacao !== undefined && { anoFabricacao: dto.anoFabricacao }),
-        ...(dto.anoModelo !== undefined && { anoModelo: dto.anoModelo }),
+        ...(dto.ano_fabricacao !== undefined && { ano_fabricacao: dto.ano_fabricacao }),
+        ...(dto.ano_modelo !== undefined && { ano_modelo: dto.ano_modelo }),
         ...(dto.cor && { cor: dto.cor }),
-        ...(dto.odometroAtual !== undefined && { odometroAtual: dto.odometroAtual }),
-        ...(dto.dataAquisicao && { dataAquisicao: new Date(dto.dataAquisicao) }),
-        ...(dto.situacao && { situacao: dto.situacao }),
+        ...(dto.odometro_atual !== undefined && { odometro_atual: dto.odometro_atual }),
+        ...(dto.data_aquisicao && { data_aquisicao: new Date(dto.data_aquisicao) }),
+        ...(dto.situacao_id !== undefined && { situacao_id: dto.situacao_id }),
         ...(dto.observacoes !== undefined && { observacoes: dto.observacoes }),
       },
-      select: SELECT_VEICULO,
+      include: INCLUDE_SITUACAO,
     });
-
     return this.mapearResposta(atualizado);
   }
 
-  async excluir(id: string): Promise<void> {
-    const veiculo = await this.prisma.veiculo.findFirst({
-      where: { id, dataExclusao: null },
+  async excluir(id: number): Promise<void> {
+    const veiculo = await this.prisma.veiculos.findFirst({
+      where: { id, data_hora_exclusao: null },
     });
     if (!veiculo) throw new NotFoundException('Veículo não encontrado');
 
-    const viagemAtiva = await this.prisma.viagem.findFirst({
+    // Bloqueia exclusão se há viagem ativa (status CRIADA ou EM_ANDAMENTO)
+    const statusAtivos = await this.prisma.status_viagem.findMany({
+      where: { nome: { in: ['CRIADA', 'EM_ANDAMENTO'] } },
+      select: { id: true },
+    });
+    const viagemAtiva = await this.prisma.viagens.findFirst({
       where: {
-        veiculoId: id,
-        status: { in: ['CRIADA', 'EM_ANDAMENTO'] },
-        dataExclusao: null,
+        veiculo_id: id,
+        status_id: { in: statusAtivos.map((s) => s.id) },
+        data_hora_exclusao: null,
       },
     });
-
     if (viagemAtiva) {
       throw new ConflictException(
         'Não é possível excluir um veículo com viagem ativa. Finalize a viagem antes.',
       );
     }
 
-    await this.prisma.veiculo.update({
+    const inativo = await this.prisma.situacoes_veiculo.findUnique({ where: { nome: 'inativo' } });
+    await this.prisma.veiculos.update({
       where: { id },
       data: {
-        situacao: 'inativo',
-        dataExclusao: agoraBrasilia(),
+        situacao_id: inativo?.id ?? veiculo.situacao_id,
+        data_hora_exclusao: agoraBrasilia(),
       },
     });
   }
 
-  private mapearResposta(veiculo: VeiculoPrisma): VeiculoRespostaDto {
-    return {
-      id: veiculo.id,
-      placa: veiculo.placa,
-      marca: veiculo.marca,
-      modelo: veiculo.modelo,
-      anoFabricacao: veiculo.anoFabricacao,
-      anoModelo: veiculo.anoModelo,
-      cor: veiculo.cor,
-      renavam: veiculo.renavam,
-      odometroAtual: veiculo.odometroAtual,
-      dataAquisicao: veiculo.dataAquisicao.toISOString().split('T')[0] ?? '',
-      situacao: veiculo.situacao as SituacaoVeiculo as SituacaoVeiculoEnum,
-      observacoes: veiculo.observacoes,
-      dataCriacao: formatarDataHoraBrasilia(veiculo.dataCriacao),
-    };
-  }
-
   /**
    * Veículos das viagens do motorista logado (distintos, ativos).
-   * Base para o motorista escolher onde lançar o abastecimento.
    */
-  async listarDoMotorista(motoristaSub: string): Promise<VeiculoRespostaDto[]> {
-    const vinculos = await this.prisma.viagem.findMany({
-      where: { motoristaId: motoristaSub, dataExclusao: null },
-      select: { veiculoId: true },
-      distinct: ['veiculoId'],
+  async listarDoMotorista(motoristaSub: number): Promise<VeiculoRespostaDto[]> {
+    const vinculos = await this.prisma.viagens.findMany({
+      where: { motorista_id: motoristaSub, data_hora_exclusao: null },
+      select: { veiculo_id: true },
+      distinct: ['veiculo_id'],
     });
-    const ids = vinculos.map((v) => v.veiculoId);
+    const ids = vinculos.map((v) => v.veiculo_id);
     if (ids.length === 0) return [];
 
-    const veiculos = await this.prisma.veiculo.findMany({
-      where: { id: { in: ids }, dataExclusao: null, situacao: 'ativo' },
-      select: SELECT_VEICULO,
+    const ativo = await this.prisma.situacoes_veiculo.findUnique({ where: { nome: 'ativo' } });
+    const veiculos = await this.prisma.veiculos.findMany({
+      where: {
+        id: { in: ids },
+        data_hora_exclusao: null,
+        ...(ativo && { situacao_id: ativo.id }),
+      },
+      include: INCLUDE_SITUACAO,
       orderBy: { placa: 'asc' },
     });
     return veiculos.map((v) => this.mapearResposta(v));
   }
 
   /**
-   * Motorista lança ABASTECIMENTO em um veículo. Só é permitido se o
-   * motorista tiver ao menos uma viagem (não excluída) com esse veículo
-   * (menor privilégio — sem vínculo a uma viagem específica/status).
+   * Motorista lança abastecimento. Cria registro em `abastecimentos`.
    */
   async criarAbastecimentoMotorista(
-    veiculoId: string,
+    veiculoId: number,
     dto: CriarAbastecimentoDto,
     usuario: UsuarioJwt,
   ): Promise<AbastecimentoRespostaDto> {
     if (usuario.perfil === 'motorista') {
-      const vinculo = await this.prisma.viagem.findFirst({
-        where: { motoristaId: usuario.sub, veiculoId, dataExclusao: null },
+      const vinculo = await this.prisma.viagens.findFirst({
+        where: { motorista_id: usuario.sub, veiculo_id: veiculoId, data_hora_exclusao: null },
         select: { id: true },
       });
       if (!vinculo) {
-        throw new ForbiddenException(
-          'Você só pode lançar abastecimento em veículos das suas viagens',
-        );
+        throw new ForbiddenException('Você só pode lançar abastecimento em veículos das suas viagens');
       }
     }
 
-    const veiculo = await this.prisma.veiculo.findFirst({
-      where: { id: veiculoId, dataExclusao: null },
+    const veiculo = await this.prisma.veiculos.findFirst({
+      where: { id: veiculoId, data_hora_exclusao: null },
       select: { id: true },
     });
     if (!veiculo) throw new NotFoundException('Veículo não encontrado');
 
+    const tipoComb = await this.prisma.tipos_combustivel.findUnique({
+      where: { nome: dto.tipo_combustivel },
+    });
+    if (!tipoComb) throw new ConflictException('Tipo de combustível inválido');
+
     const data = dto.data ? new Date(dto.data) : agoraBrasilia();
     const descricao = dto.descricao?.trim() || 'Abastecimento';
 
-    const criada = await this.prisma.despesaVeiculo.create({
+    const criada = await this.prisma.abastecimentos.create({
       data: {
-        veiculoId,
-        tipo: 'abastecimento',
+        veiculo_id: veiculoId,
+        tipo_combustivel_id: tipoComb.id,
         data,
         valor: new Decimal(dto.valor),
         descricao,
         observacoes: dto.observacoes ?? null,
         odometro: dto.odometro ?? null,
         litros: new Decimal(dto.litros),
-        precoLitro: new Decimal(dto.precoLitro),
-        tipoCombustivel: dto.tipoCombustivel,
+        preco_litro: new Decimal(dto.preco_litro),
       },
+      include: { tipo_combustivel: true },
     });
 
     return {
       id: criada.id,
-      veiculoId: criada.veiculoId,
-      tipo: criada.tipo,
+      veiculo_id: criada.veiculo_id,
+      tipo: 'abastecimento',
       data: formatarDataBrasilia(criada.data, 'yyyy-MM-dd'),
       valor: Number(criada.valor),
       litros: Number(criada.litros),
-      precoLitro: Number(criada.precoLitro),
-      tipoCombustivel: criada.tipoCombustivel ?? '',
+      preco_litro: Number(criada.preco_litro),
+      tipo_combustivel: criada.tipo_combustivel.nome,
       odometro: criada.odometro,
       descricao: criada.descricao,
-      dataCriacao: formatarDataHoraBrasilia(criada.dataCriacao),
+      data_hora_criacao: formatarDataHoraBrasilia(criada.data_hora_criacao),
+    };
+  }
+
+  private mapearResposta(v: VeiculoComSituacao): VeiculoRespostaDto {
+    return {
+      id: v.id,
+      placa: v.placa,
+      marca: v.marca,
+      modelo: v.modelo,
+      ano_fabricacao: v.ano_fabricacao,
+      ano_modelo: v.ano_modelo,
+      cor: v.cor,
+      renavam: v.renavam,
+      odometro_atual: v.odometro_atual,
+      data_aquisicao: v.data_aquisicao.toISOString().split('T')[0] ?? '',
+      situacao_id: v.situacao_id,
+      situacao: { id: v.situacao.id, nome: v.situacao.nome, descricao: v.situacao.descricao },
+      observacoes: v.observacoes,
+      data_hora_criacao: formatarDataHoraBrasilia(v.data_hora_criacao),
     };
   }
 }

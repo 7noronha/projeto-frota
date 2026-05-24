@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  ParseIntPipe,
   Query,
   UseGuards,
   HttpCode,
@@ -66,7 +67,7 @@ export class VeiculosController {
   @ApiOperation({ summary: 'Busca veículo por ID' })
   @ApiOkResponse({ type: VeiculoRespostaDto })
   @ApiNotFoundResponse({ description: 'Veículo não encontrado' })
-  async buscarPorId(@Param('id') id: string): Promise<VeiculoRespostaDto> {
+  async buscarPorId(@Param('id', ParseIntPipe) id: number): Promise<VeiculoRespostaDto> {
     return this.veiculosService.buscarPorId(id);
   }
 
@@ -86,7 +87,7 @@ export class VeiculosController {
   @ApiOkResponse({ type: VeiculoRespostaDto })
   @ApiNotFoundResponse({ description: 'Veículo não encontrado' })
   async atualizar(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: AtualizarVeiculoDto,
   ): Promise<VeiculoRespostaDto> {
     return this.veiculosService.atualizar(id, dto);
@@ -98,7 +99,7 @@ export class VeiculosController {
   @ApiOperation({ summary: 'Exclui veículo logicamente (soft delete)' })
   @ApiNotFoundResponse({ description: 'Veículo não encontrado' })
   @ApiConflictResponse({ description: 'Veículo com viagem ativa não pode ser excluído' })
-  async excluir(@Param('id') id: string): Promise<void> {
+  async excluir(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.veiculosService.excluir(id);
   }
 
@@ -111,7 +112,7 @@ export class VeiculosController {
   @ApiForbiddenResponse({ description: 'Motorista sem viagem com este veículo' })
   @ApiNotFoundResponse({ description: 'Veículo não encontrado' })
   async criarAbastecimento(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: CriarAbastecimentoDto,
     @UsuarioAutenticado() usuario: UsuarioJwt,
   ): Promise<AbastecimentoRespostaDto> {

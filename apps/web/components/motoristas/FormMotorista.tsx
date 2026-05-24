@@ -21,7 +21,7 @@ interface ErrosCampos {
   nome?: string;
   senha?: string;
   cnh?: string;
-  cnhValidade?: string;
+  cnh_validade?: string;
 }
 
 function naoVazio(valor: string, rotulo: string): string {
@@ -41,7 +41,7 @@ export function FormMotorista({ acao, motoristaInicial, titulo }: FormMotoristaP
   const [senha, setSenha] = useState('');
   const [telefone, setTelefone] = useState(motoristaInicial?.telefone ?? '');
   const [cnh, setCnh] = useState(motoristaInicial?.cnh ?? '');
-  const [cnhValidade, setCnhValidade] = useState(motoristaInicial?.cnhValidade ?? '');
+  const [cnh_validade, setCnhValidade] = useState(motoristaInicial?.cnh_validade ?? '');
   const [ativo, setAtivo] = useState<boolean>(motoristaInicial?.ativo ?? true);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -55,7 +55,7 @@ export function FormMotorista({ acao, motoristaInicial, titulo }: FormMotoristaP
     if (senha.trim()) formData.set('senha', senha);
     if (telefone.trim()) formData.set('telefone', telefone);
     formData.set('cnh', cnh);
-    formData.set('cnhValidade', cnhValidade);
+    formData.set('cnh_validade', cnh_validade);
     formData.set('ativo', String(ativo));
 
     const resultado = await acao(null, formData);
@@ -179,16 +179,16 @@ export function FormMotorista({ acao, motoristaInicial, titulo }: FormMotoristaP
                 onBlur={() => erroBlur('cnh', cnh ?? '', 'a CNH')}
               />
               <TextField
-                id="cnhValidade"
+                id="cnh_validade"
                 label="Validade da CNH"
                 type="date"
-                value={cnhValidade ?? ''}
+                value={cnh_validade ?? ''}
                 onChange={(v) => setCnhValidade(v)}
                 isRequired
-                isInvalid={Boolean(erroCampo('cnhValidade'))}
-                errorMessage={erroCampo('cnhValidade')}
+                isInvalid={Boolean(erroCampo('cnh_validade'))}
+                errorMessage={erroCampo('cnh_validade')}
                 aria-required="true"
-                onBlur={() => erroBlur('cnhValidade', cnhValidade ?? '', 'a validade da CNH')}
+                onBlur={() => erroBlur('cnh_validade', cnh_validade ?? '', 'a validade da CNH')}
               />
             </div>
 

@@ -6,7 +6,8 @@
       "PowerShell(bun --version)",
       "PowerShell(node --version)",
       "PowerShell(docker --version)",
-      "PowerShell(Set-Location C:\\\\www\\\\frota; & \"$env:USERPROFILE\\\\.bun\\\\bin\\\\bun.exe\" install)"
+      "PowerShell(Set-Location C:\\\\www\\\\frota; & \"$env:USERPROFILE\\\\.bun\\\\bin\\\\bun.exe\" install)",
+      "Bash(bun install *)"
     ]
   }
 }

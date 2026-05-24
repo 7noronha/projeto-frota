@@ -6,7 +6,8 @@ import { ErroApi } from '@/lib/api-servidor';
 type Params = Promise<{ id: string }>;
 
 export default async function PaginaEditarVeiculo({ params }: { params: Params }) {
-  const { id } = await params;
+  const { id: idStr } = await params;
+  const id = Number(idStr);
 
   let veiculo;
   try {

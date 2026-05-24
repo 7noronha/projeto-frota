@@ -6,6 +6,7 @@ import {
   Patch,
   Body,
   Param,
+  ParseIntPipe,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -57,7 +58,7 @@ export class ViagensController {
   @ApiOkResponse({ type: ViagemRespostaDto })
   @ApiNotFoundResponse({ description: 'Viagem não encontrada' })
   async buscarPorId(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @UsuarioAutenticado() usuario: UsuarioJwt,
   ): Promise<ViagemRespostaDto> {
     return this.viagensService.buscarPorId(id, usuario);
@@ -83,7 +84,7 @@ export class ViagensController {
   @ApiNotFoundResponse({ description: 'Viagem não encontrada' })
   @ApiBadRequestResponse({ description: 'Viagem não está no status CRIADA ou dados inválidos' })
   async atualizar(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: AtualizarViagemDto,
   ): Promise<ViagemRespostaDto> {
     return this.viagensService.atualizar(id, dto);
@@ -95,7 +96,7 @@ export class ViagensController {
   @ApiOkResponse({ type: ViagemRespostaDto })
   @ApiBadRequestResponse({ description: 'Status inválido ou odômetro menor que o atual' })
   async iniciar(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: IniciarViagemDto,
     @UsuarioAutenticado() usuario: UsuarioJwt,
   ): Promise<ViagemRespostaDto> {
@@ -108,7 +109,7 @@ export class ViagensController {
   @ApiOkResponse({ type: ViagemRespostaDto })
   @ApiBadRequestResponse({ description: 'Status inválido ou odômetro final menor que o inicial' })
   async finalizar(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: FinalizarViagemDto,
     @UsuarioAutenticado() usuario: UsuarioJwt,
   ): Promise<ViagemRespostaDto> {
@@ -124,7 +125,7 @@ export class ViagensController {
   @ApiCreatedResponse({ type: PosicaoRespostaDto })
   @ApiBadRequestResponse({ description: 'Viagem não está EM_ANDAMENTO' })
   async registrarPosicao(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: CriarPosicaoDto,
     @UsuarioAutenticado() usuario: UsuarioJwt,
   ): Promise<PosicaoRespostaDto> {
@@ -136,7 +137,7 @@ export class ViagensController {
   @ApiOperation({ summary: 'Últimas posições GPS registradas na viagem (desc)' })
   @ApiOkResponse({ type: [PosicaoRespostaDto] })
   async listarPosicoes(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @UsuarioAutenticado() usuario: UsuarioJwt,
     @Query('limite') limite?: string,
   ): Promise<PosicaoRespostaDto[]> {

@@ -9,7 +9,13 @@ import { ViagensModule } from './modulos/viagens/viagens.module';
 import { ConfiguracoesModule } from './modulos/configuracoes/configuracoes.module';
 import { RelatoriosModule } from './modulos/relatorios/relatorios.module';
 import { AlertasModule } from './modulos/alertas/alertas.module';
-import { DespesasModule } from './modulos/despesas/despesas.module';
+import { LookupsModule } from './modulos/lookups/lookups.module';
+import { MultasModule } from './modulos/multas/multas.module';
+import { AbastecimentosModule } from './modulos/abastecimentos/abastecimentos.module';
+import { ManutencoesModule } from './modulos/manutencoes/manutencoes.module';
+import { ImpostosModule } from './modulos/impostos/impostos.module';
+import { SegurosModule } from './modulos/seguros/seguros.module';
+import { DocumentacoesModule } from './modulos/documentacoes/documentacoes.module';
 import { NotificacoesModule } from './common/notificacoes/notificacoes.module';
 
 @Module({
@@ -32,7 +38,13 @@ import { NotificacoesModule } from './common/notificacoes/notificacoes.module';
     ConfiguracoesModule,
     RelatoriosModule,
     AlertasModule,
-    DespesasModule,
+    LookupsModule,
+    MultasModule,
+    AbastecimentosModule,
+    ManutencoesModule,
+    ImpostosModule,
+    SegurosModule,
+    DocumentacoesModule,
   ],
   controllers: [],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

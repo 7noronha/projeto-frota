@@ -64,13 +64,13 @@ function CampoDetalhe({ rotulo, valor }: { rotulo: string; valor: React.ReactNod
 }
 
 export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheViagemProps) {
-  const rotulo = ROTULOS_STATUS[viagem.status] ?? { texto: viagem.status, color: 'default' as BadgeColor };
-  const dataViagem = formatarDataIso(viagem.dataViagem);
+  const rotulo = ROTULOS_STATUS[viagem.status.nome] ?? { texto: viagem.status.nome, color: 'default' as BadgeColor };
+  const data_viagem = formatarDataIso(viagem.data_viagem);
 
   // Rastreamento em tempo real: só polla enquanto viagem está em andamento
   const posicaoMotorista = usePosicaoMotorista({
     viagemId: viagem.id,
-    ativo: viagem.status === 'EM_ANDAMENTO',
+    ativo: viagem.status.nome === 'EM_ANDAMENTO',
   });
 
   return (
@@ -87,7 +87,7 @@ export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheVia
         </VStack>
         <HStack alignItems="center" className="gap-3">
           <Badge color={rotulo.color} variant="light" size="lg">{rotulo.texto}</Badge>
-          {viagem.status === 'CRIADA' && (
+          {viagem.status.nome === 'CRIADA' && (
             <Link href={`/viagens/${viagem.id}/editar`} style={{ textDecoration: 'none' }}>
               <Button variant="outline" color="primary" size="sm" leftIcon="PiPencilBold">
                 Editar
@@ -110,11 +110,11 @@ export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheVia
         <Card.Content>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
             <CampoDetalhe rotulo="Destino" valor={viagem.destino} />
-            <CampoDetalhe rotulo="Data da viagem" valor={dataViagem} />
-            <CampoDetalhe rotulo="Hora início prevista" valor={viagem.horaInicioPrevista} />
-            <CampoDetalhe rotulo="Hora fim prevista" valor={viagem.horaFimPrevista} />
-            <CampoDetalhe rotulo="Solicitado por" valor={viagem.solicitadoPor} />
-            <CampoDetalhe rotulo="Autorizado por" valor={viagem.autorizadoPor} />
+            <CampoDetalhe rotulo="Data da viagem" valor={data_viagem} />
+            <CampoDetalhe rotulo="Hora início prevista" valor={viagem.hora_inicio_prevista} />
+            <CampoDetalhe rotulo="Hora fim prevista" valor={viagem.hora_fim_prevista} />
+            <CampoDetalhe rotulo="Solicitado por" valor={viagem.solicitado_por} />
+            <CampoDetalhe rotulo="Autorizado por" valor={viagem.autorizado_por} />
             {viagem.observacoes && (
               <div className="col-span-2">
                 <CampoDetalhe rotulo="Observações" valor={viagem.observacoes} />
@@ -126,22 +126,22 @@ export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheVia
 
       {/* Distância em linha reta (sempre que houver coords) */}
       <InfoDistanciaViagem
-        origemLatitude={viagem.origemLatitude}
-        origemLongitude={viagem.origemLongitude}
-        destinoLatitude={viagem.destinoLatitude}
-        destinoLongitude={viagem.destinoLongitude}
-        distanciaPercorrida={viagem.distanciaPercorrida}
-        rotaDistanciaKm={viagem.rotaDistanciaKm}
-        rotaDuracaoMin={viagem.rotaDuracaoMin}
+        origem_latitude={viagem.origem_latitude}
+        origem_longitude={viagem.origem_longitude}
+        destino_latitude={viagem.destino_latitude}
+        destino_longitude={viagem.destino_longitude}
+        distancia_percorrida={viagem.distancia_percorrida}
+        rota_distancia_km={viagem.rota_distancia_km}
+        rota_duracao_min={viagem.rota_duracao_min}
       />
 
       {/* Mapa — origem, destino + posição do motorista em tempo real */}
-      {(viagem.origemLatitude != null || viagem.destinoLatitude != null) && (
+      {(viagem.origem_latitude != null || viagem.destino_latitude != null) && (
         <Card>
           <Card.Header className="font-semibold text-base text-slate-800">
             <HStack alignItems="center" justifyContent="between">
               <span>Origem e destino no mapa</span>
-              {viagem.status === 'EM_ANDAMENTO' && (
+              {viagem.status.nome === 'EM_ANDAMENTO' && (
                 <Text size="xs" style={{ color: posicaoMotorista ? '#f97316' : '#94a3b8' }}>
                   {posicaoMotorista
                     ? `Motorista visto ${tempoDesde(posicaoMotorista.capturadoEm)}`
@@ -152,11 +152,11 @@ export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheVia
           </Card.Header>
           <Card.Content>
             <MapaViagem
-              origemLatitude={viagem.origemLatitude}
-              origemLongitude={viagem.origemLongitude}
-              destinoLatitude={viagem.destinoLatitude}
-              destinoLongitude={viagem.destinoLongitude}
-              rotaGeometria={viagem.rotaGeometria}
+              origem_latitude={viagem.origem_latitude}
+              origem_longitude={viagem.origem_longitude}
+              destino_latitude={viagem.destino_latitude}
+              destino_longitude={viagem.destino_longitude}
+              rota_geometria={viagem.rota_geometria}
               motoristaLatitude={posicaoMotorista?.latitude}
               motoristaLongitude={posicaoMotorista?.longitude}
             />
@@ -187,32 +187,32 @@ export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheVia
       </div>
 
       {/* Execução */}
-      {viagem.status !== 'CRIADA' && (
+      {viagem.status.nome !== 'CRIADA' && (
         <Card>
           <Card.Header className="font-semibold text-base text-slate-800">Execução</Card.Header>
           <Card.Content>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
               <CampoDetalhe
                 rotulo="Início real"
-                valor={viagem.dataHoraInicioReal ? formatarDataHoraIso(viagem.dataHoraInicioReal) : null}
+                valor={viagem.data_hora_inicio_real ? formatarDataHoraIso(viagem.data_hora_inicio_real) : null}
               />
               <CampoDetalhe
                 rotulo="Fim real"
-                valor={viagem.dataHoraFimReal ? formatarDataHoraIso(viagem.dataHoraFimReal) : null}
+                valor={viagem.data_hora_fim_real ? formatarDataHoraIso(viagem.data_hora_fim_real) : null}
               />
               <CampoDetalhe
                 rotulo="Odômetro inicial"
-                valor={viagem.odometroInicial != null ? `${viagem.odometroInicial.toLocaleString('pt-BR')} km` : null}
+                valor={viagem.odometro_inicial != null ? `${viagem.odometro_inicial.toLocaleString('pt-BR')} km` : null}
               />
               <CampoDetalhe
                 rotulo="Odômetro final"
-                valor={viagem.odometroFinal != null ? `${viagem.odometroFinal.toLocaleString('pt-BR')} km` : null}
+                valor={viagem.odometro_final != null ? `${viagem.odometro_final.toLocaleString('pt-BR')} km` : null}
               />
-              {viagem.distanciaPercorrida != null && (
+              {viagem.distancia_percorrida != null && (
                 <div className="col-span-2">
                   <CampoDetalhe
                     rotulo="Distância percorrida"
-                    valor={`${viagem.distanciaPercorrida.toLocaleString('pt-BR')} km`}
+                    valor={`${viagem.distancia_percorrida.toLocaleString('pt-BR')} km`}
                   />
                 </div>
               )}
@@ -222,7 +222,7 @@ export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheVia
       )}
 
       {/* Ação: Iniciar */}
-      {viagem.status === 'CRIADA' && (
+      {viagem.status.nome === 'CRIADA' && (
         <Card style={{ borderColor: '#bfdbfe', background: '#eff6ff' }}>
           <Card.Header className="font-semibold text-base text-blue-800">
             Iniciar viagem
@@ -230,20 +230,20 @@ export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheVia
           <Card.Content>
             <FormIniciarViagem
               acao={acaoIniciar}
-              odometroAtualVeiculo={viagem.veiculo.odometroAtual}
+              odometroAtualVeiculo={viagem.veiculo.odometro_atual}
             />
           </Card.Content>
         </Card>
       )}
 
       {/* Ação: Finalizar */}
-      {viagem.status === 'EM_ANDAMENTO' && viagem.odometroInicial != null && (
+      {viagem.status.nome === 'EM_ANDAMENTO' && viagem.odometro_inicial != null && (
         <Card style={{ borderColor: '#fde68a', background: '#fffbeb' }}>
           <Card.Header className="font-semibold text-base text-amber-900">
             Finalizar viagem
           </Card.Header>
           <Card.Content>
-            <FormFinalizarViagem acao={acaoFinalizar} odometroInicial={viagem.odometroInicial} />
+            <FormFinalizarViagem acao={acaoFinalizar} odometro_inicial={viagem.odometro_inicial} />
           </Card.Content>
         </Card>
       )}

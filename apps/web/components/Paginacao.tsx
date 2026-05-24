@@ -1,14 +1,14 @@
 import Link from 'next/link';
 
 interface PaginacaoProps {
-  totalPaginas: number;
+  total_paginas: number;
   paginaAtual: number;
   baseHref: string;
   params?: Record<string, string | undefined>;
 }
 
-export function Paginacao({ totalPaginas, paginaAtual, baseHref, params = {} }: PaginacaoProps) {
-  if (totalPaginas <= 1) return null;
+export function Paginacao({ total_paginas, paginaAtual, baseHref, params = {} }: PaginacaoProps) {
+  if (total_paginas <= 1) return null;
 
   const spBase = new URLSearchParams();
   for (const [chave, valor] of Object.entries(params)) {
@@ -17,7 +17,7 @@ export function Paginacao({ totalPaginas, paginaAtual, baseHref, params = {} }: 
 
   return (
     <nav aria-label="Paginação" className="mt-6 flex items-center justify-center gap-2">
-      {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((p) => {
+      {Array.from({ length: total_paginas }, (_, i) => i + 1).map((p) => {
         const sp = new URLSearchParams(spBase);
         sp.set('pagina', String(p));
         const ativo = p === paginaAtual;

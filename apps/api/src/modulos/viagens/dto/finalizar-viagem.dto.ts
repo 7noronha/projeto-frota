@@ -7,5 +7,5 @@ export class FinalizarViagemDto {
   @Type(() => Number)
   @IsInt()
   @Min(0, { message: 'Odômetro final não pode ser negativo' })
-  odometroFinal: number;
+  odometro_final: number;
 }

@@ -8,7 +8,8 @@ type Params = Promise<{ id: string }>;
 export const dynamic = 'force-dynamic';
 
 export default async function PaginaEditarUsuario(props: { params: Params }) {
-  const { id } = await props.params;
+  const { id: idStr } = await props.params;
+  const id = Number(idStr);
 
   let usuario;
   try {

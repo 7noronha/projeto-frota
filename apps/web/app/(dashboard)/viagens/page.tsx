@@ -19,7 +19,7 @@ export default async function PaginaViagens({ searchParams }: PaginaViagensProps
 
   const temFiltrosAtivos = Boolean(params.status ?? params.dataInicio ?? params.dataFim);
 
-  const { dados, total, totalPaginas } = await buscarViagens(pagina, {
+  const { dados, total, total_paginas } = await buscarViagens(pagina, {
     status: params.status,
     dataInicio: params.dataInicio,
     dataFim: params.dataFim,
@@ -53,7 +53,7 @@ export default async function PaginaViagens({ searchParams }: PaginaViagensProps
       <TabelaViagens viagens={dados} temFiltrosAtivos={temFiltrosAtivos} />
 
       <Paginacao
-        totalPaginas={totalPaginas}
+        total_paginas={total_paginas}
         paginaAtual={pagina}
         baseHref="/viagens"
         params={{ status: params.status, dataInicio: params.dataInicio, dataFim: params.dataFim }}

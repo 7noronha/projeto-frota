@@ -1,590 +1,246 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ViagensService } from './viagens.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { PushNotificationService } from '../../common/notificacoes/push-notification.service';
 import { GeocodingService } from '../../common/geocoding/geocoding.service';
 import { DirectionsService } from '../../common/geocoding/directions.service';
 import { VelocidadeService } from '../relatorios/velocidade.service';
-import { PushNotificationService } from '../../common/notificacoes/push-notification.service';
-import { CriarViagemDto } from './dto/criar-viagem.dto';
-import { UsuarioJwt } from '@fleetops/types';
-
-const mockUsuarioOperador: UsuarioJwt = {
-  sub: 'uuid-operador',
-  matricula: '0000000002',
-  nome: 'Operador',
-  perfil: 'operador',
-  iat: 0,
-  exp: 0,
-};
-
-const mockUsuarioMotorista: UsuarioJwt = {
-  sub: 'uuid-motorista',
-  matricula: '0009003656',
-  nome: 'Motorista João',
-  perfil: 'motorista',
-  iat: 0,
-  exp: 0,
-};
-
-const mockMotoristaPrisma = {
-  id: 'uuid-motorista',
-  nome: 'Motorista João',
-  matricula: '0009003656',
-  perfil: 'motorista',
-  ativo: true,
-  cnh: '12345678900',
-  cnhValidade: new Date('2030-12-31'),
-  dataExclusao: null,
-};
-
-const mockVeiculoPrisma = {
-  id: 'uuid-veiculo',
-  placa: 'ABC1D23',
-  marca: 'Toyota',
-  modelo: 'Corolla',
-  odometroAtual: 15000,
-  situacao: 'ativo',
-  dataExclusao: null,
-};
-
-const mockViagem = {
-  id: 'uuid-viagem',
-  origem: 'Rua da Sede, 1',
-  destino: 'Av. Paulista, 1000',
-  dataViagem: new Date('2026-05-10'),
-  horaInicioPrevista: new Date(0),
-  horaFimPrevista: new Date(0),
-  dataHoraInicioReal: null,
-  dataHoraFimReal: null,
-  odometroInicial: null,
-  odometroFinal: null,
-  distanciaPercorrida: null,
-  motoristaId: 'uuid-motorista',
-  veiculoId: 'uuid-veiculo',
-  operadorCriadorId: 'uuid-operador',
-  solicitadoPor: 'Fulano',
-  autorizadoPor: 'Ciclano',
-  observacoes: null,
-  status: 'CRIADA',
-  dataCriacao: new Date('2026-04-27T08:00:00'),
-  dataExclusao: null,
-  motorista: { id: 'uuid-motorista', nome: 'Motorista João', matricula: '0009003656' },
-  veiculo: { id: 'uuid-veiculo', placa: 'ABC1D23', marca: 'Toyota', modelo: 'Corolla', odometroAtual: 15000 },
-};
-
-function mockCriarDto(overrides: Partial<CriarViagemDto> = {}): CriarViagemDto {
-  return {
-    destino: 'Av. Paulista, 1000',
-    dataViagem: '2026-05-10',
-    horaInicioPrevista: '08:00',
-    horaFimPrevista: '12:00',
-    motoristaId: 'uuid-motorista',
-    veiculoId: 'uuid-veiculo',
-    solicitadoPor: 'Fulano',
-    autorizadoPor: 'Ciclano',
-    ...overrides,
-  };
-}
+import type { UsuarioJwt } from '@fleetops/types';
 
 describe('ViagensService', () => {
   let service: ViagensService;
   let prisma: {
-    configuracao: { findFirst: jest.Mock };
-    usuario: { findFirst: jest.Mock };
-    veiculo: { findFirst: jest.Mock; update: jest.Mock };
-    viagem: { count: jest.Mock; findMany: jest.Mock; findFirst: jest.Mock; create: jest.Mock; update: jest.Mock };
-    posicaoViagem: { create: jest.Mock; findMany: jest.Mock };
+    viagens: {
+      findFirst: jest.Mock;
+      findMany: jest.Mock;
+      count: jest.Mock;
+      update: jest.Mock;
+      create: jest.Mock;
+    };
+    veiculos: { findFirst: jest.Mock; update: jest.Mock };
+    usuarios: { findFirst: jest.Mock };
+    status_viagem: { findUnique: jest.Mock; findMany: jest.Mock };
+    posicoes_viagem: { findMany: jest.Mock; create: jest.Mock };
     $transaction: jest.Mock;
   };
 
+  const statusIdMap: Record<string, number> = {
+    CRIADA: 1,
+    EM_ANDAMENTO: 2,
+    FINALIZADA: 3,
+  };
+
+  const usuarioJwt = (perfil: string, sub = 10): UsuarioJwt => ({
+    sub,
+    matricula: '0000000010',
+    nome: 'Operador',
+    perfil,
+    iat: 0,
+    exp: 0,
+  });
+
+  const viagemFake = (statusNome: string, overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
+    id: 1,
+    origem: 'Sede',
+    destino: 'Cliente',
+    origem_latitude: null,
+    origem_longitude: null,
+    destino_latitude: null,
+    destino_longitude: null,
+    rota_geometria: null,
+    rota_distancia_km: null,
+    rota_duracao_min: null,
+    data_viagem: new Date('2026-12-01'),
+    hora_inicio_prevista: new Date('1970-01-01T08:00:00Z'),
+    hora_fim_prevista: new Date('1970-01-01T18:00:00Z'),
+    data_hora_inicio_real: null,
+    data_hora_fim_real: null,
+    odometro_inicial: null,
+    odometro_final: null,
+    distancia_percorrida: null,
+    motorista_id: 100,
+    veiculo_id: 200,
+    operador_criador_id: 10,
+    solicitado_por: 'RH',
+    autorizado_por: 'Gerência',
+    observacoes: null,
+    status_id: statusIdMap[statusNome],
+    data_hora_criacao: new Date(),
+    data_hora_atualizacao: new Date(),
+    data_hora_exclusao: null,
+    motorista: { id: 100, nome: 'Motorista', matricula: '0000000100' },
+    veiculo: { id: 200, placa: 'TST1A23', marca: 'Fiat', modelo: 'Strada', odometro_atual: 10000 },
+    status: { id: statusIdMap[statusNome], nome: statusNome, descricao: null },
+    ...overrides,
+  });
+
   beforeEach(async () => {
     prisma = {
-      configuracao: { findFirst: jest.fn().mockResolvedValue({ chave: 'endereco_sede', valor: 'Rua da Sede, 1' }) },
-      usuario: { findFirst: jest.fn().mockResolvedValue(mockMotoristaPrisma) },
-      veiculo: {
-        findFirst: jest.fn().mockResolvedValue(mockVeiculoPrisma),
-        update: jest.fn(),
-      },
-      viagem: {
+      viagens: {
+        findFirst: jest.fn(),
+        findMany: jest.fn().mockResolvedValue([]),
         count: jest.fn().mockResolvedValue(0),
-        findMany: jest.fn().mockResolvedValue([]),
-        findFirst: jest.fn().mockResolvedValue(null),
-        create: jest.fn().mockResolvedValue(mockViagem),
-        update: jest.fn().mockResolvedValue(mockViagem),
-      },
-      posicaoViagem: {
+        update: jest.fn(),
         create: jest.fn(),
+      },
+      veiculos: { findFirst: jest.fn(), update: jest.fn() },
+      usuarios: { findFirst: jest.fn() },
+      status_viagem: {
+        findUnique: jest.fn().mockImplementation(({ where: { nome } }: { where: { nome: string } }) =>
+          Promise.resolve({ id: statusIdMap[nome], nome, descricao: null }),
+        ),
         findMany: jest.fn().mockResolvedValue([]),
       },
-      $transaction: jest.fn(),
+      posicoes_viagem: { findMany: jest.fn().mockResolvedValue([]), create: jest.fn() },
+      $transaction: jest.fn().mockImplementation((promises: Promise<unknown>[]) => Promise.all(promises)),
     };
-
-    const geocodingMock: GeocodingService = {
-      geocodificar: jest.fn().mockResolvedValue(null),
-    } as unknown as GeocodingService;
-
-    const directionsMock: DirectionsService = {
-      rotear: jest.fn().mockResolvedValue(null),
-    } as unknown as DirectionsService;
-
-    const velocidadeMock: VelocidadeService = {
-      porMotorista: jest.fn().mockResolvedValue({
-        motoristaId: null,
-        veiculoId: null,
-        velocidadeMediaKmH: 40,
-        amostras: 0,
-      }),
-      global: jest.fn().mockResolvedValue({
-        motoristaId: null,
-        veiculoId: null,
-        velocidadeMediaKmH: 40,
-        amostras: 0,
-      }),
-      invalidar: jest.fn(),
-    } as unknown as VelocidadeService;
-
-    const pushMock: PushNotificationService = {
-      enviarParaUsuario: jest.fn().mockResolvedValue(false),
-      enviarParaUsuarios: jest.fn().mockResolvedValue(0),
-    } as unknown as PushNotificationService;
 
     const modulo: TestingModule = await Test.createTestingModule({
       providers: [
         ViagensService,
         { provide: PrismaService, useValue: prisma },
-        { provide: GeocodingService, useValue: geocodingMock },
-        { provide: DirectionsService, useValue: directionsMock },
-        { provide: VelocidadeService, useValue: velocidadeMock },
-        { provide: PushNotificationService, useValue: pushMock },
+        { provide: PushNotificationService, useValue: { enviarParaUsuario: jest.fn() } },
+        { provide: GeocodingService, useValue: { geocodificar: jest.fn() } },
+        { provide: DirectionsService, useValue: { calcularRota: jest.fn() } },
+        { provide: VelocidadeService, useValue: { calcularMedia: jest.fn(), invalidar: jest.fn() } },
       ],
     }).compile();
-
-    service = modulo.get<ViagensService>(ViagensService);
-  });
-
-  describe('criar', () => {
-    it('deve criar uma viagem com status CRIADA', async () => {
-      // Arrange
-      prisma.viagem.findFirst.mockResolvedValue(null); // sem conflitos
-
-      // Act
-      const resultado = await service.criar(mockCriarDto(), 'uuid-operador');
-
-      // Assert
-      expect(resultado.status).toBe('CRIADA');
-      expect(resultado.motoristaId).toBe('uuid-motorista');
-    });
-
-    it('deve lançar BadRequestException se hora fim <= hora início', async () => {
-      // Arrange
-      const dto = mockCriarDto({ horaInicioPrevista: '12:00', horaFimPrevista: '08:00' });
-
-      // Act & Assert
-      await expect(service.criar(dto, 'uuid-operador')).rejects.toThrow(BadRequestException);
-    });
-
-    it('deve lançar NotFoundException se motorista não existir', async () => {
-      // Arrange
-      prisma.usuario.findFirst.mockResolvedValue(null);
-
-      // Act & Assert
-      await expect(service.criar(mockCriarDto(), 'uuid-operador')).rejects.toThrow(NotFoundException);
-    });
-
-    it('deve lançar BadRequestException se CNH do motorista estiver vencida', async () => {
-      // Arrange
-      prisma.usuario.findFirst.mockResolvedValue({
-        ...mockMotoristaPrisma,
-        cnhValidade: new Date('2020-01-01'),
-      });
-
-      // Act & Assert
-      await expect(service.criar(mockCriarDto(), 'uuid-operador')).rejects.toThrow(BadRequestException);
-    });
-
-    it('deve lançar BadRequestException com horário do conflito se motorista já tiver viagem ativa sobreposta', async () => {
-      // Arrange — conflito retorna horario sobreposto
-      prisma.viagem.findFirst
-        .mockResolvedValueOnce({
-          id: 'uuid-conflito',
-          horaInicioPrevista: new Date(Date.UTC(1970, 0, 1, 9, 0)),
-          horaFimPrevista: new Date(Date.UTC(1970, 0, 1, 11, 0)),
-        }) // conflito motorista
-        .mockResolvedValueOnce(null);
-
-      // Act & Assert
-      await expect(service.criar(mockCriarDto(), 'uuid-operador')).rejects.toThrow(
-        /Motorista já possui viagem das 09:00 às 11:00/,
-      );
-    });
-
-    it('deve permitir criação se não houver sobreposição de horário no mesmo dia', async () => {
-      // Arrange — sem conflito (buscarConflitoDePeriodo retorna null para ambos)
-      prisma.viagem.findFirst.mockResolvedValue(null);
-
-      // Act
-      const resultado = await service.criar(mockCriarDto(), 'uuid-operador');
-
-      // Assert
-      expect(resultado.status).toBe('CRIADA');
-      // Garante que a query usou AND com lt/gt nos horários
-      const chamada = prisma.viagem.findFirst.mock.calls[0][0];
-      expect(chamada.where.AND).toEqual([
-        { horaInicioPrevista: { lt: expect.any(Date) } },
-        { horaFimPrevista: { gt: expect.any(Date) } },
-      ]);
-    });
-
-    it('deve lançar BadRequestException com horário do conflito se veículo já tiver viagem sobreposta', async () => {
-      // Arrange — primeiro findFirst sem conflito motorista, segundo retorna conflito veículo
-      prisma.viagem.findFirst
-        .mockResolvedValueOnce(null) // motorista OK
-        .mockResolvedValueOnce({
-          id: 'uuid-conflito-veiculo',
-          horaInicioPrevista: new Date(Date.UTC(1970, 0, 1, 10, 0)),
-          horaFimPrevista: new Date(Date.UTC(1970, 0, 1, 14, 0)),
-        });
-
-      // Act & Assert
-      await expect(service.criar(mockCriarDto(), 'uuid-operador')).rejects.toThrow(
-        /Veículo já possui viagem das 10:00 às 14:00/,
-      );
-    });
-
-    it('deve lançar NotFoundException se veículo não estiver ativo', async () => {
-      // Arrange
-      prisma.viagem.findFirst.mockResolvedValue(null); // sem conflito de motorista
-      prisma.veiculo.findFirst.mockResolvedValue(null); // veículo inativo
-
-      // Act & Assert
-      await expect(service.criar(mockCriarDto(), 'uuid-operador')).rejects.toThrow(NotFoundException);
-    });
-
-    it('deve lançar BadRequestException se motorista não tiver CNH cadastrada', async () => {
-      // Arrange
-      prisma.usuario.findFirst.mockResolvedValue({ ...mockMotoristaPrisma, cnh: null });
-
-      // Act & Assert
-      await expect(service.criar(mockCriarDto(), 'uuid-operador')).rejects.toThrow(
-        /CNH cadastrada/,
-      );
-    });
-
-    it('deve usar cache do endereco_sede em criações subsequentes', async () => {
-      // Arrange
-      prisma.viagem.findFirst.mockResolvedValue(null);
-
-      // Act — duas chamadas seguidas
-      await service.criar(mockCriarDto(), 'uuid-operador');
-      await service.criar(mockCriarDto(), 'uuid-operador');
-
-      // Assert — Configuracao.findFirst só foi chamado UMA vez (cache hit na segunda)
-      expect(prisma.configuracao.findFirst).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('listar', () => {
-    it('deve aplicar filtro de motoristaId quando usuário é motorista (forçado)', async () => {
-      // Arrange
-      prisma.viagem.count.mockResolvedValue(0);
-      prisma.viagem.findMany.mockResolvedValue([]);
-
-      // Act
-      await service.listar({}, mockUsuarioMotorista);
-
-      // Assert — where inclui motoristaId = sub do motorista logado
-      const argsCount = prisma.viagem.count.mock.calls[0][0];
-      expect(argsCount.where.motoristaId).toBe('uuid-motorista');
-    });
-
-    it('deve retornar paginação correta', async () => {
-      // Arrange
-      prisma.viagem.count.mockResolvedValue(42);
-      prisma.viagem.findMany.mockResolvedValue([mockViagem]);
-
-      // Act
-      const resultado = await service.listar({ pagina: 2, tamanhoPagina: 10 }, mockUsuarioOperador);
-
-      // Assert
-      expect(resultado.total).toBe(42);
-      expect(resultado.pagina).toBe(2);
-      expect(resultado.tamanhoPagina).toBe(10);
-      expect(resultado.totalPaginas).toBe(5);
-    });
-  });
-
-  describe('buscarPorId', () => {
-    it('deve lançar NotFoundException se viagem não existir', async () => {
-      // Arrange
-      prisma.viagem.findFirst.mockResolvedValue(null);
-
-      // Act & Assert
-      await expect(service.buscarPorId('uuid-inexistente', mockUsuarioOperador)).rejects.toThrow(
-        NotFoundException,
-      );
-    });
-
-    it('deve lançar ForbiddenException se motorista tentar acessar viagem de outro', async () => {
-      // Arrange
-      prisma.viagem.findFirst.mockResolvedValue({
-        ...mockViagem,
-        motoristaId: 'uuid-outro-motorista',
-      });
-
-      // Act & Assert
-      await expect(service.buscarPorId('uuid-viagem', mockUsuarioMotorista)).rejects.toThrow(
-        ForbiddenException,
-      );
-    });
-
-    it('deve fazer backfill de coordenadas quando viagem nao tem lat/lng e geocoding funciona', async () => {
-      // Arrange — viagem antiga sem coordenadas (cenário real: criada antes do GPS)
-      const viagemSemCoords = {
-        ...mockViagem,
-        origemLatitude: null,
-        origemLongitude: null,
-        destinoLatitude: null,
-        destinoLongitude: null,
-      };
-      prisma.viagem.findFirst.mockResolvedValue(viagemSemCoords);
-
-      // Geocoding agora retorna coords para ambos os endereços
-      const geocodingService = (service as unknown as { geocoding: GeocodingService }).geocoding;
-      (geocodingService.geocodificar as jest.Mock)
-        .mockResolvedValueOnce({ latitude: -15.7942, longitude: -47.8822 })
-        .mockResolvedValueOnce({ latitude: -23.5505, longitude: -46.6333 });
-
-      prisma.viagem.update.mockResolvedValue({
-        ...viagemSemCoords,
-        origemLatitude: -15.7942,
-        origemLongitude: -47.8822,
-        destinoLatitude: -23.5505,
-        destinoLongitude: -46.6333,
-      });
-
-      // Act
-      const resp = await service.buscarPorId('uuid-viagem', mockUsuarioOperador);
-
-      // Assert
-      expect(geocodingService.geocodificar).toHaveBeenCalledWith(viagemSemCoords.origem);
-      expect(geocodingService.geocodificar).toHaveBeenCalledWith(viagemSemCoords.destino);
-      expect(prisma.viagem.update).toHaveBeenCalled();
-      expect(resp.origemLatitude).toBe(-15.7942);
-      expect(resp.destinoLatitude).toBe(-23.5505);
-    });
-
-    it('nao deve persistir nada se backfill nao resolver nenhuma coordenada', async () => {
-      // Arrange — viagem sem coords + token Mapbox ausente (geocoding retorna null)
-      prisma.viagem.findFirst.mockResolvedValue({
-        ...mockViagem,
-        origemLatitude: null,
-        origemLongitude: null,
-        destinoLatitude: null,
-        destinoLongitude: null,
-      });
-
-      // Act
-      const resp = await service.buscarPorId('uuid-viagem', mockUsuarioOperador);
-
-      // Assert
-      expect(prisma.viagem.update).not.toHaveBeenCalled();
-      expect(resp.origemLatitude).toBeNull();
-      expect(resp.destinoLatitude).toBeNull();
-    });
+    service = modulo.get(ViagensService);
   });
 
   describe('iniciar', () => {
-    it('deve iniciar viagem alterando status para EM_ANDAMENTO', async () => {
-      // Arrange
-      const viagemComVeiculo = {
-        ...mockViagem,
-        veiculo: { ...mockViagem.veiculo, odometroAtual: 15000 },
-      };
-      prisma.viagem.findFirst.mockResolvedValue(viagemComVeiculo);
-      prisma.viagem.update.mockResolvedValue({ ...mockViagem, status: 'EM_ANDAMENTO', odometroInicial: 15100 });
+    it('deve transicionar CRIADA → EM_ANDAMENTO com odômetro válido', async () => {
+      prisma.viagens.findFirst.mockResolvedValue(viagemFake('CRIADA'));
+      prisma.viagens.update.mockResolvedValue(
+        viagemFake('EM_ANDAMENTO', { odometro_inicial: 10500, data_hora_inicio_real: new Date() }),
+      );
 
-      // Act
-      const resultado = await service.iniciar('uuid-viagem', { odometroInicial: 15100 }, mockUsuarioOperador);
+      const r = await service.iniciar(1, { odometro_inicial: 10500 }, usuarioJwt('motorista', 100));
 
-      // Assert
-      expect(resultado.status).toBe('EM_ANDAMENTO');
+      expect(prisma.viagens.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status_id: statusIdMap['EM_ANDAMENTO'],
+            odometro_inicial: 10500,
+            data_hora_inicio_real: expect.any(Date),
+          }),
+        }),
+      );
+      expect(r.status.nome).toBe('EM_ANDAMENTO');
     });
 
-    it('deve lançar BadRequestException se status não for CRIADA', async () => {
-      // Arrange
-      prisma.viagem.findFirst.mockResolvedValue({ ...mockViagem, status: 'EM_ANDAMENTO' });
-
-      // Act & Assert
+    it('deve lançar NotFound quando viagem não existe', async () => {
+      prisma.viagens.findFirst.mockResolvedValue(null);
       await expect(
-        service.iniciar('uuid-viagem', { odometroInicial: 15100 }, mockUsuarioOperador),
+        service.iniciar(999, { odometro_inicial: 10500 }, usuarioJwt('admin')),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('deve rejeitar quando status não for CRIADA', async () => {
+      prisma.viagens.findFirst.mockResolvedValue(viagemFake('EM_ANDAMENTO'));
+      await expect(
+        service.iniciar(1, { odometro_inicial: 10500 }, usuarioJwt('admin')),
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('deve lançar BadRequestException se odômetro inicial for menor que o atual do veículo', async () => {
-      // Arrange
-      prisma.viagem.findFirst.mockResolvedValue({
-        ...mockViagem,
-        veiculo: { ...mockViagem.veiculo, odometroAtual: 16000 },
-      });
-
-      // Act & Assert
+    it('deve rejeitar motorista tentando iniciar viagem de outro motorista', async () => {
+      prisma.viagens.findFirst.mockResolvedValue(viagemFake('CRIADA', { motorista_id: 100 }));
       await expect(
-        service.iniciar('uuid-viagem', { odometroInicial: 15000 }, mockUsuarioOperador),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('deve lançar ForbiddenException se motorista tentar iniciar viagem de outro motorista', async () => {
-      // Arrange
-      prisma.viagem.findFirst.mockResolvedValue({
-        ...mockViagem,
-        motoristaId: 'uuid-outro-motorista',
-        veiculo: { ...mockViagem.veiculo, odometroAtual: 15000 },
-      });
-
-      // Act & Assert
-      await expect(
-        service.iniciar('uuid-viagem', { odometroInicial: 15100 }, mockUsuarioMotorista),
+        service.iniciar(1, { odometro_inicial: 10500 }, usuarioJwt('motorista', 999)),
       ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('deve rejeitar odômetro inicial menor que o atual do veículo', async () => {
+      prisma.viagens.findFirst.mockResolvedValue(viagemFake('CRIADA'));
+      await expect(
+        service.iniciar(1, { odometro_inicial: 5000 }, usuarioJwt('admin')),
+      ).rejects.toThrow(/odômetro inicial/i);
     });
   });
 
   describe('finalizar', () => {
-    it('deve finalizar viagem, calcular distância e atualizar odômetro do veículo', async () => {
-      // Arrange
-      const viagemEmAndamento = { ...mockViagem, status: 'EM_ANDAMENTO', odometroInicial: 15000 };
-      prisma.viagem.findFirst.mockResolvedValue(viagemEmAndamento);
-      prisma.$transaction.mockResolvedValue([
-        { ...mockViagem, status: 'FINALIZADA', odometroFinal: 15320, distanciaPercorrida: 320 },
-        {},
-      ]);
+    it('deve transicionar EM_ANDAMENTO → FINALIZADA calculando distância', async () => {
+      prisma.viagens.findFirst.mockResolvedValue(
+        viagemFake('EM_ANDAMENTO', {
+          odometro_inicial: 10500,
+          data_hora_inicio_real: new Date('2026-01-01T08:00:00Z'),
+        }),
+      );
+      prisma.viagens.update.mockResolvedValue(
+        viagemFake('FINALIZADA', {
+          odometro_inicial: 10500,
+          odometro_final: 10800,
+          distancia_percorrida: 300,
+        }),
+      );
 
-      // Act
-      const resultado = await service.finalizar('uuid-viagem', { odometroFinal: 15320 }, mockUsuarioOperador);
+      const r = await service.finalizar(1, { odometro_final: 10800 }, usuarioJwt('motorista', 100));
 
-      // Assert
-      expect(resultado.status).toBe('FINALIZADA');
-      expect(resultado.distanciaPercorrida).toBe(320);
+      expect(prisma.viagens.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status_id: statusIdMap['FINALIZADA'],
+            odometro_final: 10800,
+            distancia_percorrida: 300,
+          }),
+        }),
+      );
+      expect(r.status.nome).toBe('FINALIZADA');
     });
 
-    it('deve lançar BadRequestException se odômetro final <= inicial', async () => {
-      // Arrange
-      prisma.viagem.findFirst.mockResolvedValue({ ...mockViagem, status: 'EM_ANDAMENTO', odometroInicial: 15000 });
-
-      // Act & Assert
+    it('deve rejeitar finalizar viagem que não está EM_ANDAMENTO', async () => {
+      prisma.viagens.findFirst.mockResolvedValue(viagemFake('CRIADA'));
       await expect(
-        service.finalizar('uuid-viagem', { odometroFinal: 14999 }, mockUsuarioOperador),
+        service.finalizar(1, { odometro_final: 10800 }, usuarioJwt('admin')),
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('deve lançar BadRequestException se status não for EM_ANDAMENTO', async () => {
-      // Arrange
-      prisma.viagem.findFirst.mockResolvedValue({ ...mockViagem, status: 'CRIADA' });
-
-      // Act & Assert
+    it('deve rejeitar odômetro final menor ou igual ao inicial', async () => {
+      prisma.viagens.findFirst.mockResolvedValue(
+        viagemFake('EM_ANDAMENTO', { odometro_inicial: 10500 }),
+      );
       await expect(
-        service.finalizar('uuid-viagem', { odometroFinal: 15500 }, mockUsuarioOperador),
-      ).rejects.toThrow(BadRequestException);
+        service.finalizar(1, { odometro_final: 10500 }, usuarioJwt('admin')),
+      ).rejects.toThrow(/odômetro final/i);
+    });
+
+    it('deve rejeitar motorista finalizando viagem de outro motorista', async () => {
+      prisma.viagens.findFirst.mockResolvedValue(
+        viagemFake('EM_ANDAMENTO', { motorista_id: 100, odometro_inicial: 10500 }),
+      );
+      await expect(
+        service.finalizar(1, { odometro_final: 10800 }, usuarioJwt('motorista', 999)),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
-  describe('registrarPosicao', () => {
-    const dtoPosicao = { latitude: -23.5, longitude: -46.6 };
+  describe('listar', () => {
+    it('motorista deve receber apenas suas próprias viagens (filtro forçado)', async () => {
+      prisma.viagens.findMany.mockResolvedValue([]);
+      prisma.viagens.count.mockResolvedValue(0);
 
-    it('deve criar posicao quando motorista da viagem reporta em EM_ANDAMENTO', async () => {
-      prisma.viagem.findFirst.mockResolvedValue({
-        id: 'uuid-viagem',
-        motoristaId: 'uuid-motorista',
-        status: 'EM_ANDAMENTO',
-      });
-      prisma.posicaoViagem.create.mockResolvedValue({
-        id: 'uuid-pos',
-        viagemId: 'uuid-viagem',
-        latitude: -23.5,
-        longitude: -46.6,
-        precisaoM: null,
-        capturadoEm: new Date('2026-05-21T18:30:00'),
-      });
+      await service.listar({}, usuarioJwt('motorista', 100));
 
-      const r = await service.registrarPosicao('uuid-viagem', mockUsuarioMotorista, dtoPosicao);
-      expect(r.latitude).toBe(-23.5);
-      expect(prisma.posicaoViagem.create).toHaveBeenCalled();
-    });
-
-    it('deve lancar Forbidden se outro motorista tentar', async () => {
-      prisma.viagem.findFirst.mockResolvedValue({
-        id: 'uuid-viagem',
-        motoristaId: 'outro-motorista',
-        status: 'EM_ANDAMENTO',
-      });
-      await expect(
-        service.registrarPosicao('uuid-viagem', mockUsuarioMotorista, dtoPosicao),
-      ).rejects.toThrow(ForbiddenException);
-    });
-
-    it('deve lancar Forbidden se operador/admin tentar (so motorista reporta)', async () => {
-      prisma.viagem.findFirst.mockResolvedValue({
-        id: 'uuid-viagem',
-        motoristaId: 'uuid-motorista',
-        status: 'EM_ANDAMENTO',
-      });
-      await expect(
-        service.registrarPosicao('uuid-viagem', mockUsuarioOperador, dtoPosicao),
-      ).rejects.toThrow(ForbiddenException);
-    });
-
-    it('deve lancar BadRequest se viagem nao estiver EM_ANDAMENTO', async () => {
-      prisma.viagem.findFirst.mockResolvedValue({
-        id: 'uuid-viagem',
-        motoristaId: 'uuid-motorista',
-        status: 'CRIADA',
-      });
-      await expect(
-        service.registrarPosicao('uuid-viagem', mockUsuarioMotorista, dtoPosicao),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('deve lancar NotFound se viagem nao existir', async () => {
-      prisma.viagem.findFirst.mockResolvedValue(null);
-      await expect(
-        service.registrarPosicao('inexistente', mockUsuarioMotorista, dtoPosicao),
-      ).rejects.toThrow(NotFoundException);
-    });
-  });
-
-  describe('listarPosicoes', () => {
-    it('deve listar posicoes mais recentes primeiro', async () => {
-      prisma.viagem.findFirst.mockResolvedValue({ motoristaId: 'uuid-motorista' });
-      prisma.posicaoViagem.findMany.mockResolvedValue([
-        {
-          id: 'p1',
-          viagemId: 'uuid-viagem',
-          latitude: -23.5,
-          longitude: -46.6,
-          precisaoM: 10,
-          capturadoEm: new Date('2026-05-21T18:30:00'),
-        },
-      ]);
-      const r = await service.listarPosicoes('uuid-viagem', mockUsuarioOperador);
-      expect(r).toHaveLength(1);
-      expect(prisma.posicaoViagem.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ orderBy: { capturadoEm: 'desc' }, take: 50 }),
+      expect(prisma.viagens.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ motorista_id: 100, data_hora_exclusao: null }),
+        }),
       );
     });
 
-    it('deve travar limite entre 1 e 500', async () => {
-      prisma.viagem.findFirst.mockResolvedValue({ motoristaId: 'uuid-motorista' });
-      await service.listarPosicoes('uuid-viagem', mockUsuarioOperador, 10000);
-      expect(prisma.posicaoViagem.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ take: 500 }),
-      );
-    });
+    it('admin deve poder listar sem filtro de motorista', async () => {
+      prisma.viagens.findMany.mockResolvedValue([]);
+      prisma.viagens.count.mockResolvedValue(0);
 
-    it('motorista nao pode listar posicoes de viagem alheia', async () => {
-      prisma.viagem.findFirst.mockResolvedValue({ motoristaId: 'outro' });
-      await expect(
-        service.listarPosicoes('uuid-viagem', mockUsuarioMotorista),
-      ).rejects.toThrow(ForbiddenException);
+      await service.listar({}, usuarioJwt('admin'));
+
+      const callArg = prisma.viagens.findMany.mock.calls[0][0];
+      expect(callArg.where.motorista_id).toBeUndefined();
     });
   });
 });

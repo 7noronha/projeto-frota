@@ -13,7 +13,8 @@ type Params = Promise<{ id: string }>;
 export const dynamic = 'force-dynamic';
 
 export default async function PaginaEditarViagem(props: { params: Params }) {
-  const { id } = await props.params;
+  const { id: idStr } = await props.params;
+  const id = Number(idStr);
 
   let viagem;
   try {
@@ -24,7 +25,7 @@ export default async function PaginaEditarViagem(props: { params: Params }) {
   }
 
   // Só permite editar quando status = CRIADA
-  if (viagem.status !== 'CRIADA') {
+  if (viagem.status.nome !== 'CRIADA') {
     redirect(`/viagens/${id}`);
   }
 

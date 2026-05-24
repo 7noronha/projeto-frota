@@ -4,9 +4,15 @@ import { notFound } from 'next/navigation';
 import { Button, HStack, VStack, Heading, Text } from '@lojascem/components-react';
 import { ErroApi } from '@/lib/api-servidor';
 import { buscarVeiculoPorId } from '../../actions';
-import { buscarDespesas } from './actions';
-import { TabelaDespesas } from '@/components/despesas/TabelaDespesas';
-import { ResumoDespesas } from '@/components/despesas/ResumoDespesas';
+import {
+  buscarMultas,
+  buscarAbastecimentos,
+  buscarManutencoes,
+  buscarImpostos,
+  buscarSeguros,
+  buscarDocumentacoes,
+} from './actions';
+import { ListaDespesasVeiculo } from '@/components/despesas/ListaDespesasVeiculo';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Despesas — FleetOps' };
@@ -14,7 +20,8 @@ export const metadata: Metadata = { title: 'Despesas — FleetOps' };
 type Params = Promise<{ id: string }>;
 
 export default async function PaginaDespesas(props: { params: Params }) {
-  const { id } = await props.params;
+  const { id: idStr } = await props.params;
+  const id = Number(idStr);
 
   let veiculo;
   try {
@@ -24,7 +31,25 @@ export default async function PaginaDespesas(props: { params: Params }) {
     throw erro;
   }
 
-  const { dados: despesas, total } = await buscarDespesas(id, 1);
+  // Busca em paralelo as 6 subtabelas
+  const [multas, abastecimentos, manutencoes, impostos, seguros, documentacoes] = await Promise.all(
+    [
+      buscarMultas(id),
+      buscarAbastecimentos(id),
+      buscarManutencoes(id),
+      buscarImpostos(id),
+      buscarSeguros(id),
+      buscarDocumentacoes(id),
+    ],
+  );
+
+  const totalGeral =
+    multas.total +
+    abastecimentos.total +
+    manutencoes.total +
+    impostos.total +
+    seguros.total +
+    documentacoes.total;
 
   return (
     <VStack className="gap-6">
@@ -35,26 +60,26 @@ export default async function PaginaDespesas(props: { params: Params }) {
           </Heading>
           <Text size="sm" className="mt-1" style={{ color: 'var(--fo-text-secondary)' }}>
             <span className="font-mono font-semibold">{veiculo.placa}</span> · {veiculo.marca}{' '}
-            {veiculo.modelo} · {total} {total === 1 ? 'lançamento' : 'lançamentos'}
+            {veiculo.modelo} · {totalGeral} {totalGeral === 1 ? 'lançamento' : 'lançamentos'} no
+            total
           </Text>
         </VStack>
-        <HStack alignItems="center" gap={2}>
-          <Link href="/veiculos" style={{ textDecoration: 'none' }}>
-            <Button variant="outline" color="default" leftIcon="PiArrowLeftBold">
-              Voltar
-            </Button>
-          </Link>
-          <Link href={`/veiculos/${id}/despesas/nova`} style={{ textDecoration: 'none' }}>
-            <Button color="primary" leftIcon="PiPlusBold">
-              Nova despesa
-            </Button>
-          </Link>
-        </HStack>
+        <Link href="/veiculos" style={{ textDecoration: 'none' }}>
+          <Button variant="outline" color="default" leftIcon="PiArrowLeftBold">
+            Voltar
+          </Button>
+        </Link>
       </HStack>
 
-      {despesas.length > 0 && <ResumoDespesas despesas={despesas} />}
-
-      <TabelaDespesas veiculoId={id} despesas={despesas} />
+      <ListaDespesasVeiculo
+        veiculoId={id}
+        multas={multas.dados}
+        abastecimentos={abastecimentos.dados}
+        manutencoes={manutencoes.dados}
+        impostos={impostos.dados}
+        seguros={seguros.dados}
+        documentacoes={documentacoes.dados}
+      />
     </VStack>
   );
 }

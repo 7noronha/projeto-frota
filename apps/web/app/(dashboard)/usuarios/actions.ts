@@ -15,7 +15,7 @@ export async function buscarUsuarios(
   pagina = 1,
   filtros: FiltrosUsuarios = {},
 ): Promise<RespostaPaginada<UsuarioResposta>> {
-  const params = new URLSearchParams({ pagina: String(pagina), tamanhoPagina: '20' });
+  const params = new URLSearchParams({ pagina: String(pagina), tamanho_pagina: '20' });
   if (filtros.nome) params.set('nome', filtros.nome);
   if (filtros.perfil) params.set('perfil', filtros.perfil);
   if (filtros.ativo) params.set('ativo', filtros.ativo);
@@ -23,7 +23,7 @@ export async function buscarUsuarios(
   return fetchServidor<RespostaPaginada<UsuarioResposta>>(`/usuarios?${params}`);
 }
 
-export async function buscarUsuarioPorId(id: string): Promise<UsuarioResposta> {
+export async function buscarUsuarioPorId(id: number): Promise<UsuarioResposta> {
   return fetchServidor<UsuarioResposta>(`/usuarios/${id}`);
 }
 
@@ -41,8 +41,8 @@ function montarCorpo(formData: FormData): Record<string, unknown> {
   if (email && String(email).trim()) corpo.email = email;
   const cnh = formData.get('cnh');
   if (cnh && String(cnh).trim()) corpo.cnh = cnh;
-  const cnhValidade = formData.get('cnhValidade');
-  if (cnhValidade && String(cnhValidade).trim()) corpo.cnhValidade = cnhValidade;
+  const cnh_validade = formData.get('cnh_validade');
+  if (cnh_validade && String(cnh_validade).trim()) corpo.cnh_validade = cnh_validade;
   const ativo = formData.get('ativo');
   if (ativo !== null) corpo.ativo = ativo === 'true';
   return corpo;
@@ -67,7 +67,7 @@ export async function acaoCriarUsuario(
 }
 
 export async function acaoAtualizarUsuario(
-  id: string,
+  id: number,
   _estadoAnterior: { erro?: string } | null,
   formData: FormData,
 ): Promise<{ erro?: string } | null> {
@@ -86,7 +86,7 @@ export async function acaoAtualizarUsuario(
   redirect('/usuarios');
 }
 
-export async function acaoInativarUsuario(id: string): Promise<{ erro?: string } | null> {
+export async function acaoInativarUsuario(id: number): Promise<{ erro?: string } | null> {
   try {
     await fetchServidor(`/usuarios/${id}/inativar`, { method: 'PATCH' });
   } catch (erro) {
@@ -97,7 +97,7 @@ export async function acaoInativarUsuario(id: string): Promise<{ erro?: string }
   return null;
 }
 
-export async function acaoReativarUsuario(id: string): Promise<{ erro?: string } | null> {
+export async function acaoReativarUsuario(id: number): Promise<{ erro?: string } | null> {
   try {
     await fetchServidor(`/usuarios/${id}/reativar`, { method: 'PATCH' });
   } catch (erro) {
@@ -108,7 +108,7 @@ export async function acaoReativarUsuario(id: string): Promise<{ erro?: string }
   return null;
 }
 
-export async function acaoExcluirUsuario(id: string): Promise<{ erro?: string } | null> {
+export async function acaoExcluirUsuario(id: number): Promise<{ erro?: string } | null> {
   try {
     await fetchServidor(`/usuarios/${id}`, { method: 'DELETE' });
   } catch (erro) {

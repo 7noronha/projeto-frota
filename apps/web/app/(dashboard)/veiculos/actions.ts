@@ -9,7 +9,7 @@ export async function buscarVeiculos(
   pagina = 1,
   filtros: { placa?: string; modelo?: string; situacao?: string } = {},
 ): Promise<RespostaPaginada<VeiculoResposta>> {
-  const params = new URLSearchParams({ pagina: String(pagina), tamanhoPagina: '20' });
+  const params = new URLSearchParams({ pagina: String(pagina), tamanho_pagina: '20' });
   if (filtros.placa) params.set('placa', filtros.placa);
   if (filtros.modelo) params.set('modelo', filtros.modelo);
   if (filtros.situacao) params.set('situacao', filtros.situacao);
@@ -17,7 +17,7 @@ export async function buscarVeiculos(
   return fetchServidor<RespostaPaginada<VeiculoResposta>>(`/veiculos?${params}`);
 }
 
-export async function buscarVeiculoPorId(id: string): Promise<VeiculoResposta> {
+export async function buscarVeiculoPorId(id: number): Promise<VeiculoResposta> {
   return fetchServidor<VeiculoResposta>(`/veiculos/${id}`);
 }
 
@@ -29,12 +29,12 @@ export async function acaoCriarVeiculo(
     placa: formData.get('placa'),
     marca: formData.get('marca'),
     modelo: formData.get('modelo'),
-    anoFabricacao: Number(formData.get('anoFabricacao')),
-    anoModelo: Number(formData.get('anoModelo')),
+    ano_fabricacao: Number(formData.get('ano_fabricacao')),
+    ano_modelo: Number(formData.get('ano_modelo')),
     cor: formData.get('cor'),
     renavam: formData.get('renavam'),
-    odometroAtual: Number(formData.get('odometroAtual')),
-    dataAquisicao: formData.get('dataAquisicao'),
+    odometro_atual: Number(formData.get('odometro_atual')),
+    data_aquisicao: formData.get('data_aquisicao'),
     situacao: formData.get('situacao'),
     observacoes: formData.get('observacoes') || undefined,
   };
@@ -54,18 +54,18 @@ export async function acaoCriarVeiculo(
 }
 
 export async function acaoAtualizarVeiculo(
-  id: string,
+  id: number,
   _estadoAnterior: { erro?: string } | null,
   formData: FormData,
 ): Promise<{ erro?: string } | null> {
   const corpo = {
     marca: formData.get('marca'),
     modelo: formData.get('modelo'),
-    anoFabricacao: Number(formData.get('anoFabricacao')),
-    anoModelo: Number(formData.get('anoModelo')),
+    ano_fabricacao: Number(formData.get('ano_fabricacao')),
+    ano_modelo: Number(formData.get('ano_modelo')),
     cor: formData.get('cor'),
-    odometroAtual: Number(formData.get('odometroAtual')),
-    dataAquisicao: formData.get('dataAquisicao'),
+    odometro_atual: Number(formData.get('odometro_atual')),
+    data_aquisicao: formData.get('data_aquisicao'),
     situacao: formData.get('situacao'),
     observacoes: formData.get('observacoes') || undefined,
   };
@@ -84,7 +84,7 @@ export async function acaoAtualizarVeiculo(
   redirect('/veiculos');
 }
 
-export async function acaoExcluirVeiculo(id: string): Promise<{ erro?: string } | void> {
+export async function acaoExcluirVeiculo(id: number): Promise<{ erro?: string } | void> {
   try {
     await fetchServidor(`/veiculos/${id}`, { method: 'DELETE' });
   } catch (erro) {

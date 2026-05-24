@@ -10,7 +10,7 @@ export interface ResumoCnhVencendo {
 
 export async function buscarCnhsVencendoEm30Dias(): Promise<ResumoCnhVencendo> {
   const resultado = await fetchServidor<RespostaPaginada<UsuarioResposta>>(
-    '/usuarios?perfil=motorista&ativo=true&cnhVencendoAteDias=30&tamanhoPagina=5',
+    '/usuarios?perfil=motorista&ativo=true&cnhVencendoAteDias=30&tamanho_pagina=5',
   );
   return { total: resultado.total, proximos: resultado.dados };
 }

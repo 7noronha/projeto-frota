@@ -1,24 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEmail,
-  IsEnum,
+  IsInt,
   IsOptional,
   IsString,
   Length,
   Matches,
   MaxLength,
   MinLength,
+  Min,
 } from 'class-validator';
 import { Maiusculas } from '../../../common/decorators/maiusculas.decorator';
-
-export enum PerfilEnum {
-  ADMIN = 'admin',
-  GERENTE = 'gerente',
-  ENCARREGADO = 'encarregado',
-  OPERADOR = 'operador',
-  MOTORISTA = 'motorista',
-}
 
 export class CriarUsuarioDto {
   @ApiProperty({ example: '0009003656', description: 'Matrícula funcional (10 dígitos)' })
@@ -39,9 +33,11 @@ export class CriarUsuarioDto {
   @MinLength(8, { message: 'Senha deve ter no mínimo 8 caracteres' })
   senha: string;
 
-  @ApiProperty({ enum: PerfilEnum, example: PerfilEnum.OPERADOR })
-  @IsEnum(PerfilEnum, { message: 'Perfil inválido' })
-  perfil: PerfilEnum;
+  @ApiProperty({ example: 1, description: 'ID do perfil (FK perfis_usuario.id)' })
+  @Type(() => Number)
+  @IsInt({ message: 'perfil_id inválido' })
+  @Min(1)
+  perfil_id: number;
 
   @ApiPropertyOptional({ example: 'joao@empresa.com' })
   @IsOptional()
@@ -67,7 +63,7 @@ export class CriarUsuarioDto {
   @IsOptional()
   @IsString()
   @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'Data deve estar no formato YYYY-MM-DD' })
-  cnhValidade?: string;
+  cnh_validade?: string;
 
   @ApiPropertyOptional({ default: true })
   @IsOptional()
