@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const ROTAS_PUBLICAS = ['/login'];
+const ROTAS_PUBLICAS = ['/login', '/erd'];
 
 export function middleware(request: NextRequest): NextResponse {
   const token = request.cookies.get('token')?.value;
@@ -14,7 +14,9 @@ export function middleware(request: NextRequest): NextResponse {
     return NextResponse.redirect(urlLogin);
   }
 
-  if (token && ehRotaPublica) {
+  // Quando autenticado, /login redireciona pra dashboard.
+  // /erd é documentação técnica — fica acessível mesmo logado, sem redirect.
+  if (token && ehRotaPublica && pathname.startsWith('/login')) {
     return NextResponse.redirect(new URL('/veiculos', request.url));
   }
 
