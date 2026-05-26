@@ -47,9 +47,19 @@ export class UsuariosService {
           })()
         : undefined;
 
+    // Resolve filtro `perfil` (nome) → perfil_id quando informado.
+    // perfil_id explicit ganha precedência sobre o nome.
+    let perfilIdResolvido = filtros.perfil_id;
+    if (!perfilIdResolvido && filtros.perfil) {
+      const perfil = await this.prisma.perfis_usuario.findUnique({
+        where: { nome: filtros.perfil },
+      });
+      if (perfil) perfilIdResolvido = perfil.id;
+    }
+
     const where = {
       data_hora_exclusao: null as null,
-      ...(filtros.perfil_id && { perfil_id: filtros.perfil_id }),
+      ...(perfilIdResolvido && { perfil_id: perfilIdResolvido }),
       ...(filtros.matricula && { matricula: { contains: filtros.matricula } }),
       ...(filtros.nome && { nome: { contains: filtros.nome, mode: 'insensitive' as const } }),
       ...(filtros.ativo !== undefined && { ativo: filtros.ativo }),

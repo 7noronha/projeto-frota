@@ -10,6 +10,14 @@ export class FiltrosListarUsuariosDto {
   @Min(1)
   perfil_id?: number;
 
+  @ApiPropertyOptional({
+    example: 'motorista',
+    description: 'Filtrar por nome do perfil (admin, operador, motorista, etc.). Alternativa a perfil_id.',
+  })
+  @IsOptional()
+  @IsString()
+  perfil?: string;
+
   @ApiPropertyOptional({ example: '0009', description: 'Filtrar por matrícula (busca parcial)' })
   @IsOptional()
   @IsString()
