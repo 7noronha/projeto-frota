@@ -218,7 +218,7 @@ frota/
 - **1 tabela de auditoria** (`impostos_historicos`)
 - **1 tabela de configuração** (`configuracoes`)
 
-Detalhe completo do schema, relacionamentos e diagrama em **[`docs/ERD.md`](./docs/ERD.md)**.
+Detalhe completo do schema em **[`docs/ERD.md`](./docs/ERD.md)** (texto + Mermaid) ou **diagrama interativo em `/erd`** no web (drag, zoom, MiniMap — React Flow).
 
 ### Padrões
 
@@ -343,4 +343,5 @@ Proprietário. Uso interno.
 - **[PRD-FleetOps-MVP.md](./PRD-FleetOps-MVP.md)** — Requisitos do produto e escopo do MVP
 - **[REFACTOR.md](./REFACTOR.md)** — Histórico e detalhes do refactor schema-snake-case
 - **[DEPLOY_CHECKLIST.md](./DEPLOY_CHECKLIST.md)** — Procedimento de deploy de produção
-- **[docs/ERD.md](./docs/ERD.md)** — Diagrama entidade-relacionamento completo
+- **[docs/ERD.md](./docs/ERD.md)** — Diagrama entidade-relacionamento (texto + Mermaid)
+- **[/erd](https://projeto-frota-web.vercel.app/erd)** — Diagrama interativo (rota pública do web)
