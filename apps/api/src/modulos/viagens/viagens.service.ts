@@ -160,10 +160,20 @@ export class ViagensService {
     const { pagina, tamanhoPagina, skip } = calcularPaginacao(filtros);
     const ehMotorista = usuario.perfil === 'motorista';
 
+    // Resolve filtro `status` (nome) → status_id quando informado.
+    // status_id explícito ganha precedência sobre o nome.
+    let statusIdResolvido = filtros.status_id;
+    if (!statusIdResolvido && filtros.status) {
+      const status = await this.prisma.status_viagem.findUnique({
+        where: { nome: filtros.status },
+      });
+      if (status) statusIdResolvido = status.id;
+    }
+
     const where = {
       data_hora_exclusao: null as null,
       ...(ehMotorista && { motorista_id: usuario.sub }),
-      ...(filtros.status_id && { status_id: filtros.status_id }),
+      ...(statusIdResolvido && { status_id: statusIdResolvido }),
       ...(!ehMotorista && filtros.motorista_id && { motorista_id: filtros.motorista_id }),
       ...(filtros.veiculo_id && { veiculo_id: filtros.veiculo_id }),
       ...(filtros.dataInicio && filtros.dataFim && {

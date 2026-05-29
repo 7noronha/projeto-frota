@@ -20,6 +20,14 @@ export class FiltrosListarVeiculosDto {
   @Min(1)
   situacao_id?: number;
 
+  @ApiPropertyOptional({
+    example: 'ativo',
+    description: 'Filtrar por nome da situação (ativo, inativo, etc.). Alternativa a situacao_id.',
+  })
+  @IsOptional()
+  @IsString()
+  situacao?: string;
+
   @ApiPropertyOptional({ default: 1, minimum: 1 })
   @IsOptional()
   @Type(() => Number)
@@ -33,5 +41,5 @@ export class FiltrosListarVeiculosDto {
   @IsInt()
   @Min(1)
   @Max(100)
-  tamanhoPagina?: number = 20;
+  tamanho_pagina?: number = 20;
 }

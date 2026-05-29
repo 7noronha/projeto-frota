@@ -13,7 +13,6 @@ const itensMenu = [
   { href: '/viagens', rotulo: 'Viagens', icone: 'PiMapTrifoldBold' as const },
   { href: '/usuarios', rotulo: 'Usuários', icone: 'PiUserListBold' as const },
   { href: '/relatorios', rotulo: 'Relatórios', icone: 'PiChartBarBold' as const },
-  { href: '/erd', rotulo: 'Diagrama ER', icone: 'PiTreeStructureBold' as const },
   { href: '/configuracoes', rotulo: 'Configurações', icone: 'PiGearBold' as const },
 ];
 

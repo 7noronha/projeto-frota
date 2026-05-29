@@ -65,7 +65,7 @@ describe('UsuariosService', () => {
       prisma.usuarios.findMany.mockResolvedValue([usuarioFake()]);
       prisma.usuarios.count.mockResolvedValue(1);
 
-      const r = await service.listar({ pagina: 1, tamanhoPagina: 20 });
+      const r = await service.listar({ pagina: 1, tamanho_pagina: 20 });
 
       expect(r.total).toBe(1);
       expect(r.pagina).toBe(1);

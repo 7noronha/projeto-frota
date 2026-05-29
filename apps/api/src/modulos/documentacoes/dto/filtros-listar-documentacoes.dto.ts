@@ -40,5 +40,5 @@ export class FiltrosListarDocumentacoesDto {
   @IsInt()
   @Min(1)
   @Max(100)
-  tamanhoPagina?: number = 20;
+  tamanho_pagina?: number = 20;
 }

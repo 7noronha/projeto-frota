@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDateString, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsDateString, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class FiltrosListarViagensDto {
   @ApiPropertyOptional({ example: 1, description: 'ID do status (FK status_viagem.id)' })
@@ -9,6 +9,14 @@ export class FiltrosListarViagensDto {
   @IsInt()
   @Min(1)
   status_id?: number;
+
+  @ApiPropertyOptional({
+    example: 'EM_ANDAMENTO',
+    description: 'Filtrar por nome do status (CRIADA, EM_ANDAMENTO, FINALIZADA). Alternativa a status_id.',
+  })
+  @IsOptional()
+  @IsString()
+  status?: string;
 
   @ApiPropertyOptional({ description: 'ID do motorista' })
   @IsOptional()
@@ -47,5 +55,5 @@ export class FiltrosListarViagensDto {
   @IsInt()
   @Min(1)
   @Max(100)
-  tamanhoPagina?: number = 20;
+  tamanho_pagina?: number = 20;
 }

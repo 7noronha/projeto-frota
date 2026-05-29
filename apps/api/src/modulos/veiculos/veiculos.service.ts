@@ -46,9 +46,19 @@ export class VeiculosService {
   async listar(filtros: FiltrosListarVeiculosDto): Promise<RespostaPaginada<VeiculoRespostaDto>> {
     const { pagina, tamanhoPagina, skip } = calcularPaginacao(filtros);
 
+    // Resolve filtro `situacao` (nome) → situacao_id quando informado.
+    // situacao_id explícito ganha precedência sobre o nome.
+    let situacaoIdResolvido = filtros.situacao_id;
+    if (!situacaoIdResolvido && filtros.situacao) {
+      const situacao = await this.prisma.situacoes_veiculo.findUnique({
+        where: { nome: filtros.situacao },
+      });
+      if (situacao) situacaoIdResolvido = situacao.id;
+    }
+
     const where = {
       data_hora_exclusao: null as null,
-      ...(filtros.situacao_id && { situacao_id: filtros.situacao_id }),
+      ...(situacaoIdResolvido && { situacao_id: situacaoIdResolvido }),
       ...(filtros.placa && { placa: { contains: filtros.placa, mode: 'insensitive' as const } }),
       ...(filtros.modelo && { modelo: { contains: filtros.modelo, mode: 'insensitive' as const } }),
     };
