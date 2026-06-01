@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { VeiculosService } from './veiculos.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
@@ -108,7 +108,7 @@ describe('VeiculosService', () => {
 
     it('deve rejeitar situação inválida', async () => {
       prisma.situacoes_veiculo.findUnique.mockResolvedValue(null);
-      await expect(service.criar(dtoBase)).rejects.toThrow(ConflictException);
+      await expect(service.criar(dtoBase)).rejects.toThrow(BadRequestException);
     });
 
     it('deve rejeitar placa duplicada', async () => {

@@ -33,11 +33,23 @@ export class CriarUsuarioDto {
   @MinLength(8, { message: 'Senha deve ter no mínimo 8 caracteres' })
   senha: string;
 
-  @ApiProperty({ example: 1, description: 'ID do perfil (FK perfis_usuario.id)' })
+  @ApiPropertyOptional({
+    example: 1,
+    description: 'ID do perfil (FK perfis_usuario.id). Alternativa a "perfil".',
+  })
+  @IsOptional()
   @Type(() => Number)
   @IsInt({ message: 'perfil_id inválido' })
   @Min(1)
-  perfil_id: number;
+  perfil_id?: number;
+
+  @ApiPropertyOptional({
+    example: 'motorista',
+    description: 'Nome do perfil (admin, operador, motorista, etc.). Alternativa a perfil_id.',
+  })
+  @IsOptional()
+  @IsString()
+  perfil?: string;
 
   @ApiPropertyOptional({ example: 'joao@empresa.com' })
   @IsOptional()

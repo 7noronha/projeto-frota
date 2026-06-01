@@ -80,11 +80,23 @@ export class CriarVeiculoDto {
   @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: 'Data deve estar no formato YYYY-MM-DD' })
   data_aquisicao: string;
 
-  @ApiProperty({ example: 1, description: 'ID da situação (FK situacoes_veiculo.id)' })
+  @ApiPropertyOptional({
+    example: 1,
+    description: 'ID da situação (FK situacoes_veiculo.id). Alternativa a "situacao".',
+  })
+  @IsOptional()
   @Type(() => Number)
   @IsInt({ message: 'situacao_id inválido' })
   @Min(1)
-  situacao_id: number;
+  situacao_id?: number;
+
+  @ApiPropertyOptional({
+    example: 'ativo',
+    description: 'Nome da situação (ativo, em_manutencao, inativo, baixado). Alternativa a situacao_id.',
+  })
+  @IsOptional()
+  @IsString()
+  situacao?: string;
 
   @ApiPropertyOptional({ example: 'REVISÃO REALIZADA EM 10/2024' })
   @Maiusculas()

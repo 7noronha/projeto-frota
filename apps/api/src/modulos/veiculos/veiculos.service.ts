@@ -1,5 +1,6 @@
 import { calcularPaginacao } from '../../common/utils/paginacao';
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -93,8 +94,15 @@ export class VeiculosService {
   }
 
   async criar(dto: CriarVeiculoDto): Promise<VeiculoRespostaDto> {
-    const situacao = await this.prisma.situacoes_veiculo.findUnique({ where: { id: dto.situacao_id } });
-    if (!situacao) throw new ConflictException('Situação inválida');
+    // Aceita situacao_id (FK) ou situacao (nome). id tem precedência.
+    const situacao = dto.situacao_id
+      ? await this.prisma.situacoes_veiculo.findUnique({ where: { id: dto.situacao_id } })
+      : dto.situacao
+        ? await this.prisma.situacoes_veiculo.findUnique({ where: { nome: dto.situacao } })
+        : null;
+    if (!situacao) {
+      throw new BadRequestException('Situação inválida — informe situacao_id ou situacao');
+    }
 
     const [placaExistente, renavamExistente] = await Promise.all([
       this.prisma.veiculos.findFirst({ where: { placa: dto.placa, data_hora_exclusao: null } }),
@@ -114,7 +122,7 @@ export class VeiculosService {
         renavam: dto.renavam,
         odometro_atual: dto.odometro_atual,
         data_aquisicao: new Date(dto.data_aquisicao),
-        situacao_id: dto.situacao_id,
+        situacao_id: situacao.id,
         observacoes: dto.observacoes ?? null,
       },
       include: INCLUDE_SITUACAO,
@@ -128,6 +136,14 @@ export class VeiculosService {
     });
     if (!veiculo) throw new NotFoundException('Veículo não encontrado');
 
+    // Resolve situacao (nome) → id, quando informada no lugar de situacao_id.
+    let situacaoIdNovo = dto.situacao_id;
+    if (situacaoIdNovo === undefined && dto.situacao) {
+      const s = await this.prisma.situacoes_veiculo.findUnique({ where: { nome: dto.situacao } });
+      if (!s) throw new BadRequestException('Situação inválida');
+      situacaoIdNovo = s.id;
+    }
+
     const atualizado = await this.prisma.veiculos.update({
       where: { id },
       data: {
@@ -138,7 +154,7 @@ export class VeiculosService {
         ...(dto.cor && { cor: dto.cor }),
         ...(dto.odometro_atual !== undefined && { odometro_atual: dto.odometro_atual }),
         ...(dto.data_aquisicao && { data_aquisicao: new Date(dto.data_aquisicao) }),
-        ...(dto.situacao_id !== undefined && { situacao_id: dto.situacao_id }),
+        ...(situacaoIdNovo !== undefined && { situacao_id: situacaoIdNovo }),
         ...(dto.observacoes !== undefined && { observacoes: dto.observacoes }),
       },
       include: INCLUDE_SITUACAO,

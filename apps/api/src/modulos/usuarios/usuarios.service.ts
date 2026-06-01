@@ -96,8 +96,13 @@ export class UsuariosService {
   }
 
   async criar(dto: CriarUsuarioDto): Promise<UsuarioRespostaDto> {
-    const perfil = await this.prisma.perfis_usuario.findUnique({ where: { id: dto.perfil_id } });
-    if (!perfil) throw new BadRequestException('Perfil inválido');
+    // Aceita perfil_id (FK) ou perfil (nome). id tem precedência.
+    const perfil = dto.perfil_id
+      ? await this.prisma.perfis_usuario.findUnique({ where: { id: dto.perfil_id } })
+      : dto.perfil
+        ? await this.prisma.perfis_usuario.findUnique({ where: { nome: dto.perfil } })
+        : null;
+    if (!perfil) throw new BadRequestException('Perfil inválido — informe perfil_id ou perfil');
 
     if (perfil.nome === 'motorista' && (!dto.cnh || !dto.cnh_validade)) {
       throw new BadRequestException('CNH e validade da CNH são obrigatórios para motoristas');
@@ -115,7 +120,7 @@ export class UsuariosService {
         matricula: dto.matricula,
         nome: dto.nome,
         senha_hash: senhaHash,
-        perfil_id: dto.perfil_id,
+        perfil_id: perfil.id,
         email: dto.email ?? null,
         telefone: dto.telefone ?? null,
         cnh: dto.cnh ?? null,
@@ -135,10 +140,18 @@ export class UsuariosService {
     });
     if (!usuario) throw new NotFoundException('Usuário não encontrado');
 
+    // Resolve perfil (nome) → id quando informado no lugar de perfil_id.
+    let perfilIdNovo = dto.perfil_id;
+    if (perfilIdNovo === undefined && dto.perfil) {
+      const p = await this.prisma.perfis_usuario.findUnique({ where: { nome: dto.perfil } });
+      if (!p) throw new BadRequestException('Perfil inválido');
+      perfilIdNovo = p.id;
+    }
+
     // Validar perfil novo, se mudou
     let perfilNovo = usuario.perfil;
-    if (dto.perfil_id && dto.perfil_id !== usuario.perfil_id) {
-      const p = await this.prisma.perfis_usuario.findUnique({ where: { id: dto.perfil_id } });
+    if (perfilIdNovo && perfilIdNovo !== usuario.perfil_id) {
+      const p = await this.prisma.perfis_usuario.findUnique({ where: { id: perfilIdNovo } });
       if (!p) throw new BadRequestException('Perfil inválido');
       perfilNovo = p;
     }
@@ -158,7 +171,7 @@ export class UsuariosService {
       data: {
         ...(dto.nome && { nome: dto.nome }),
         ...(senhaHash && { senha_hash: senhaHash }),
-        ...(dto.perfil_id && { perfil_id: dto.perfil_id }),
+        ...(perfilIdNovo && { perfil_id: perfilIdNovo }),
         ...(dto.email !== undefined && { email: dto.email }),
         ...(dto.telefone !== undefined && { telefone: dto.telefone }),
         ...(dto.cnh !== undefined && { cnh: dto.cnh }),
