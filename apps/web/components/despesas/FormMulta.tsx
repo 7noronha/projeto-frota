@@ -89,7 +89,7 @@ export function FormMulta({
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             {erro && <Alert color="error">{erro}</Alert>}
 
-            <SelectField label="Gravidade" value={gravidadeId} onChange={setGravidadeId}>
+            <SelectField label="Gravidade" isBlock value={gravidadeId} onChange={setGravidadeId}>
               {gravidades.map((g) => (
                 <ListBox.Item key={String(g.id)}>{g.nome}</ListBox.Item>
               ))}

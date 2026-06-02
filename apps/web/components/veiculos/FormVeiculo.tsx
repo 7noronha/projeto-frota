@@ -126,6 +126,7 @@ export function FormVeiculo({ acao, veiculoInicial, titulo }: FormVeiculoProps) 
               </div>
               <SelectField
                 label="Situação"
+                isBlock
                 isRequired
                 aria-required="true"
                 value={situacao}

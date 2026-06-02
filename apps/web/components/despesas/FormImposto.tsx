@@ -96,7 +96,7 @@ export function FormImposto({
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             {erro && <Alert color="error">{erro}</Alert>}
 
-            <SelectField label="Tipo de imposto" value={tipoId} onChange={setTipoId}>
+            <SelectField label="Tipo de imposto" isBlock value={tipoId} onChange={setTipoId}>
               {tiposImposto.map((t) => (
                 <ListBox.Item key={String(t.id)}>{t.nome}</ListBox.Item>
               ))}

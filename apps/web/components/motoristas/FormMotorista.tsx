@@ -106,6 +106,7 @@ export function FormMotorista({ acao, motoristaInicial, titulo }: FormMotoristaP
               {ehEdicao && (
                 <SelectField
                   label="Status"
+                  isBlock
                   value={String(ativo)}
                   onChange={(valor) => setAtivo(valor === 'true')}
                 >

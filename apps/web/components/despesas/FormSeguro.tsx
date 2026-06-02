@@ -92,7 +92,7 @@ export function FormSeguro({
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             {erro && <Alert color="error">{erro}</Alert>}
 
-            <SelectField label="Cobertura" value={tipoId} onChange={setTipoId}>
+            <SelectField label="Cobertura" isBlock value={tipoId} onChange={setTipoId}>
               {tiposCobertura.map((t) => (
                 <ListBox.Item key={String(t.id)}>{t.nome}</ListBox.Item>
               ))}

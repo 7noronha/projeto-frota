@@ -85,7 +85,7 @@ export function FormDocumentacao({
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             {erro && <Alert color="error">{erro}</Alert>}
 
-            <SelectField label="Tipo de documento" value={tipoId} onChange={setTipoId}>
+            <SelectField label="Tipo de documento" isBlock value={tipoId} onChange={setTipoId}>
               {tiposDocumento.map((t) => (
                 <ListBox.Item key={String(t.id)}>{t.nome}</ListBox.Item>
               ))}

@@ -93,7 +93,7 @@ export function FormAbastecimento({
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             {erro && <Alert color="error">{erro}</Alert>}
 
-            <SelectField label="Tipo de combustível" value={tipoId} onChange={setTipoId}>
+            <SelectField label="Tipo de combustível" isBlock value={tipoId} onChange={setTipoId}>
               {tiposCombustivel.map((t) => (
                 <ListBox.Item key={String(t.id)}>{t.nome}</ListBox.Item>
               ))}
