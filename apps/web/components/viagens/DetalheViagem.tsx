@@ -140,10 +140,14 @@ export function DetalheViagem({ viagem, acaoIniciar, acaoFinalizar }: DetalheVia
       {(viagem.origem_latitude != null || viagem.destino_latitude != null) && (
         <Card>
           <Card.Header className="font-semibold text-base text-slate-800">
-            <HStack alignItems="center" justifyContent="between">
+            <HStack alignItems="center" justifyContent="between" className="w-full gap-3 flex-wrap">
               <span>Origem e destino no mapa</span>
               {viagem.status.nome === 'EM_ANDAMENTO' && (
-                <Text size="xs" style={{ color: posicaoMotorista ? '#f97316' : '#94a3b8' }}>
+                <Text
+                  size="xs"
+                  className="whitespace-nowrap"
+                  style={{ color: posicaoMotorista ? '#f97316' : '#94a3b8' }}
+                >
                   {posicaoMotorista
                     ? `Motorista visto ${tempoDesde(posicaoMotorista.capturadoEm)}`
                     : 'Aguardando posição do motorista…'}
