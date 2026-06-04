@@ -49,10 +49,24 @@ export function usePosicaoMotorista({
           cache: 'no-store',
         });
         if (!resp.ok) return;
-        const dados = (await resp.json()) as PosicaoMotorista[];
+        // A API responde em snake_case (latitude, longitude, precisao_m,
+        // capturado_em). Mapeamos para o shape camelCase do hook.
+        const dados = (await resp.json()) as Array<{
+          latitude: number;
+          longitude: number;
+          precisao_m: number | null;
+          capturado_em: string;
+        }>;
         if (cancelado) return;
-        const ultima = dados[0];
-        if (ultima) setPosicao(ultima);
+        const ultima = Array.isArray(dados) ? dados[0] : undefined;
+        if (ultima && ultima.latitude != null && ultima.longitude != null) {
+          setPosicao({
+            latitude: ultima.latitude,
+            longitude: ultima.longitude,
+            precisaoM: ultima.precisao_m ?? null,
+            capturadoEm: ultima.capturado_em,
+          });
+        }
       } catch {
         // Silencioso — mantém último valor conhecido
       }

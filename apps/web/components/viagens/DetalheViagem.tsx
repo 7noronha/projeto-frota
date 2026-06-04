@@ -33,7 +33,8 @@ interface DetalheViagemProps {
  * Quanto tempo passou desde um timestamp ISO/Brasília. "há 30s", "há 2 min",
  * "há 1h". Aceita strings no formato dd/MM/yyyy HH:mm:ss da API.
  */
-function tempoDesde(timestamp: string): string {
+function tempoDesde(timestamp: string | null | undefined): string {
+  if (!timestamp) return 'há poucos instantes';
   const agora = Date.now();
   // formato Brasília "dd/MM/yyyy HH:mm:ss" precisa ser convertido
   const m = timestamp.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})/);

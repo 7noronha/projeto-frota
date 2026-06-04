@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server';
 import { fetchServidor, ErroApi } from '@/lib/api-servidor';
 
 interface PosicaoResposta {
-  id: string;
-  viagemId: string;
+  id: number;
+  viagem_id: number;
   latitude: number;
   longitude: number;
-  precisaoM: number | null;
-  capturadoEm: string;
+  precisao_m: number | null;
+  capturado_em: string;
 }
 
 /**
